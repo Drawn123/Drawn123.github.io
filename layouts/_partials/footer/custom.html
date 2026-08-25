@@ -1,0 +1,53 @@
+<canvas class="drawn-bg-canvas" aria-hidden="true"></canvas>
+<div class="drawn-cursor-glow" aria-hidden="true"></div>
+<button class="drawn-back-to-top" type="button" aria-label="返回顶部 / Back to top">
+    <svg aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+        <path d="M12 19V5M6 11l6-6 6 6" />
+    </svg>
+</button>
+<div class="drawn-ocean" aria-hidden="true">
+    <svg class="drawn-ocean-art drawn-ocean-back" viewBox="0 0 1440 150" preserveAspectRatio="none" role="presentation">
+        <path class="drawn-wave drawn-wave-back" d="M0 58C170 18 310 84 480 55C650 26 790 20 965 57C1140 94 1260 24 1440 48V150H0Z" />
+        <path class="drawn-wave drawn-wave-mid" d="M0 82C160 116 330 38 510 73C690 108 830 111 1000 73C1170 35 1290 94 1440 71V150H0Z" />
+    </svg>
+    <svg class="drawn-fish-art" viewBox="0 0 1440 150" preserveAspectRatio="xMidYMid slice" role="presentation">
+        <g class="drawn-fish drawn-fish-one">
+            <path class="drawn-fish-tail" d="M8 0L-12-12L-10 12Z" />
+            <ellipse class="drawn-fish-body" cx="23" cy="0" rx="24" ry="13" />
+            <path class="drawn-fish-fin" d="M24 2L12 17L34 9Z" />
+            <circle class="drawn-fish-eye" cx="38" cy="-4" r="3.2" />
+            <circle class="drawn-fish-pupil" cx="39" cy="-4" r="1.4" />
+        </g>
+        <g class="drawn-fish drawn-fish-two">
+            <path class="drawn-fish-tail" d="M7 0L-11-10L-9 10Z" />
+            <ellipse class="drawn-fish-body" cx="21" cy="0" rx="22" ry="11" />
+            <path class="drawn-fish-fin" d="M21 2L11 14L30 8Z" />
+            <circle class="drawn-fish-eye" cx="35" cy="-3" r="3" />
+            <circle class="drawn-fish-pupil" cx="36" cy="-3" r="1.3" />
+        </g>
+        <g class="drawn-fish drawn-fish-three">
+            <path class="drawn-fish-tail" d="M9 0L-14-13L-11 13Z" />
+            <ellipse class="drawn-fish-body" cx="25" cy="0" rx="26" ry="14" />
+            <path class="drawn-fish-fin" d="M25 2L12 18L37 9Z" />
+            <circle class="drawn-fish-eye" cx="42" cy="-4" r="3.4" />
+            <circle class="drawn-fish-pupil" cx="43" cy="-4" r="1.5" />
+        </g>
+    </svg>
+    <svg class="drawn-whale-art" viewBox="-24 -20 348 190" preserveAspectRatio="xMidYMid meet" role="presentation">
+        <g class="drawn-whale">
+            <path class="drawn-whale-tail" d="M69 82C40 78 22 62 17 39C35 38 53 45 67 59C68 40 78 23 94 12C105 35 100 57 82 74Z" />
+            <path class="drawn-whale-body" d="M69 78C107 49 174 42 228 57C260 66 282 87 286 108C251 101 217 104 181 119C139 128 95 112 69 78Z" />
+            <path class="drawn-whale-belly" d="M91 83C136 66 202 70 260 100C269 104 278 108 286 108C251 101 217 104 181 119C143 126 111 114 91 83Z" />
+            <path class="drawn-whale-fin" d="M163 101C146 105 129 119 122 135C145 132 166 120 178 107Z" />
+            <path class="drawn-whale-smile" d="M248 91C257 96 265 96 273 92" />
+            <circle class="drawn-whale-eye" cx="253" cy="78" r="4" />
+        </g>
+    </svg>
+    <svg class="drawn-ocean-art drawn-ocean-front" viewBox="0 0 1440 150" preserveAspectRatio="none" role="presentation">
+        <path class="drawn-wave drawn-wave-front" d="M0 105C180 66 330 134 514 101C698 68 842 74 1012 109C1182 144 1300 78 1440 103V150H0Z" />
+    </svg>
+</div>
+{{- $script := resources.Get "js/drawn-site.js" | minify | fingerprint -}}
+{{- with $script -}}
+    <script src="{{ .RelPermalink }}" integrity="{{ .Data.Integrity }}" defer></script>
+{{- end -}}

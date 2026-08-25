@@ -1,0 +1,7 @@
+{{- $section := .Section -}}
+{{- $pages := slice -}}
+{{- with site.GetPage $section -}}
+    {{- $pages = .RegularPagesRecursive -}}
+{{- end -}}
+{{- return $pages -}}
+

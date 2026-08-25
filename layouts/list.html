@@ -1,0 +1,67 @@
+{{ define "main" }}
+    {{- $sourcePages := partial "helper/pages.html" . -}}
+    {{- $pager := partial "helper/paginator.html" . -}}
+
+    <header>
+        <h3 class="section-title">
+            {{ if eq .Parent (.GetPage "/") }}
+                {{ T "list.section" }}
+            {{ else }}
+                {{ .Parent.Title }}
+            {{ end }}
+        </h3>
+
+        <div class="section-card">
+            <div class="section-details">
+                <h3 class="section-count">{{ T "list.page" (len $sourcePages) }}</h3>
+                <h1 class="section-term">{{ .Title }}</h1>
+                {{ with .Params.description }}
+                    <h2 class="section-description">{{ . }}</h2>
+                {{ end }}
+            </div>
+        </div>
+    </header>
+
+    {{ if in (slice "algorithm" "notes" "demo") .Section }}
+        <section class="drawn-home-panel drawn-section-tree">
+            <div class="drawn-section-heading">
+                <p>{{ if eq .Section "demo" }}Sample Tree{{ else }}Knowledge Tree{{ end }}</p>
+                <h2>{{ if eq .Section "demo" }}示例内容树 / Sample Tree{{ else }}知识树 / Knowledge Tree{{ end }}</h2>
+            </div>
+            {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
+        </section>
+    {{ end }}
+
+    {{ if and (eq .Section "blog") (eq .RelPermalink "/blog/") }}
+        {{ partial "drawn/blog-portals.html" . }}
+    {{ end }}
+
+    {{- $subsections := .Sections -}}
+    {{- with $subsections -}}
+        <aside>
+            <h2 class="section-title">{{ T "list.subsection" (len $subsections) }}</h2>
+            <div class="subsection-list">
+                <div class="article-list--tile">
+                    {{ range sort . "Weight" "asc" }}
+                        {{ partial "article-list/tile" . }}
+                    {{ end }}
+                </div>
+            </div>
+        </aside>
+    {{- end -}}
+
+    {{- if gt $pager.TotalNumberOfElements 0 -}}
+        <section class="article-list--compact">
+            {{ range $pager.Pages }}
+                {{ partial "article-list/compact" . }}
+            {{ end }}
+        </section>
+        {{ partial "drawn/pagination.html" $pager }}
+    {{- end -}}
+
+    {{ partialCached "footer/footer" . }}
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}

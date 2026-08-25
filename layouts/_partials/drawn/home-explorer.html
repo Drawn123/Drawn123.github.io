@@ -1,0 +1,26 @@
+{{- $algorithm := site.GetPage "section" "algorithm" -}}
+{{- $notes := site.GetPage "section" "notes" -}}
+<section class="drawn-home-panel drawn-home-explorer">
+    <div class="drawn-section-heading">
+        <p>Knowledge Explorer</p>
+        <h2>知识树 / Knowledge Tree</h2>
+    </div>
+    <div class="knowledge-explorer-grid">
+        {{- with $algorithm -}}
+        <article class="knowledge-explorer-column">
+            <header>
+                <a href="{{ .RelPermalink }}">算法题解 / Algorithm Solutions</a>
+            </header>
+            {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
+        </article>
+        {{- end -}}
+        {{- with $notes -}}
+        <article class="knowledge-explorer-column">
+            <header>
+                <a href="{{ .RelPermalink }}">学习笔记 / Learning Notes</a>
+            </header>
+            {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
+        </article>
+        {{- end -}}
+    </div>
+</section>

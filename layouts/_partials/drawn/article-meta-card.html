@@ -1,0 +1,29 @@
+{{- $hasCategories := .Params.categories -}}
+{{- $hasTags := .Params.tags -}}
+{{- $hasDifficulty := .Params.difficulty -}}
+{{- $hasPlatform := .Params.platform -}}
+{{- $hasProblem := .Params.problem_id -}}
+{{- if or $hasCategories $hasTags $hasDifficulty $hasPlatform $hasProblem .Params.pinned -}}
+<aside class="drawn-meta-card" aria-label="Article metadata">
+    {{- if .Params.pinned -}}
+        <span class="drawn-meta-pill drawn-meta-pinned">置顶 / Pinned</span>
+    {{- end -}}
+    {{- range (.GetTerms "categories") -}}
+        <a class="drawn-meta-pill" href="{{ .RelPermalink }}">类别 / {{ .LinkTitle }}</a>
+    {{- end -}}
+    {{- range first 4 (.GetTerms "tags") -}}
+        <a class="drawn-meta-pill" href="{{ .RelPermalink }}">标签 / {{ .LinkTitle }}</a>
+    {{- end -}}
+    {{- with .Params.difficulty -}}
+        <span class="drawn-meta-pill">难度 / {{ . }}</span>
+    {{- end -}}
+    {{- with .Params.platform -}}
+        {{- range . -}}
+            <span class="drawn-meta-pill">平台 / {{ . }}</span>
+        {{- end -}}
+    {{- end -}}
+    {{- with .Params.problem_id -}}
+        <span class="drawn-meta-pill">题号 / {{ . }}</span>
+    {{- end -}}
+</aside>
+{{- end -}}

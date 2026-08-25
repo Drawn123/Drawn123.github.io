@@ -1,0 +1,28 @@
+{{- $root := .FirstSection -}}
+{{- $pages := slice -}}
+{{- with $root -}}
+    {{- $weighted := sort (where .RegularPagesRecursive "Weight" "gt" 0) "Weight" "asc" -}}
+    {{- $unweighted := sort (where .RegularPagesRecursive "Weight" "eq" 0) "Date" "asc" -}}
+    {{- $pages = $weighted | append $unweighted -}}
+{{- end -}}
+{{- $prev := false -}}
+{{- $next := false -}}
+{{- range $index, $page := $pages -}}
+    {{- if eq $page.RelPermalink $.RelPermalink -}}
+        {{- if gt $index 0 -}}{{- $prev = index $pages (sub $index 1) -}}{{- end -}}
+        {{- if lt (add $index 1) (len $pages) -}}{{- $next = index $pages (add $index 1) -}}{{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- if or $prev $next -}}
+<nav class="drawn-prev-next" aria-label="Previous and next article">
+    {{- with $prev -}}
+        <a class="drawn-prev" href="{{ .RelPermalink }}"><span>← Previous</span><strong>{{ .Title }}</strong></a>
+    {{- else -}}
+        <span></span>
+    {{- end -}}
+    {{- with $next -}}
+        <a class="drawn-next" href="{{ .RelPermalink }}"><span>Next →</span><strong>{{ .Title }}</strong></a>
+    {{- end -}}
+</nav>
+{{- end -}}
+

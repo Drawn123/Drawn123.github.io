@@ -1,0 +1,23 @@
+{{- $sections := slice
+    (dict "Page" (site.GetPage "section" "algorithm") "Label" "Algorithm" "Text" "算法题解、竞赛模板与分层知识树")
+    (dict "Page" (site.GetPage "section" "notes") "Label" "Notes" "Text" "C++、Git、Linux 与工程学习笔记")
+    (dict "Page" (site.GetPage "section" "post") "Label" "Posts" "Text" "随笔、项目记录和其他文章")
+-}}
+<section class="drawn-home-panel drawn-blog-map">
+    <div class="drawn-section-heading">
+        <p>Blog Sections</p>
+        <h2>内容分类 / Explore the Blog</h2>
+    </div>
+    <div class="drawn-portal-grid">
+        {{- range $sections -}}
+            {{- $item := . -}}
+            {{- with $item.Page -}}
+                <a class="drawn-portal" href="{{ .RelPermalink }}">
+                    <span>{{ $item.Label }}</span>
+                    <strong>{{ .Title }}</strong>
+                    <em>{{ $item.Text }}</em>
+                </a>
+            {{- end -}}
+        {{- end -}}
+    </div>
+</section>

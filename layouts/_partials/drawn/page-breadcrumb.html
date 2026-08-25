@@ -1,0 +1,19 @@
+{{- if not .IsHome -}}
+<nav class="drawn-breadcrumb" aria-label="Breadcrumb">
+    <a href="{{ site.Home.RelPermalink }}">主页 / Home</a>
+    {{- if in site.Params.mainSections .Section -}}
+        {{- with site.GetPage "section" "blog" -}}
+            <span>›</span>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        {{- end -}}
+    {{- end -}}
+    {{- range .Ancestors.Reverse -}}
+        {{- if not .IsHome -}}
+            <span>›</span>
+            <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+        {{- end -}}
+    {{- end -}}
+    <span>›</span>
+    <span aria-current="page">{{ .Title }}</span>
+</nav>
+{{- end -}}

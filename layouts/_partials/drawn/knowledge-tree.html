@@ -1,0 +1,33 @@
+{{- $root := .Root -}}
+{{- $current := .Current -}}
+{{- $depth := default 0 .Depth -}}
+{{- if $root -}}
+{{- $hasNodes := or (gt (len $root.Sections) 0) (gt (len $root.RegularPages) 0) -}}
+{{- if not $hasNodes -}}
+<p class="knowledge-tree-empty">暂无文章 / No pages yet</p>
+{{- else -}}
+<ul class="knowledge-tree-list depth-{{ $depth }}">
+    {{- range sort $root.Sections "Weight" "asc" -}}
+        {{- $active := or (eq .RelPermalink $current.RelPermalink) (in $current.RelPermalink .RelPermalink) -}}
+        <li class="knowledge-tree-node is-folder {{ if $active }}is-active{{ end }}">
+            <details {{ if $active }}open{{ end }}>
+                <summary>
+                    <a class="knowledge-tree-label" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                    <span class="knowledge-tree-count">{{ len .RegularPagesRecursive }}</span>
+                </summary>
+                {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" $current "Depth" (add $depth 1)) }}
+            </details>
+        </li>
+    {{- end -}}
+    {{- range sort $root.RegularPages "Weight" "asc" -}}
+        {{- $active := eq .RelPermalink $current.RelPermalink -}}
+        <li class="knowledge-tree-node is-page {{ if $active }}is-current{{ end }}">
+            <a href="{{ .RelPermalink }}">
+                <span class="knowledge-tree-label">{{ .Title }}</span>
+                {{- if .Params.pinned -}}<b>置顶</b>{{- end -}}
+            </a>
+        </li>
+    {{- end -}}
+</ul>
+{{- end -}}
+{{- end -}}

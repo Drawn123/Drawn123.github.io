@@ -1,0 +1,55 @@
+{{ define "main" }}
+    <article class="main-article drawn-archives-page">
+        {{ partial "drawn/page-breadcrumb.html" . }}
+        <header class="drawn-archives-header">
+            <p class="drawn-archives-eyebrow">A TIMELINE OF NOTES AND POSTS</p>
+            <h1>归档 <span>/ Archives</span></h1>
+            <p class="drawn-archives-description">按文章日期整理的知识记录与创作轨迹</p>
+        </header>
+
+        {{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+        {{- $archiveEntries := slice -}}
+        {{- range $page := $pages -}}
+            {{- $date := $page.Date -}}
+            {{- if $date.IsZero -}}{{ $date = $page.Lastmod }}{{- end -}}
+            {{- if $date.IsZero -}}{{ $date = now }}{{- end -}}
+            {{- $archiveEntries = $archiveEntries | append (dict "Page" $page "Date" $date) -}}
+        {{- end -}}
+        {{- $archiveEntries = sort $archiveEntries "Date" "desc" -}}
+        <section class="drawn-archive-list" aria-label="Archives">
+            {{- $activeYear := "" -}}
+            {{- $activeMonth := "" -}}
+            {{- range $archiveEntries -}}
+                {{- $page := .Page -}}
+                {{- $date := .Date -}}
+                {{- $year := $date.Format "2006" -}}
+                {{- $month := $date.Format "01" -}}
+                {{- if ne $year $activeYear -}}
+                    {{- if ne $activeYear "" -}}</div></div></div></section>{{- end -}}
+                    <section class="drawn-archive-year" id="{{ $year }}">
+                        <h2>{{ $year }}</h2>
+                        <div class="drawn-archive-months">
+                    {{- $activeYear = $year -}}
+                    {{- $activeMonth = "" -}}
+                {{- end -}}
+                {{- if ne $month $activeMonth -}}
+                    {{- if ne $activeMonth "" -}}</div></div>{{- end -}}
+                    <div class="drawn-archive-month">
+                        <h3><time datetime="{{ $date.Format "2006-01" }}">{{ $date.Format "January" }}</time></h3>
+                        <div class="drawn-archive-items">
+                    {{- $activeMonth = $month -}}
+                {{- end -}}
+                <a href="{{ $page.RelPermalink }}" class="drawn-archive-item">
+                    <time datetime="{{ $date.Format "2006-01-02" }}">{{ $date.Format "02" }}</time>
+                    <span>{{ $page.Title }}</span>
+                    <small>{{ $page.FirstSection.Title }}</small>
+                </a>
+            {{- end -}}
+            {{- if gt (len $pages) 0 -}}</div></div></div></section>{{- end -}}
+        </section>
+    </article>
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}

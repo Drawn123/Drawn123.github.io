@@ -1,0 +1,33 @@
+{{- $pages := .Pages -}}
+{{- $isBlog := and (eq .Kind "section") (eq .Section "blog") -}}
+{{- $isFormalSection := and (eq .Kind "section") (in .Site.Params.mainSections .Section) -}}
+
+{{- if .IsHome -}}
+    {{- $pages = where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- else if $isBlog -}}
+    {{- $pages = where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- else if $isFormalSection -}}
+    {{- $pages = .RegularPagesRecursive -}}
+{{- else if or (eq .Kind "section") (eq .Kind "taxonomy") (eq .Kind "term") -}}
+    {{- $subsections := .Sections -}}
+    {{- $pages = .Pages | complement $subsections -}}
+    {{- if eq (len $pages) 0 -}}
+        {{- $pages = $subsections -}}
+    {{- end -}}
+{{- end -}}
+
+{{- if or .IsHome $isBlog $isFormalSection (eq .Kind "term") -}}
+    {{- $pinned := partial "drawn/pinned-pages.html" $pages -}}
+    {{- $regular := $pages -}}
+    {{- if gt (len $pinned) 0 -}}
+        {{- $regular = $pages | complement $pinned -}}
+    {{- end -}}
+    {{- $pages = $regular.ByDate.Reverse -}}
+    {{- if gt (len $pinned) 0 -}}
+        {{- $pages = $pinned | append $pages -}}
+    {{- end -}}
+{{- else -}}
+    {{- $pages = partial "helper/pages-sort.html" (dict "Pages" $pages "Context" .) -}}
+{{- end -}}
+
+{{- return $pages -}}

@@ -1,0 +1,61 @@
+{{ define "main" }}
+    {{- partial "drawn/home-hero.html" . -}}
+    {{- partial "drawn/home-portals.html" . -}}
+    {{- partial "drawn/home-explorer.html" . -}}
+
+    {{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+    {{- $pinned := partial "drawn/pinned-pages.html" $pages -}}
+    {{- $regular := $pages -}}
+    {{- if gt (len $pinned) 0 -}}
+        {{- $regular = $pages | complement $pinned -}}
+    {{- end -}}
+
+    {{- with $pinned -}}
+    <section class="drawn-home-panel">
+        <div class="drawn-section-heading">
+            <p>Pinned</p>
+            <h2>置顶文章 / Pinned Posts</h2>
+        </div>
+        <section class="article-list">
+            {{ range first 4 . }}
+                {{ partial "article-list/default" . }}
+            {{ end }}
+        </section>
+    </section>
+    {{- end -}}
+
+    <section class="drawn-home-panel">
+        <div class="drawn-section-heading">
+            <p>Recent Posts</p>
+            <h2>最新文章 / Recent Posts</h2>
+        </div>
+        <section class="article-list">
+            {{ range first 8 ($regular.ByDate.Reverse) }}
+                {{ partial "article-list/default" . }}
+            {{ end }}
+        </section>
+    </section>
+
+    <section class="drawn-home-panel drawn-activity">
+        <div class="drawn-section-heading">
+            <p>Learning Activity</p>
+            <h2>学习动态 / Learning Activity</h2>
+        </div>
+        <div class="drawn-activity-panel">
+            <div class="drawn-activity-strip">
+                {{ range first 10 $pages.ByDate.Reverse }}
+                    <a href="{{ .RelPermalink }}">
+                        <time>{{ .Date | time.Format "01-02" }}</time>
+                        <span>{{ .Title }}</span>
+                    </a>
+                {{ end }}
+            </div>
+        </div>
+    </section>
+
+    {{- partial "footer/footer" . -}}
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}

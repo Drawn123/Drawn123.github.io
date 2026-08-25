@@ -1,0 +1,6 @@
+{{- $pages := . -}}
+{{- $pinned := where $pages "Params.pinned" true -}}
+{{- $weighted := sort (where $pinned "Weight" "gt" 0) "Weight" "asc" -}}
+{{- $unweighted := sort (where $pinned "Weight" "eq" 0) "Date" "desc" -}}
+{{- return ($weighted | append $unweighted) -}}
+

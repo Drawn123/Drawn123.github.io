@@ -1,0 +1,21 @@
+{{- $pager := . -}}
+{{- if gt $pager.TotalPages 1 -}}
+<nav class="drawn-pagination" aria-label="Pagination">
+    {{- with $pager.Prev -}}
+        <a class="drawn-pagination-prev" href="{{ .URL }}">‹ <span class="pagination-wide">Previous</span><span class="pagination-narrow">Prev</span></a>
+    {{- end -}}
+    <div class="drawn-pagination-pages">
+        {{- range $pager.Pagers -}}
+            {{- if eq .PageNumber $pager.PageNumber -}}
+                <span aria-current="page">{{ .PageNumber }}</span>
+            {{- else -}}
+                <a href="{{ .URL }}">{{ .PageNumber }}</a>
+            {{- end -}}
+        {{- end -}}
+    </div>
+    <span class="drawn-pagination-count">{{ $pager.PageNumber }} / {{ $pager.TotalPages }}</span>
+    {{- with $pager.Next -}}
+        <a class="drawn-pagination-next" href="{{ .URL }}"><span class="pagination-wide">Next</span><span class="pagination-narrow">Next</span> ›</a>
+    {{- end -}}
+</nav>
+{{- end -}}

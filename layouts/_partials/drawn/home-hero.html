@@ -1,0 +1,16 @@
+{{- $algorithm := site.GetPage "section" "algorithm" -}}
+{{- $notes := site.GetPage "section" "notes" -}}
+{{- $blog := site.GetPage "section" "blog" -}}
+{{- $allPages := where site.RegularPages "Type" "in" site.Params.mainSections -}}
+<section class="drawn-home-hero">
+    <div>
+        <p class="drawn-kicker">Code · Learn · Share</p>
+        <h1>Drawn123</h1>
+        <p>个人主页、算法题解知识库、学习笔记库和 GitHub 项目展示站。</p>
+        <div class="drawn-hero-actions">
+            {{ with $blog }}<a href="{{ .RelPermalink }}">博客总览 / Blog</a>{{ end }}
+            <a href="/search/">搜索 / Search</a>
+            {{ with index (shuffle $allPages) 0 }}<a href="{{ .RelPermalink }}">随机 / Random</a>{{ end }}
+        </div>
+    </div>
+</section>

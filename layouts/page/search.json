@@ -1,0 +1,43 @@
+{{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- $result := slice -}}
+
+{{- range $pages -}}
+    {{- $categories := slice -}}
+    {{- range (.GetTerms "categories") -}}
+        {{- $categories = $categories | append .LinkTitle -}}
+    {{- end -}}
+    {{- $tags := slice -}}
+    {{- range (.GetTerms "tags") -}}
+        {{- $tags = $tags | append .LinkTitle -}}
+    {{- end -}}
+    {{- $platform := slice -}}
+    {{- with .Params.platform -}}
+        {{- if reflect.IsSlice . -}}
+            {{- $platform = . -}}
+        {{- else -}}
+            {{- $platform = slice . -}}
+        {{- end -}}
+    {{- end -}}
+    {{- $data := dict
+        "title" .Title
+        "date" .Date
+        "permalink" .RelPermalink
+        "content" (.Plain)
+        "section" .Section
+        "categories" $categories
+        "tags" $tags
+        "difficulty" (.Params.difficulty | default "")
+        "platform" $platform
+        "problem_id" (.Params.problem_id | default "")
+        "pinned" (.Params.pinned | default false)
+    -}}
+
+    {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Context" .) -}}
+    {{- if $image -}}
+        {{- $data = merge $data (dict "image" $image.Permalink) -}}
+    {{- end -}}
+
+    {{- $result = $result | append $data -}}
+{{- end -}}
+
+{{ jsonify $result }}
