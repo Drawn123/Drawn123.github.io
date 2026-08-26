@@ -5,7 +5,7 @@ weight: 30
 menu:
     main:
         name: "博客 | Blog"
-        weight: 4
+        weight: 2
         params:
             icon: archives
 ---

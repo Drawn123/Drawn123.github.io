@@ -1,17 +1,18 @@
 ---
 title: "ICPC 算法模板"
-date: 2026-08-23
-lastmod: 2026-08-25
+date: 2025-12-23
+lastmod: 2026-08-27
 categories:
   - "总结 | conclusion"
 tags:
-difficulty: 
-platform:
-problem_id:
+  - ""
+
 weight: 1
 pinned: true
 draft: false
 ---
+
+[TOC]
 
 ## 数学
 
@@ -148,7 +149,9 @@ double sqrt_binary(double x) {
 
 ### 三分
 
-#### 1. 浮点三分（实数域单峰函数求极值）
+#### 浮点三分
+
+（实数域单峰函数求极值）
 
 假设函数 `f(x)` 在区间 `[l, r]` 上是单峰的，求极小值点（极大值只需改比较符号）。
 
@@ -174,7 +177,9 @@ void solve(){
 }
 ```
 
-#### 2. 整数三分（离散域严格单峰函数求最值）
+#### 整数三分
+
+（离散域严格单峰函数求最值）
 
 适用于定义在整数区间上的凸/凹函数。以**求最小值**为例（求最大值改符号）。
 
@@ -441,7 +446,7 @@ struct BIT{
 
 ### 单调栈
 
-1. 左进右出，大值递增站，小值递减栈
+1. 左进右出，大值递增栈，小值递减栈
 2. 根据题目要求判断是否加等号 
 
 **STL版单调栈**
@@ -1034,7 +1039,7 @@ int find(int l,int r){
 
 * 二叉树的中序遍历（左根右）
 
-  **思路：**必须用一个指针 `cur` 一路向左走到底，模拟递归的压栈。
+  **思路：** 必须用一个指针 `cur` 一路向左走到底，模拟递归的压栈。
 
   ```c++
   vector<int> inorder;
@@ -1075,11 +1080,9 @@ vector<int> discrete(vector<int>& a) {
 ```
 
 ```c++
-struct Trans
-{
+struct Trans{
     vector<int> F;
-    void init(const vector<int>& A)
-    {
+    void init(const vector<int>& A){
         // 可以适当调一下下标从0开始还是从1开始
         for(int i=0;i<A.size();i++) F.push_back(A[i]);
         sort(F.begin(),F.end());
@@ -1087,31 +1090,26 @@ struct Trans
     }
     // 找到val对应离散化之后的值
     // ！！！注意val这个数必须参加过才能正确查询
-    int get(int val)
-    {
+    int get(int val){
         int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
         return x;
     }
     // 找到第一个>=val的离散化后的值（也就是离散化之后的排名）
-    int findhigh(int val)
-    {
+    int findhigh(int val){
         int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
         return x;
     }
     // 找到最后一个<=val的离散化后的值
-    int findlow(int val)
-    {
+    int findlow(int val){
         int x=upper_bound(F.begin(),F.end(),val)-F.begin();
         return x;
     }
     // 把数组A里面的数都替换成离散化之后的结果
-    void change(vector<int>& A,int n)
-    {
+    void change(vector<int>& A,int n){
         for(int i=1;i<=n;i++) A[i]=get(A[i]);
     }
     // 取原排名为rank的原数组中的值
-    int origin(int rank)
-    {
+    int origin(int rank){
         return F[rank-1];
     }
 };
@@ -1372,7 +1370,95 @@ for(int k=1;k<=n;k++){// 先枚举每一个中间点
 }
 ```
 
+##### Floyd 传递闭包
 
+二元关系具有传递性，通过传递性判断更多元素之间的关系被称为传递闭包
+
+**$i$ 能到达 $j$**，当且仅当：
+
+1. $i$ **原本就能直接到达** $j$；
+2. **或者**： $i$ **能够到达中转点** $k$，**并且** 中转点 $k$ **能够到达** $j$。
+
+```c++
+int d[N][N];
+int n,m;
+void solve(){
+    cin>>n>>m;
+    for(int i=1;i<=n;i++) d[i][i]=1;
+    for(int i=1;i<=m;i++){
+        int x,y;
+        cin>>x>>y;
+        d[x][y]=d[y][x]=1;
+    }
+    for(int k=1;k<=n;k++){
+        for(int i=1;i<=n;i++){
+            if(!d[i][k]) continue;
+            for(int j=1;j<=n;j++){
+                d[i][j] |= d[i][k]&d[k][j];
+            }
+        }
+    }
+}
+```
+
+例如，可以用 floyd 传递闭包解决**拓扑排序**问题，给出了每个人的后代信息，要求输出一个序列，使得每个人的后辈都比那个人后列出。
+
+- **错误做法**：将传递闭包的偏序关系直接传给 `sort` 比较，并在两元素无亲缘关系时写了 `return a < b`。
+- **正确做法**：跑完传递闭包后**统计每个点能到达的节点总数（包含自己）**，长辈的可达点数必然大于后辈，按**可达点数从大到小排序**即可。
+
+**错误原因**
+
+原逻辑认为“无长辈/后辈关系时谁前谁后都可以”，于是用 `return a < b` 强行指定顺序。但这破坏了 `std::sort` 必须满足的**传递性**（Strict Weak Ordering）。
+
+例如：若 $A$ 与 $B$ 无关系（判定 $A < B$），$B$ 与 $C$ 无关系（判定 $B < C$），`sort` 会推导 $A < C$；但若图中恰好存在 $C \to A$ 的长辈关系，代码又会根据 `d[C][A] == 1` 判定 $C < A$（即 $A > C$）。这构成了 $A < B < C < A$ 的逻辑矛盾，导致 `sort` 内部逻辑错误。
+
+```c++
+const int N=110;
+int d[N][N];
+int cnt[N];
+int n;
+
+void solve(){
+    memset(d,0,sizeof(d));
+    memset(cnt,0,sizeof(cnt));
+
+    cin>>n;
+    for(int i=1;i<=n;i++){
+        d[i][i]=1;
+        int c;
+        while(cin>>c && c!=0){
+            d[i][c]=1;
+        }
+    }
+
+    for(int k=1;k<=n;k++){
+        for(int i=1;i<=n;i++){
+            if(!d[i][k]) continue;
+            for(int j=1;j<=n;j++){
+                d[i][j] |= d[i][k]&d[k][j];
+            }
+        }
+    }
+
+    vector<int> p(n);
+    for(int i=1;i<=n;i++){
+        p[i-1]=i;
+        for(int j=1;j<=n;j++){
+            if(d[i][j]) cnt[i]++;
+        }
+    }
+
+    sort(p.begin(),p.end(),[&](int a,int b){
+        if(cnt[a]!=cnt[b]) return cnt[a]>cnt[b];
+        return a<b;
+    });
+
+    for(int i=0;i<n;i++){
+        cout<<p[i]<<" ";
+    }
+    cout<<endl;
+}
+```
 
 #### Bellman-Ford
 
@@ -1428,13 +1514,13 @@ void bellman_ford(int n,int s){
 
 #### SPFA
 
-**Bellman-Ford算法的优化版：** 只有上一轮松驰过的节点、距离变小的节点才有可能引起下一轮松弛操作，用一个队列维护刚刚哪些节点的距离变小了即可
+**Bellman-Ford算法的优化版：**只有上一轮松驰过的节点、距离变小的节点才有可能引起下一轮松弛操作，用一个队列维护刚刚哪些节点的距离变小了即可
 
 用cnt数组检测从一个起点能不能走到负环，cnt数组表示路径上的边数
 
 **时间复杂度为 $O(nm)$** 
 
-**如果想判断整张图有没有负环，需要设置虚拟源点，** 到其他所有点的边权为 0 ，判定条件改为 `cnt[v]>=n+1`
+**如果想判断整张图有没有负环，需要设置虚拟源点，**到其他所有点的边权为 0 ，判定条件改为 `cnt[v]>=n+1`
 
 ```c++
 struct Edge{
@@ -1479,84 +1565,6 @@ void spfa(int n,int s){
         else cout<<d[i]<<" ";
     }
     cout<<endl;
-}
-```
-
-
-
-### 01 BFS
-
-**01-BFS（0-1 广度优先搜索）** 是一种专门用来解决**边权只有 0 和 1** 的图中最短路问题的算法。
-
-普通的 BFS 只能解决边权全部相等（或均为 1）的最短路，而当图中同时存在权重为 0 和权重为 1 的边时，普通的 BFS 就会失效。虽然我们可以用 Dijkstra 算法来跑最短路，但 Dijkstra 的时间复杂度是 $O(M \log N)$。
-
-而 01-BFS 可以利用双端队列（`std::deque`），把时间复杂度优化到完美的 **$O(N + M)$**（即线性时间复杂度），在算法竞赛中非常实用。
-
-------
-
-#### 💡 核心运行机制：双端队列（Deque）
-
-普通 BFS 使用的是先进先出的队列（`queue`），因为所有边权都一样，先被拓展到的点一定距离更近（满足两段性）。
-
-但在 01-BFS 中，我们面临两种选择：
-
-- **如果走了一条权重为 0 的边**：意味着到达新点的距离和当前点的距离**完全一样**。它有更高的优先级，应该尽早去拓展别的点。
-- **如果走了一条权重为 1 的边**：意味着到达新点的距离比当前点**多 1**。它的优先级更低。
-
-为了保证队列里的点永远满足“从距离小到大”的单调性，我们使用 `std::deque`：
-
-1. 遇到 **0 权边**：把新点插入到队列的 **头部（`push_front`）**。
-2. 遇到 **1 权边**：把新点插入到队列的 **尾部（`push_back`）**。
-
-#### 🎯 典型应用场景
-
-在网格图或迷宫题中，如果遇到以下字眼，90% 都是跑 01-BFS：
-
-1. **开关/转向代价**：在网格图中移动，顺着当前方向走代价为 0，改变方向（旋转电路/轨道）代价为 1（例如经典题：电路维修）。
-2. **翻转矩阵**：走黑格子代价为 0，走白格子需要把白格子翻转成黑格子，代价为 1。
-3. **免费指定 $k$ 条边**：虽然边权各异，但如果题目允许你指定 $k$ 条边使其代价变为 0（二分答案后，大于 mid 的边权视为 1，小于等于 mid 的边权视为 0）。
-
-#### ⚖️ 算法对比
-
-| **算法**     | **适用边权**         | **时间复杂度** | **核心数据结构**      |
-| ------------ | -------------------- | -------------- | --------------------- |
-| **普通 BFS** | 只有 1（或全部相等） | $O(N + M)$     | `std::queue`          |
-| **01-BFS**   | **只有 0 和 1**      | **$O(N + M)$** | `std::deque`          |
-| **Dijkstra** | 任意非负数           | $O(M \log N)$  | `std::priority_queue` |
-
-**一句话总结**：01-BFS 就是把 Dijkstra 里的“优先队列（堆）”用更轻量、更高效的“双端队列”代替了，只要边权只有 0 和 1，它就是效率最高的王者。
-
-```c++
-struct p{
-    int to,w;
-};
-int m,n;
-vector<vector<p>> g;// 邻接表存图
-vector<int> dis;
-vector<int> vis;
-void bfs01(int start){
-    dis.assign(n+1,1e18);
-    vis.assign(n+1,0);
-    deque<int> q;
-
-    dis[start]=0;
-    q.push_back(start);
-
-    while(!q.empty()){
-        int u=q.front();
-        q.pop_front();
-
-        if(vis[u]) continue;
-        vis[u]=1;
-
-        for(auto &[v,w]:g[u]){
-            if(dis[u]+w<dis[v]){
-                dis[v]=dis[u]+w;
-                if(w==0) q.push_front(v);
-                else q.push_back(v);
-            }
-        }
-    }
 }
 ```
 
@@ -1733,7 +1741,9 @@ void solve(){
 
 
 
-### 二分图判定（染色法）
+### 二分图
+
+#### 二分图染色法判定
 
 ```c++
 const int N=2e5+10;
@@ -1774,6 +1784,53 @@ void solve(){
     if(flag) cout<<"YES"<<endl;
     else cout<<"NO"<<endl;
 }
+```
+
+#### 匈牙利算法
+
+```c++
+vector<int> match;// 记录右顶点v匹配的是哪个左顶点
+vector<int> vis;// 当前轮dfs右顶点是否被访问过
+vector<vector<int>> g;
+
+bool dfs(int u){
+    for(int v:g[u]){
+        if(!vis[v]){
+            vis[v]=1;
+
+            // v还没有匹配对象，或v的原对象可以腾地方
+            if(match[v]==0 || dfs(match[v])){
+                match[v]=u;// 匹配成功
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+void solve(){
+    int n,m,e;
+    cin>>n>>m>>e;
+    g.assign(n+1,vector<int>());
+    
+    for(int i=0;i<e;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+    }
+
+    match.assign(m+1,0);
+    int ans=0;
+
+    for(int i=1;i<=n;i++){
+        vis.assign(m+1,0);// 每次换新起点前清空访问标记
+        if(dfs(i)){
+            ans++;
+        }
+    }
+    cout<<ans<<endl;
+}
+
 ```
 
 
@@ -1953,7 +2010,7 @@ vector<int> randperm(int n) {
 
 ### STL
 
-#### **基础容器：queue/priority_queue/stack/deque**
+**基础容器：queue/priority_queue/stack/deque**
 
 1. `queue` 队列
     - `size()`
@@ -1987,7 +2044,7 @@ vector<int> randperm(int n) {
 
 ------
 
-#### **有序关联容器：set/map/multiset/multimap**
+**有序关联容器：set/map/multiset/multimap**
 
 基于平衡二叉树（红黑树），动态维护有序序列
 
@@ -2037,7 +2094,7 @@ vector<int> randperm(int n) {
 
 ------
 
-#### **bitset 位集**
+**bitset 位集**
 
 ```cpp
 bitset<100005> s;
@@ -2055,7 +2112,7 @@ bitset<100005> s;
 
 ------
 
-#### **其他 STL 库：vector/pair/string**
+**其他 STL 库：vector/pair/string**
 
 1. `vector` 变长数组（倍增的思想）
 
@@ -2080,6 +2137,51 @@ bitset<100005> s;
     - `clear()`
     - `substr(起始下标, 子串长度)` 返回子串
     - `c_str()` 返回字符串所在字符数组的起始地址
+
+**array/tuple**
+
+**array**
+
+所有元素都是一个类型，支持下标访问
+
+```cpp
+// 初始化和赋值
+array<int, 3> arr1 = {1, 2, 3};
+array<int, 3> arr2 = {1};
+arr2 = arr1;
+// 元素访问
+arr[0] = 10;
+// 迭代器
+// 这里auto写全是 vector<int>::iterator
+for(auto it = arr.begin(); it != arr.end(); ++it)
+for(int& x : arr)  
+// 大小
+size_t sz = arr.size();
+// 排序
+sort(arr.begin(), arr.end());
+// 所有元素设置为同一个值
+fill(arr.begin(), arr.end(), 0);
+arr.fill(42);
+```
+
+**tuple**
+
+三个变量类型可以不同
+
+```cpp
+// 创建和初始化
+tuple<int, double, string> t1(1, 2.3, "hello");
+auto t2 = make_tuple(4, 5.6, "world");
+auto t3 = tuple(7, 8.9, "!");
+// 元素访问
+int i = get<0>(t1);
+double d = get<1>(t1);
+string s = get<2>(t1);
+// 结构化绑定
+auto [a,b,c] = t1;
+```
+
+
 
 ### 内置函数
 
@@ -2155,8 +2257,6 @@ signed main(){
 }
 ```
 
-// vp的时候忘记怎么开快读了
-
 * 外面开 里面分配
 
 ```c++
@@ -2173,41 +2273,67 @@ pre.assign(n + 2, vector<int>(m + 2, 0));
 | `__int128`  | 128-bit  | $\pm 1.7 \times 10^{38}$ | $[-2^{127}, 2^{127}-1]$ |
 
 ```c++
-namespace my128{
-	using int128 = __int128_t;
-	int128 abs(const int128 &x) {
-		return x > 0 ? x : -x;
-	}
-	istream &operator>>(istream &it,int128 &j){
-		string val;
-		it >> val;
-		reverse(val.begin(),val.end());
-		int128 ans = 0;
-		bool f = false;
-		char c = val.back();
-		val.pop_back();
-		for(;c<'0'||c>'9';c=val.back(),val.pop_back()){
-			if(c=='-') f = 1;
-		}
-		for(;c>='0'&&c<='9';c=val.back(),val.pop_back()){
-			ans = ans * 10 + c - '0';
-		}
-		j = f ? -ans : ans;
-		return it;
-	}
-	ostream &operator<<(ostream &os,const int128 &j){
-		string ans;
-		function<void(int128)> write = [&](int128 x){
-			if(x<0) ans += '-',x = -x;
-			if(x>9) write(x/10);
-			ans += x % 10 + '0';
-		};
-		write(j);
-		return os << ans;
-	}
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <functional>
+
+using namespace std;
+
+namespace my128 {
+    using int128 = __int128_t;
+
+    int128 abs(const int128 &x) {
+        return x > 0 ? x : -x;
+    }
+
+    // 修复后的输入重载
+    istream &operator>>(istream &it, int128 &j) {
+        string s;
+        if (!(it >> s)) return it; // 读取字符串
+        
+        int128 ans = 0;
+        bool f = false;
+        int i = 0;
+        
+        if (s[0] == '-') {
+            f = true;
+            i = 1;
+        } else if (s[0] == '+') {
+            i = 1;
+        }
+        
+        for (; i < s.size(); ++i) {
+            if (s[i] >= '0' && s[i] <= '9') {
+                ans = ans * 10 + (s[i] - '0');
+            } else {
+                break; // 遇到非数字字符停止
+            }
+        }
+        
+        j = f ? -ans : ans;
+        return it;
+    }
+
+    // 输出重载（保持原样，这个递归写法是对的）
+    ostream &operator<<(ostream &os, const int128 &j) {
+        if (j == 0) return os << "0";
+        string ans;
+        function<void(int128)> write = [&](int128 x) {
+            if (x < 0) ans += '-', x = -x;
+            if (x > 9) write(x / 10);
+            ans += (char)(x % 10 + '0');
+        };
+        int128 temp = j;
+        if (temp < 0) {
+            ans += '-';
+            temp = -temp;
+        }
+        write(temp);
+        return os << ans;
+    }
 }
 using namespace my128;
-using int = int128;
 ```
 
 **函数支持**：`abs()` 这种标准库函数可能不支持 `__int128`，建议自己写：`auto my_abs = [](int128 x) { return x < 0 ? -x : x; };`。

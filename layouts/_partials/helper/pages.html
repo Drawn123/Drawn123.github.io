@@ -16,6 +16,17 @@
     {{- end -}}
 {{- end -}}
 
+{{/* A taxonomy index should never expose stale/empty terms left behind by an earlier build. */}}
+{{- if eq .Kind "taxonomy" -}}
+    {{- $nonEmptyTerms := slice -}}
+    {{- range $pages -}}
+        {{- if gt (len .Pages) 0 -}}
+            {{- $nonEmptyTerms = $nonEmptyTerms | append . -}}
+        {{- end -}}
+    {{- end -}}
+    {{- $pages = $nonEmptyTerms -}}
+{{- end -}}
+
 {{- if or .IsHome $isBlog $isFormalSection (eq .Kind "term") -}}
     {{- $pinned := partial "drawn/pinned-pages.html" $pages -}}
     {{- $regular := $pages -}}

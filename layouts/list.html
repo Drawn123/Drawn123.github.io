@@ -1,6 +1,7 @@
 {{ define "main" }}
     {{- $sourcePages := partial "helper/pages.html" . -}}
     {{- $pager := partial "helper/paginator.html" . -}}
+    {{- $isTagIndex := and (eq .Kind "taxonomy") (eq .Type "tags") -}}
 
     <header>
         <h3 class="section-title">
@@ -50,7 +51,15 @@
         </aside>
     {{- end -}}
 
-    {{- if gt $pager.TotalNumberOfElements 0 -}}
+    {{- if $isTagIndex -}}
+        {{- if gt (len $sourcePages) 0 -}}
+        <section class="article-list--compact taxonomy-term-grid">
+            {{ range $sourcePages }}
+                {{ partial "article-list/compact" . }}
+            {{ end }}
+        </section>
+        {{- end -}}
+    {{- else if gt $pager.TotalNumberOfElements 0 -}}
         <section class="article-list--compact">
             {{ range $pager.Pages }}
                 {{ partial "article-list/compact" . }}
