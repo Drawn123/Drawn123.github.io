@@ -1,7 +1,7 @@
 ---
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-08-27
+lastmod: 2026-08-29
 categories:
   - "总结 | conclusion"
 tags:
@@ -14,300 +14,16 @@ draft: false
 
 [TOC]
 
-## 数学
-
-### 最大公约数
-
-时间复杂度为 $O(log(\min{(a,b)}))$
-
-```c++
-int gcd(int a,int b){
-    if(b==0) return a;
-    return gcd(b,a%b);
-}
-```
-
-```c++
-int gcd(int a,int b){
-	while(b){
-        int temp=b;
-        b=a%b;
-        a=temp;
-    }
-    return a;
-}
-```
-
-### 最小公倍数
-
-```c++
-int lcm(int a,int b){
-    return a/gcd(a,b)*b;
-}
-```
-
-### 快速幂与乘法逆元
-
-计算  $a^b mod MOD$
-
-```c++
-int qpow(int a,int b){
-    int ret=1;
-    while(b){
-        if(b&1) ret = ret*a%MOD;
-        a=a*a%MOD;
-        b >>= 1;
-    }
-    return ret;
-}
-int inv(int x){
-    return qpow(x,MOD-2);
-}
-```
-
-$\frac{a}{b} \bmod m \equiv a \cdot b^{m-2} \pmod{m}$
-
-调用：`a*inv(b)%MOD`
-
-### 埃氏筛法
-
-时间复杂度为 $O(n \log \log n)$ 
-
-```c++
-// 筛出 [1,n] 的所有质数
-vector<int> primes;
-vector<int> is_prime;// 1表示质数，0表示合数
-
-void sieve(int n){
-    is_prime.assign(n+1,1);
-    primes.clear();
-    is_prime[0]=is_prime[1]=0;
-    for(int i=2;i<=n;i++){
-        if(is_prime[i]){
-            primes.push_back(i);
-            if(i*i<=n){
-                for(int j=i*i;j<=n;j+=i){
-                    is_prime[j]=0;
-                }
-            }
-        }
-    }
-}
-```
-
-这个合法上界不要开太大
+> [!NOTE]
+>
+> **全局代码约定（Global Conventions）**：
+>
+> 1. **数据类型**：除特殊说明（如显式使用 `__int128`、`double` 或局部位运算变量）外，默认全文代码开头均包含 `#define int long long`。
+> 2. **数值上限**：在默认 `long long` 语境下，无穷大 `INF` 统一采用 `1e18`。
+> 3. **数组下标**：图论、树形结构及数据结构模板默认采用 **1-based** 下标。
+> 4. **输入输出**：默认开启 `ios::sync_with_stdio(false); cin.tie(nullptr);`。
 
 
-
-### 取模运算
-
-```c++
-const int MOD = 1e9 + 7;
-// (a + b) % MOD
-int add(int a, int b) {
-  int ret = a + b;
-  if (ret >= MOD) ret -= MOD;
-  return ret;
-}
-// (a - b) % MOD
-int sub(int a, int b) {
-  int ret = a - b;
-  if (ret < 0) ret += MOD;
-  return ret;
-}
-// (a * b) % MOD
-int mul(int a, int b) {
-  return 1LL * a * b % MOD;
-}
-// (a / b) % MOD = a * inv(b) % MOD
-int div_mod(int a, int b) {
-  return mul(a, inv(b));
-}
-// 将任意整数 x 转为 [0, MOD-1] 范围
-int norm(int x) {
-  return (x % MOD + MOD) % MOD;
-}
-```
-
-
-
-### 浮点数二分
-
-```c++
-// 浮点数二分求平方根
-// 公式：x 的平方根满足 mid^2 <= x < (mid+eps)^2
-double sqrt_binary(double x) {
-  double l = 0, r = x;
-  for (int i = 0; i < 100; i++) { // 固定迭代次数，保证精度
-    double mid = (l + r) / 2;
-    if (mid * mid < x) l = mid;  // mid^2 < x，答案在 [mid, r]
-    else r = mid;         // mid^2 >= x，答案在 [l, mid]
-  }
-  return l;
-}
-```
-
-### 三分
-
-#### 浮点三分
-
-（实数域单峰函数求极值）
-
-假设函数 `f(x)` 在区间 `[l, r]` 上是单峰的，求极小值点（极大值只需改比较符号）。
-
-```c++
-// 浮点数三分
-// 单谷函数（先减后增，求谷底）
-double f(double x){
-    return (x-3.14159)*(x-3.14159)+10.0;
-}
-double ternary_search_float(double l,double r){
-    for(int i=0;i<100;i++){
-        double m1=l+(r-l)/3.0;
-        double m2=r-(r-l)/3.0;
-        if(f(m1)<f(m2)){
-            r=m2;
-        }
-        else l=m1;
-    }
-    return l;
-}
-void solve(){
-    double ans=ternary_search_float(-1.0,100.0);
-}
-```
-
-#### 整数三分
-
-（离散域严格单峰函数求最值）
-
-适用于定义在整数区间上的凸/凹函数。以**求最小值**为例（求最大值改符号）。
-
-```c++
-// 整数三分 
-// 单谷函数（先减后增，求谷底）
-double f(int x){
-    return (x-5)*(x-5)+10;
-}
-
-int ternary_search_int(int l,int r){
-
-    while(r-l>2){
-        int m1=l+(r-l)/3;
-        int m2=r-(r-l)/3;
-        if(f(m1)<f(m2)){
-            r=m2;
-        }
-        else l=m1;
-    }
-    int res=l;
-    for(int i=l+1;i<=r;i++){
-        if(f(i)<f(res)) res=i;
-    }
-    return res;
-}
-void solve(){
-    int ans=ternary_search_int(0,100);
-}
-```
-
-### 重载运算符
-
-**优先队列**自定义排序方式：
-
-```c++
-// ============================================================
-// 1. 单一字段：价格小的在堆顶（小根堆效果）
-// ============================================================
-struct Product {
-    int price;
-
-    bool operator < (const Product& other) const {
-        return price > other.price;  // 价格小的在堆顶（反着写）
-    }
-};
-
-// ============================================================
-// 2. 单一字段：优先级高的在堆顶（大根堆效果）
-// ============================================================
-struct Task {
-    int priority;  // 数字越大越紧急
-
-    bool operator < (const Task& other) const {
-        return priority < other.priority;  // 优先级高的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 3. 多字段：主要年级小的在堆顶 + 次要分数小的在堆顶
-// ============================================================
-struct Point {
-    int x, y;
-
-    bool operator < (const Point& other) const {
-        if (x != other.x) return x > other.x;  // x 小的在堆顶（反着写）
-        return y > other.y;                    // y 小的在堆顶（反着写）
-    }
-};
-
-// ============================================================
-// 4. 多字段：主要年级小的在堆顶 + 次要分数高的在堆顶
-// ============================================================
-struct Student {
-    int grade;  // 年级
-    int score;  // 分数
-
-    bool operator < (const Student& other) const {
-        if (grade != other.grade) return grade > other.grade;  // 年级小的在堆顶（反着写）
-        return score < other.score;  // 分数高的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 5. 多字段：主要关卡高的在堆顶 + 次要用时短的在堆顶
-// ============================================================
-struct Game {
-    int level;  // 关卡
-    int time;   // 用时
-
-    bool operator < (const Game& other) const {
-        if (level != other.level) return level < other.level;  // 关卡高的在堆顶（顺着写）
-        return time > other.time;   // 用时短的在堆顶（反着写）
-    }
-};
-
-// ============================================================
-// 6. 多字段：主要击杀多的在堆顶 + 次要助攻多的在堆顶
-// ============================================================
-struct Record {
-    int kills;   // 击杀数
-    int assists; // 助攻数
-
-    bool operator < (const Record& other) const {
-        if (kills != other.kills) return kills < other.kills;  // 击杀多的在堆顶（顺着写）
-        return assists < other.assists;  // 助攻多的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 7. 字符串：长度短的在堆顶，同长度字典序小的在堆顶
-// ============================================================
-struct Word {
-    string text;
-
-    bool operator < (const Word& other) const {
-        if (text.length() != other.text.length())
-            return text.length() > other.text.length();  // 长度短的在堆顶（反着写）
-        return text > other.text;  // 字典序小的在堆顶（反着写）
-    }
-};
-```
-
-1. **结构体排序的本质**：返回 `true` 代表**“前者留在前面”**
-2. **优先队列的本质**：返回 `true` 的元素代表**“优先级低，被压入堆底”**（如上）
-3. 优先队列
-    * 多字段直接定义大根堆
-    * 单一字段直接定义小根堆方便一点 `priority_queue<int,vector<int>,greater<int>>`
 
 ## 数据结构
 
@@ -454,13 +170,12 @@ struct BIT{
 ```c++
 // 1. 右边第一个比当前元素大 (正向遍历 + 出栈记录)
 // 原理：栈内维护单调递减。出现更大元素时，栈内比它小的元素依次出栈，它们的右边更大者就是 a[i]
-vector<int> nextGreaterElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
+vector<int> nextGreaterElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
     stack<int> st;
-    for(int i=0;i<n;i++){
-        while(!st.empty()&&a[st.top()]<a[i]){
-            res[st.top()]=a[i]; // 栈顶遇到了右边第一个比它大的 a[i]
+    for(int i = 1; i <= n; i++){
+        while(!st.empty() && a[st.top()] < a[i]){
+            res[st.top()] = a[i]; // 栈顶遇到了右边第一个比它大的 a[i]
             st.pop();
         }
         st.push(i);
@@ -470,13 +185,12 @@ vector<int> nextGreaterElement(const vector<int>& a){
 
 // 2. 右边第一个比当前元素小 (正向遍历 + 出栈记录)
 // 原理：栈内维护单调递增。出现更小元素时，栈内比它大的元素依次出栈，它们的右边更小者就是 a[i]
-vector<int> nextSmallerElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
+vector<int> nextSmallerElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
     stack<int> st;
-    for(int i=0;i<n;i++){
-        while(!st.empty()&&a[st.top()]>a[i]){
-            res[st.top()]=a[i]; // 栈顶遇到了右边第一个比它小的 a[i]
+    for(int i = 1; i <= n; i++){
+        while(!st.empty() && a[st.top()] > a[i]){
+            res[st.top()] = a[i]; // 栈顶遇到了右边第一个比它小的 a[i]
             st.pop();
         }
         st.push(i);
@@ -486,15 +200,14 @@ vector<int> nextSmallerElement(const vector<int>& a){
 
 // 3. 左边第一个比当前元素大 (正向遍历 + 入栈前记录)
 // 原理：栈内维护单调递减。弹出所有 <= a[i] 的元素，剩下还在栈顶的就是左边第一个严格比它大的
-vector<int> prevGreaterElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
+vector<int> prevGreaterElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
     stack<int> st;
-    for(int i=0;i<n;i++){
-        while(!st.empty()&&a[st.top()]<=a[i]){
+    for(int i = 1; i <= n; i++){
+        while(!st.empty() && a[st.top()] <= a[i]){
             st.pop(); // 阻挡答案的无用较小元素全部剔除
         }
-        if(!st.empty()) res[i]=a[st.top()]; // 剩下的栈顶即为左边第一个更大者
+        if(!st.empty()) res[i] = a[st.top()]; // 剩下的栈顶即为左边第一个更大者
         st.push(i);
     }
     return res;
@@ -502,15 +215,14 @@ vector<int> prevGreaterElement(const vector<int>& a){
 
 // 4. 左边第一个比当前元素小 (正向遍历 + 入栈前记录)
 // 原理：栈内维护单调递增。弹出所有 >= a[i] 的元素，剩下还在栈顶的就是左边第一个严格比它小的
-vector<int> prevSmallerElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
+vector<int> prevSmallerElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
     stack<int> st;
-    for(int i=0;i<n;i++){
-        while(!st.empty()&&a[st.top()]>=a[i]){
+    for(int i = 1; i <= n; i++){
+        while(!st.empty() && a[st.top()] >= a[i]){
             st.pop(); // 阻挡答案的无用较大元素全部剔除
         }
-        if(!st.empty()) res[i]=a[st.top()]; // 剩下的栈顶即为左边第一个更小者
+        if(!st.empty()) res[i] = a[st.top()]; // 剩下的栈顶即为左边第一个更小者
         st.push(i);
     }
     return res;
@@ -522,72 +234,68 @@ vector<int> prevSmallerElement(const vector<int>& a){
 ```c++
 // 1. 右边第一个比当前元素严格大 (vector 模拟数组版本)
 // 原理：栈内维护单调递减。出现更大元素时，栈内比它小的元素依次出栈，它们的右边更大者就是 a[i]
-vector<int> nextGreaterElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
-    vector<int> stk(n+1); // vector 模拟栈
-    int top=0; // top == 0 表示栈空
+vector<int> nextGreaterElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
+    vector<int> stk(n + 1); // vector 模拟栈
+    int top = 0; // top == 0 表示栈空
     
-    for(int i=0;i<n;i++){
-        while(top>0&&a[stk[top]]<a[i]){
-            res[stk[top]]=a[i]; // 栈顶遇到了右边第一个比它大的 a[i]
+    for(int i = 1; i <= n; i++){
+        while(top > 0 && a[stk[top]] < a[i]){
+            res[stk[top]] = a[i]; // 栈顶遇到了右边第一个比它大的 a[i]
             top--; // 出栈
         }
-        stk[++top]=i; // 进栈
+        stk[++top] = i; // 进栈
     }
     return res;
 }
 
 // 2. 右边第一个比当前元素严格小 (vector 模拟数组版本)
 // 原理：栈内维护单调递增。出现更小元素时，栈内比它大的元素依次出栈，它们的右边更小者就是 a[i]
-vector<int> nextSmallerElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
-    vector<int> stk(n+1);
-    int top=0;
+vector<int> nextSmallerElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
+    vector<int> stk(n + 1);
+    int top = 0;
     
-    for(int i=0;i<n;i++){
-        while(top>0&&a[stk[top]]>a[i]){
-            res[stk[top]]=a[i]; // 栈顶遇到了右边第一个比它小的 a[i]
+    for(int i = 1; i <= n; i++){
+        while(top > 0 && a[stk[top]] > a[i]){
+            res[stk[top]] = a[i]; // 栈顶遇到了右边第一个比它小的 a[i]
             top--; // 出栈
         }
-        stk[++top]=i; // 进栈
+        stk[++top] = i; // 进栈
     }
     return res;
 }
 
 // 3. 左边第一个比当前元素严格大 (vector 模拟数组版本)
 // 原理：栈内维护单调递减。弹出所有 <= a[i] 的元素，剩下还在栈顶的就是左边第一个严格比它大的
-vector<int> prevGreaterElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
-    vector<int> stk(n+1);
-    int top=0;
+vector<int> prevGreaterElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
+    vector<int> stk(n + 1);
+    int top = 0;
     
-    for(int i=0;i<n;i++){
-        while(top>0&&a[stk[top]]<=a[i]){
+    for(int i = 1; i <= n; i++){
+        while(top > 0 && a[stk[top]] <= a[i]){
             top--; // 剔除无用的较小或相等元素
         }
-        if(top>0) res[i]=a[stk[top]]; // 剩下的栈顶即为左边第一个严格更大者
-        stk[++top]=i; // 进栈
+        if(top > 0) res[i] = a[stk[top]]; // 剩下的栈顶即为左边第一个严格更大者
+        stk[++top] = i; // 进栈
     }
     return res;
 }
 
 // 4. 左边第一个比当前元素严格小 (vector 模拟数组版本)
 // 原理：栈内维护单调递增。弹出所有 >= a[i] 的元素，剩下还在栈顶的就是左边第一个严格比它小的
-vector<int> prevSmallerElement(const vector<int>& a){
-    int n=a.size();
-    vector<int> res(n,-1);
-    vector<int> stk(n+1);
-    int top=0;
+vector<int> prevSmallerElement(const vector<int>& a, int n){
+    vector<int> res(n + 1, -1);
+    vector<int> stk(n + 1);
+    int top = 0;
     
-    for(int i=0;i<n;i++){
-        while(top>0&&a[stk[top]]>=a[i]){
+    for(int i = 1; i <= n; i++){
+        while(top > 0 && a[stk[top]] >= a[i]){
             top--; // 剔除无用的较大或相等元素
         }
-        if(top>0) res[i]=a[stk[top]]; // 剩下的栈顶即为左边第一个严格更小者
-        stk[++top]=i; // 进栈
+        if(top > 0) res[i] = a[stk[top]]; // 剩下的栈顶即为左边第一个严格更小者
+        stk[++top] = i; // 进栈
     }
     return res;
 }
@@ -602,46 +310,44 @@ vector<int> prevSmallerElement(const vector<int>& a){
 ```c++
 // 单调队列：滑动窗口最小值 (STL 版本)
 // 原理：维护双端队列，队首始终是窗口内最小值，队内元素单调递增
-vector<int> slidingWindowMin(const vector<int>& a,int k){
-    int n=a.size();
+vector<int> slidingWindowMin(const vector<int>& a, int n, int k){
     vector<int> mn;
     deque<int> q; // 存放下标
 
-    for(int i=0;i<n;i++){
+    for(int i = 1; i <= n; i++){
         // 移除超出窗口左边界 [i-k+1, i] 的下标
-        while(!q.empty() && q.front()<i-k+1){
+        while(!q.empty() && q.front() < i - k + 1){
             q.pop_front();
         }
         // 移除队尾所有大于 a[i] 的元素，保持单调递增
-        while(!q.empty() && a[q.back()]>a[i]){
+        while(!q.empty() && a[q.back()] > a[i]){
             q.pop_back();
         }
         q.push_back(i);
-        // 窗口形成后，队首就是最小值
-        if(i>=k-1) mn.push_back(q.front());
+        // 窗口形成后（i >= k），队首元素对应的值就是最小值
+        if(i >= k) mn.push_back(a[q.front()]);
     }
     return mn;
 }
 
 // 单调队列：滑动窗口最大值 (STL 版本)
 // 原理：维护双端队列，队首始终是窗口内最大值，队内元素单调递减
-vector<int> slidingWindowMax(const vector<int>& a,int k){
-    int n=a.size();
+vector<int> slidingWindowMax(const vector<int>& a, int n, int k){
     vector<int> mx;
     deque<int> q; // 存放下标
 
-    for(int i=0;i<n;i++){
+    for(int i = 1; i <= n; i++){
         // 移除超出窗口左边界 [i-k+1, i] 的下标
-        while(!q.empty() && q.front()<i-k+1){
+        while(!q.empty() && q.front() < i - k + 1){
             q.pop_front();
         }
         // 移除队尾所有小于 a[i] 的元素，保持单调递减
-        while(!q.empty() && a[q.back()]<a[i]){
+        while(!q.empty() && a[q.back()] < a[i]){
             q.pop_back();
         }
         q.push_back(i);
-        // 窗口形成后，队首就是最大值
-        if(i>=k-1) mx.push_back(q.front());
+        // 窗口形成后（i >= k），队首元素对应的值就是最大值
+        if(i >= k) mx.push_back(a[q.front()]);
     }
     return mx;
 }
@@ -652,48 +358,46 @@ vector<int> slidingWindowMax(const vector<int>& a,int k){
 ```c++
 // 单调队列：滑动窗口最小值 (vector 模拟数组版本)
 // 原理：用 head 和 tail 指针维护 vector 队列，队首始终是窗口内最小值
-vector<int> slidingWindowMin(const vector<int>& a,int k){
-    int n=a.size();
+vector<int> slidingWindowMin(const vector<int>& a, int n, int k){
     vector<int> mn;
-    vector<int> q(n+1); // vector 模拟队列空间
-    int head=1,tail=0; // 初始化：head > tail 表示队空
+    vector<int> q(n + 1); // vector 模拟队列空间
+    int head = 1, tail = 0; // 初始化：head > tail 表示队空
 
-    for(int i=0;i<n;i++){
+    for(int i = 1; i <= n; i++){
         // 移除超出窗口左边界 [i-k+1, i] 的下标 (队头出队)
-        while(head<=tail&&q[head]<i-k+1){
+        while(head <= tail && q[head] < i - k + 1){
             head++;
         }
         // 移除队尾所有大于 a[i] 的元素，保持单调递增 (队尾出队)
-        while(head<=tail&&a[q[tail]]>a[i]){
+        while(head <= tail && a[q[tail]] > a[i]){
             tail--;
         }
-        q[++tail]=i; // 进队尾
-        // 窗口形成后，队首就是最小值
-        if(i>=k-1) mn.push_back(q[head]);
+        q[++tail] = i; // 进队尾
+        // 窗口形成后（i >= k），队首元素对应的值就是最小值
+        if(i >= k) mn.push_back(a[q[head]]);
     }
     return mn;
 }
 
 // 单调队列：滑动窗口最大值 (vector 模拟数组版本)
 // 原理：用 head 和 tail 指针维护 vector 队列，队首始终是窗口内最大值
-vector<int> slidingWindowMax(const vector<int>& a,int k){
-    int n=a.size();
+vector<int> slidingWindowMax(const vector<int>& a, int n, int k){
     vector<int> mx;
-    vector<int> q(n+1);
-    int head=1,tail=0; // 初始化：head > tail 表示队空
+    vector<int> q(n + 1);
+    int head = 1, tail = 0; // 初始化：head > tail 表示队空
 
-    for(int i=0;i<n;i++){
+    for(int i = 1; i <= n; i++){
         // 移除超出窗口左边界 [i-k+1, i] 的下标 (队头出队)
-        while(head<=tail&&q[head]<i-k+1){
+        while(head <= tail && q[head] < i - k + 1){
             head++;
         }
         // 移除队尾所有小于 a[i] 的元素，保持单调递减 (队尾出队)
-        while(head<=tail&&a[q[tail]]<a[i]){
+        while(head <= tail && a[q[tail]] < a[i]){
             tail--;
         }
-        q[++tail]=i; // 进队尾
-        // 窗口形成后，队首就是最大值
-        if(i>=k-1) mx.push_back(q[head]);
+        q[++tail] = i; // 进队尾
+        // 窗口形成后（i >= k），队首元素对应的值就是最大值
+        if(i >= k) mx.push_back(a[q[head]]);
     }
     return mx;
 }
@@ -1065,21 +769,6 @@ int find(int l,int r){
 ### 离散化
 
 ```c++
-// 离散化：将原数组的值映射为 1,2,3,... 的排名
-// 公式：rank = lower_bound(sorted_unique, x) - sorted_unique + 1
-vector<int> discrete(vector<int>& a) {
-  vector<int> b = a;
-  sort(b.begin(), b.end());            // 排序
-  b.erase(unique(b.begin(), b.end()), b.end());  // 去重
-  for (int& x : a) {
-    // lower_bound 返回第一个 >= x 的位置，+1 使排名从 1 开始
-    x = lower_bound(b.begin(), b.end(), x) - b.begin() + 1;
-  }
-  return b; // 返回离散化值表，用于还原：原值 = b[x-1]
-}
-```
-
-```c++
 struct Trans{
     vector<int> F;
     void init(const vector<int>& A){
@@ -1408,7 +1097,7 @@ void solve(){
 
 **错误原因**
 
-原逻辑认为“无长辈/后辈关系时谁前谁后都可以”，于是用 `return a < b` 强行指定顺序。但这破坏了 `std::sort` 必须满足的**传递性**（Strict Weak Ordering）。
+原逻辑认为“无长辈/后辈关系时谁前谁后都可以”，于是用 `return a < b` 强行指定顺序。但这破坏了 `sort` 必须满足的**传递性**（Strict Weak Ordering）。
 
 例如：若 $A$ 与 $B$ 无关系（判定 $A < B$），$B$ 与 $C$ 无关系（判定 $B < C$），`sort` 会推导 $A < C$；但若图中恰好存在 $C \to A$ 的长辈关系，代码又会根据 `d[C][A] == 1` 判定 $C < A$（即 $A > C$）。这构成了 $A < B < C < A$ 的逻辑矛盾，导致 `sort` 内部逻辑错误。
 
@@ -1621,6 +1310,74 @@ void solve(){
 ```
 
 
+### 01BFS
+
+可以解决边权只有0和1的单源最短路问题
+
+用双端队列维护队列的单调性：
+
+* **边权为 $0$ 的边**：节点 $v$ 的距离与当前节点 $u$ **完全相同**，说明它的优先级最高！我们直接将 $v$ 插到**队头**（`push_front`）。
+
+* **边权为 $1$ 的边**：节点 $v$ 的距离等于 $dist[u] + 1$，按照普通 BFS 规则，插到**队尾**（`push_back`）。
+
+时间复杂度为 $O(M+N)$
+
+```c++
+struct Edge{
+    int v,w;
+};
+int n,m;
+vector<vector<Edge>> g;
+vector<int> d;
+
+void bfs01(int s){
+    d.assign(n+1,1e18);
+    deque<int> dq;
+    
+    d[s]=0;
+    dq.push_back(s);
+    
+    while(!dq.empty()){
+        int u=dq.front();
+        dq.pop_front();
+        
+        for(auto &e:g[u]){
+            int v=e.v;
+            int w=e.w;
+            if(d[v]>d[u]+w){
+                d[v]=d[u]+w;
+                
+                if(w==0){
+                    dq.push_front(v);
+                }
+                else{
+                    dq.push_back(v);
+                }
+            }
+        }
+    }
+}
+void solve(){
+    cin>>n>>m;
+    g.assign(n+1,{});
+    
+    for(int i=0;i<m;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+    }
+    int s=1;
+    bfs01(s);
+    for(int i=1;i<=n;i++){
+        if(d[i]==1e18) cout<<-1<<" ";
+        else cout<<d[i]<<" ";
+    }
+    cout<<endl;
+}
+```
+
+
 
 ### 最小生成树
 
@@ -1681,7 +1438,154 @@ void solve(){
 
 
 
+### 树的直径 
+
+**法一：树形 dp 求树的直径**
+
+以任意节点为根（通常设 1 号为根）。对于节点 $u$：
+
+- 定义 $d_1[u]$ 为以 $u$ 为根的子树中，从 $u$ 出发向下的**最长路径**。
+- 定义 $d_2[u]$ 为以 $u$ 为根的子树中，从 $u$ 出发向下的**次长路径**（不能与最长路径走同一条分支）。
+- 经过节点 $u$ 的最长简单路径长度为 $d_1[u] + d_2[u]$。
+- **遍历整棵树，所有节点的 $(d_1[u] + d_2[u])$ 中的最大值即为树的直径。**
+
+```c++
+struct Edge{
+    int v,w;
+};
+int n;
+vector<vector<Edge>> g;
+int ans;
+int dfs(int u,int fa){
+    int d1=0;
+    int d2=0;
+    
+    for(auto &e:g[u]){
+        int v=e.v;
+        if(v==fa) continue;
+        int d=dfs(v,u)+e.w;
+        if(d>d1){
+            d2=d1;
+            d1=d;
+        }
+        else if(d>d2){
+            d2=d;
+        }
+    }
+    ans=max(ans,d1+d2);
+    return d1;
+}
+int get_d(){
+    ans=0;
+    dfs(1,0);
+    return ans;
+}
+```
+
+**法二：两次 DFS 求树的直径**
+
+只适用于**边权非负**的情况，如果有负边权，需要考虑树形 dp，但是两次 DFS 更有利于还原路径 
+
+1. 从任意节点出发找到最远节点 $A$（$A$ 即为直径的一个端点）
+2. 从 $A$ 出发再次搜索找到最远节点 $B$，$A$ 到 $B$ 的路径即为树的直径
+
+时间复杂度为 $O(N)$
+
+```c++
+struct Edge{
+    int v,w;
+};
+int n;
+vector<vector<Edge>> g;
+int p1;// 最远点
+int mxd;// 最长距离（树的直径）
+void dfs(int u,int fa,int d){
+    if(d>mxd){
+        mxd=d;
+        p1=u;// 刷新最远点
+    }
+    for(auto &e:g[u]){
+        if(e.v!=fa){
+            dfs(e.v,u,d+e.w);
+        }
+    }
+}
+
+void get_d(){
+    // 第一次dfs：从1号点出发，找到最远点A
+    mxd=-1;
+    dfs(1,0,0);
+    int A=p1;
+    // 第二次dfs：从A出发，找到最远点B
+    mxd=-1;
+    dfs(A,0,0);
+    return mxd;
+}
+```
+
+
+
+### 树的重心
+
+在树中删去节点 $u$ 后，剩余部分会形成若干个连通块（即子树）。使**最大连通块的节点数最小**的那个节点 $u$，就称为这棵树的**重心**。
+
+**核心性质**
+
+1. **子树限制**：以重心为根时，它的任何一棵子树（包含它的父节点方向的那棵“上子树”）的节点数都不超过 $\lfloor \frac{N}{2} \rfloor$。
+2. **重心个数**：一棵树最多有 2 个重心；若有 2 个重心，它们必然相邻。
+3. **距离和最小**：树上所有节点到重心的距离之和是最小的（即树的最佳“集散中心”）。
+
+求重心（一次dfs）
+
+1. 设 $sz[u]$ 表示以节点 $u$ 为根的子树的大小。
+
+2. 在递归回溯时，算出的最大子树节点数即为：
+
+   $$\text{max\_part} = \max\left( \max_{v \in \text{child}(u)} sz[v], \ N - sz[u] \right)$$
+
+   其中 $N - sz[u]$ 就是 $u$ **向上**连接的那部分连通块的大小。
+
+3. 比较所有节点的 $\text{max\_part}$，值最小的节点即为重心。
+
+```c++
+int n;
+vector<vector<int>> g;
+vector<int> sz;
+vector<int> center;// 存储重心（最多两个）
+int mn;// 全局最小的最大连通块大小
+void dfs(int u,int fa){
+    sz[u]=1;
+    int mxp=0;// 删掉u后 产生的最大连通块大小
+    for(int v:g[u]){
+        if(v==fa) continue;
+        dfs(v,u);
+        sz[u] += sz[v];
+        mxp=max(mxp,sz[v]);
+    }
+    // 上方子树
+    mxp=max(mxp,n-sz[u]);
+    if(mxp<mn){
+        mn=mxp;
+        center.clear();
+        center.push_back(u);
+    }
+    else if(mxp==mn){
+        center.push_back(u);
+    }
+}
+void get_center(){
+    sz.assign(n+1,0);
+    center.clear();
+    mn=1e18;
+    dfs(1,0);
+}
+```
+
+
+
 ### LCA
+
+时间复杂度为 $O((M+N)\log N)$
 
 ```c++
 const int N=5e5+10;
@@ -1741,9 +1645,137 @@ void solve(){
 
 
 
+### 树上差分
+
+基于自底向上子树求和
+
+- **点差分**（修改路径 $u \to v$ 上的节点）：
+
+  $$\text{diff}[u] += x, \quad \text{diff}[v] += x, \quad \text{diff}[\text{LCA}] -= x, \quad \text{diff}[\text{fa}_{\text{LCA}}] -= x$$
+
+  - *逻辑*：$u, v$ 向上传播；$\text{LCA}$ 抵消一次多加；$\text{fa}_{\text{LCA}}$ 截断向上传播。
+
+- **边差分**（修改路径 $u \to v$ 上的边，点 $u$ 代表连向父节点的边）：
+
+  $$\text{diff}[u] += x, \quad \text{diff}[v] += x, \quad \text{diff}[\text{LCA}] -= 2x$$
+
+  - *逻辑*：$u, v$ 向上传播；$\text{LCA}$ 处完全扣除 $2x$，不影响 $\text{LCA}$ 到其父节点的边。
+
+时间复杂度为 $O((M+N)\log N)$
+
+| **概念**     | **点差分中的 diff[u]**              | **边差分中的 diff[u]**                                       |
+| ------------ | ----------------------------------- | ------------------------------------------------------------ |
+| **代表对象** | 代表 **节点 $u$ 本身** 的点权修改量 | 代表 **节点 $u$ 与其父节点 `fa[u]` 之间的那条边** 的边权修改量 |
+| **最终答案** | `val[u]` 就是节点 $u$ 的最终点权    | `val[u]` 就是边 $(u, \text{fa}[u])$ 的最终边权               |
+
+```c++
+int n,m;
+vector<vector<int>> g;
+vector<int> dep;
+vector<vector<int>> fa;// 倍增数组 fa[u][i]
+vector<int> diff;
+vector<int> val;// 每个节点最终权值
+
+// dfs预处理深度与倍增lca数组
+void dfs_lca(int u,int pa,int d){
+	dep[u]=d;
+    fa[u][0]=pa;
+    for(int i=1;i<20;i++){
+        fa[u][i]=fa[fa[u][i-1]][i-1];
+    }
+    for(int v:g[u]){
+        if(v!=pa){
+            dfs_lca(v,u,d+1);
+        }
+    }
+}
+// 倍增求lca
+int get_lca(int u,int v){
+    if(dep[u]<dep[v]) swap(u,v);
+    for(int i=19;i>=0;i--){
+        if(dep[u]-(1<<i)>=dep[v]){
+            u=fa[u][i];
+        }
+    }
+    if(u==v) return u;
+    for(int i=19;i>=0;i--){
+        if(fa[u][i]!=fa[v][i]){
+            u=fa[u][i];
+            v=fa[v][i];
+        }
+    }
+    return fa[u][0];
+}
+
+// 点差分修改
+void add_node(int u,int v,int x){
+    int lca=get_lca(u,v);
+    int p=fa[lca][0];
+    
+    diff[u] += x;
+    diff[v] += x;
+    diff[lca] -= x;
+    if(p!=0) diff[p] -= x;
+}
+// 边差分修改
+void add_edge(int u,int v,int x){
+    int lca=get_lca(u,v);
+    diff[u] += x;
+    diff[v] += x;
+    diff[lca] -= 2*x;
+}
+
+// 自底向上汇总差分值（回溯）
+void dfs_sum(int u,int p){
+    val[u]=diff[u];
+    for(int v:g[u]){
+        if(v!=p){
+            dfs_sum(v,u);
+            val[u] += val[v];
+        }
+    }
+}
+void solve(){
+    cin>>n>>m;
+    
+    g.resize(n+1);
+    dep.resize(n+1);
+    fa.assign(n+1,vector<int>(20,0));
+    diff.assign(n+1,0);
+    val.assign(n+1,0);
+    
+    for(int i=0;i<n-1;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    
+    dfs_lca(1,0,1);
+    
+    while(m--){
+        int u,v,x;
+        cin>>u>>v>>x;
+        add_node(u,v,x);
+    }
+    
+    dfs_sum(1,0);
+    for(int i=1;i<=n;i++){
+        cout<<val[i]<<" ";
+    }
+    // 在需要输出边权时，只需遍历2~n的 val[i] 即可（val[i]对应点i与其父节点连接的那条边
+    cout<<endl;
+}
+```
+
+
+
 ### 二分图
 
 #### 二分图染色法判定
+
+* 二分图不存在奇环
+* 非连通图是二分图，当且仅当每一个连通分量都是二分图
 
 ```c++
 const int N=2e5+10;
@@ -1835,9 +1867,306 @@ void solve(){
 
 
 
+## 数学
+
+### 最大公约数
+
+时间复杂度为 $O(log(\min{(a,b)}))$
+
+```c++
+int gcd(int a,int b){
+    if(b==0) return a;
+    return gcd(b,a%b);
+}
+```
+
+```c++
+int gcd(int a,int b){
+	while(b){
+        int temp=b;
+        b=a%b;
+        a=temp;
+    }
+    return a;
+}
+```
+
+### 最小公倍数
+
+```c++
+int lcm(int a,int b){
+    return a/gcd(a,b)*b;
+}
+```
+
+### 快速幂与乘法逆元
+
+计算  $a^b mod MOD$
+
+```c++
+int qpow(int a,int b){
+    int ret=1;
+    while(b){
+        if(b&1) ret = ret*a%MOD;
+        a=a*a%MOD;
+        b >>= 1;
+    }
+    return ret;
+}
+int inv(int x){
+    return qpow(x,MOD-2);
+}
+```
+
+$\frac{a}{b} \bmod m \equiv a \cdot b^{m-2} \pmod{m}$
+
+调用：`a*inv(b)%MOD`
+
+### 埃氏筛法
+
+时间复杂度为 $O(n \log \log n)$ 
+
+```c++
+// 筛出 [1,n] 的所有质数
+vector<int> primes;
+vector<int> is_prime;// 1表示质数，0表示合数
+
+void sieve(int n){
+    is_prime.assign(n+1,1);
+    primes.clear();
+    is_prime[0]=is_prime[1]=0;
+    for(int i=2;i<=n;i++){
+        if(is_prime[i]){
+            primes.push_back(i);
+            if(i*i<=n){
+                for(int j=i*i;j<=n;j+=i){
+                    is_prime[j]=0;
+                }
+            }
+        }
+    }
+}
+```
+
+这个合法上界不要开太大
+
+
+
+### 取模运算
+
+```c++
+const int MOD = 1e9 + 7;
+// (a + b) % MOD
+int add(int a, int b) {
+  int ret = a + b;
+  if (ret >= MOD) ret -= MOD;
+  return ret;
+}
+// (a - b) % MOD
+int sub(int a, int b) {
+  int ret = a - b;
+  if (ret < 0) ret += MOD;
+  return ret;
+}
+// (a * b) % MOD
+int mul(int a, int b) {
+  return 1LL * a * b % MOD;
+}
+// (a / b) % MOD = a * inv(b) % MOD
+int div_mod(int a, int b) {
+  return mul(a, inv(b));
+}
+// 将任意整数 x 转为 [0, MOD-1] 范围
+int norm(int x) {
+  return (x % MOD + MOD) % MOD;
+}
+```
+
+
+
+### 浮点数二分
+
+```c++
+// 浮点数二分求平方根
+// 公式：x 的平方根满足 mid^2 <= x < (mid+eps)^2
+double sqrt_binary(double x) {
+  double l = 0, r = x;
+  for (int i = 0; i < 100; i++) { // 固定迭代次数，保证精度
+    double mid = (l + r) / 2;
+    if (mid * mid < x) l = mid;  // mid^2 < x，答案在 [mid, r]
+    else r = mid;         // mid^2 >= x，答案在 [l, mid]
+  }
+  return l;
+}
+```
+
+### 三分
+
+#### 浮点三分
+
+（实数域单峰函数求极值）
+
+假设函数 `f(x)` 在区间 `[l, r]` 上是单峰的，求极小值点（极大值只需改比较符号）。
+
+```c++
+// 浮点数三分
+// 单谷函数（先减后增，求谷底）
+double f(double x){
+    return (x-3.14159)*(x-3.14159)+10.0;
+}
+double ternary_search_float(double l,double r){
+    for(int i=0;i<100;i++){
+        double m1=l+(r-l)/3.0;
+        double m2=r-(r-l)/3.0;
+        if(f(m1)<f(m2)){
+            r=m2;
+        }
+        else l=m1;
+    }
+    return l;
+}
+void solve(){
+    double ans=ternary_search_float(-1.0,100.0);
+}
+```
+
+#### 整数三分
+
+（离散域严格单峰函数求最值）
+
+适用于定义在整数区间上的凸/凹函数。以**求最小值**为例（求最大值改符号）。
+
+```c++
+// 整数三分 
+// 单谷函数（先减后增，求谷底）
+double f(int x){
+    return (x-5)*(x-5)+10;
+}
+
+int ternary_search_int(int l,int r){
+
+    while(r-l>2){
+        int m1=l+(r-l)/3;
+        int m2=r-(r-l)/3;
+        if(f(m1)<f(m2)){
+            r=m2;
+        }
+        else l=m1;
+    }
+    int res=l;
+    for(int i=l+1;i<=r;i++){
+        if(f(i)<f(res)) res=i;
+    }
+    return res;
+}
+void solve(){
+    int ans=ternary_search_int(0,100);
+}
+```
+
+### 重载运算符
+
+**优先队列**自定义排序方式：
+
+```c++
+// ============================================================
+// 1. 单一字段：价格小的在堆顶（小根堆效果）
+// ============================================================
+struct Product {
+    int price;
+
+    bool operator < (const Product& other) const {
+        return price > other.price;  // 价格小的在堆顶（反着写）
+    }
+};
+
+// ============================================================
+// 2. 单一字段：优先级高的在堆顶（大根堆效果）
+// ============================================================
+struct Task {
+    int priority;  // 数字越大越紧急
+
+    bool operator < (const Task& other) const {
+        return priority < other.priority;  // 优先级高的在堆顶（顺着写）
+    }
+};
+
+// ============================================================
+// 3. 多字段：主要年级小的在堆顶 + 次要分数小的在堆顶
+// ============================================================
+struct Point {
+    int x, y;
+
+    bool operator < (const Point& other) const {
+        if (x != other.x) return x > other.x;  // x 小的在堆顶（反着写）
+        return y > other.y;                    // y 小的在堆顶（反着写）
+    }
+};
+
+// ============================================================
+// 4. 多字段：主要年级小的在堆顶 + 次要分数高的在堆顶
+// ============================================================
+struct Student {
+    int grade;  // 年级
+    int score;  // 分数
+
+    bool operator < (const Student& other) const {
+        if (grade != other.grade) return grade > other.grade;  // 年级小的在堆顶（反着写）
+        return score < other.score;  // 分数高的在堆顶（顺着写）
+    }
+};
+
+// ============================================================
+// 5. 多字段：主要关卡高的在堆顶 + 次要用时短的在堆顶
+// ============================================================
+struct Game {
+    int level;  // 关卡
+    int time;   // 用时
+
+    bool operator < (const Game& other) const {
+        if (level != other.level) return level < other.level;  // 关卡高的在堆顶（顺着写）
+        return time > other.time;   // 用时短的在堆顶（反着写）
+    }
+};
+
+// ============================================================
+// 6. 多字段：主要击杀多的在堆顶 + 次要助攻多的在堆顶
+// ============================================================
+struct Record {
+    int kills;   // 击杀数
+    int assists; // 助攻数
+
+    bool operator < (const Record& other) const {
+        if (kills != other.kills) return kills < other.kills;  // 击杀多的在堆顶（顺着写）
+        return assists < other.assists;  // 助攻多的在堆顶（顺着写）
+    }
+};
+
+// ============================================================
+// 7. 字符串：长度短的在堆顶，同长度字典序小的在堆顶
+// ============================================================
+struct Word {
+    string text;
+
+    bool operator < (const Word& other) const {
+        if (text.length() != other.text.length())
+            return text.length() > other.text.length();  // 长度短的在堆顶（反着写）
+        return text > other.text;  // 字典序小的在堆顶（反着写）
+    }
+};
+```
+
+1. **结构体排序的本质**：返回 `true` 代表**“前者留在前面”**
+2. **优先队列的本质**：返回 `true` 的元素代表**“优先级低，被压入堆底”**（如上）
+3. 优先队列
+   * 多字段直接定义大根堆
+   * 单一字段直接定义小根堆方便一点 `priority_queue<int,vector<int>,greater<int>>`
+
+
+
 ## 动态规划
 
-### 背包 DP
+### 背包
 
 ```c++
 // 01背包二维
@@ -2258,6 +2587,7 @@ signed main(){
 ```
 
 * 外面开 里面分配
+* `resize` 只能调整大小，不能清空原来数据 
 
 ```c++
 diff.assign(n + 2, vector<int>(m + 2, 0));
