@@ -1,7 +1,7 @@
 ---
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-08-29
+lastmod: 2026-08-31
 categories:
   - "总结 | conclusion"
 tags:
@@ -99,9 +99,24 @@ struct DSU{
 };
 ```
 
+### 扩展域并查集 
+
+
+
+### 带权并查集
+
 
 
 ### 树状数组
+
+- 核心用于维护**可逆的前缀和**（如加减法、异或），**不支持**动态修改下的区间最值（Max / Min）；**不支持**复杂的区间覆盖、乘法等非可逆操作。
+- **常见模式、写法与复杂度**
+
+| **使用模式**                  | **维护对象**                          | **修改方式**                                            | **查询方式**                                  | **时间复杂度**                     |
+| ----------------------------- | ------------------------------------- | ------------------------------------------------------- | --------------------------------------------- | ---------------------------------- |
+| **单点修改 + 区间查询**       | 原数组 $A$                            | `add(x, k)`  位置 $x$ 增加 $k$                          | `range(L, R)`  返回区间 $[L, R]$ 的和         | 修改 $O(\log N)$  查询 $O(\log N)$ |
+| **区间修改 + 单点查询**       | 差分数组 $D$  ($D_i = A_i - A_{i-1}$) | `add(L, k)`  `add(R + 1, -k)`  区间 $[L, R]$ 统一加 $k$ | `query(x)`  返回位置 $x$ 的当前真实值 $A_x$   | 修改 $O(\log N)$  查询 $O(\log N)$ |
+| **权值树状数组（第 $k$ 小）** | 数值出现频次                          | `add(val, 1)`  插入数值 $val$                           | `kth(k)`  通过内部倍增返回全局第 $k$ 小的数值 | 插入 $O(\log N)$  查询 $O(\log N)$ |
 
 ```c++
 // 树状数组 (Binary Indexed Tree)
@@ -159,6 +174,438 @@ struct BIT{
     }
 };
 ```
+
+### 逆序对
+
+逆序对定义为：在序列 $a$ 中，若 $i < j$ 且 $a[i] > a[j]$，则 $(i, j)$ 构成一个逆序对。
+
+#### 归并排序解法
+
+```c++
+int find(int l,int r){
+  if(l>=r) return 0;
+  int ret=0;
+  int mid=(l+r)/2;
+  ret += find(l,mid);
+  ret += find(mid+1,r);
+  int i=l,j=mid+1,k=0;
+  while(i<=mid && j<=r){
+    if(a[i]<=a[j]) temp[k++]=a[i++];
+    else{
+      temp[k++]=a[j++];
+      ret += mid-(i-1);
+    }
+  }
+  while(i<=mid) temp[k++]=a[i++];
+  while(j<=r) temp[k++]=a[j++];
+  for(int i=l,k=0;i<=r;k++,i++){
+    a[i]=temp[k];
+  }
+  return ret;
+}
+```
+
+#### 树状数组解法
+
+- **倒序遍历**：从后往前（从 $n$ 到 $1$）依次扫描数组 $a$。
+- **查询贡献**：对于当前的 $a[i]$，利用 `query(a[i] - 1)` 查询树状数组中**已加入且严格小于 $a[i]$ 的数字个数**。因为是从后往前扫描，这些已加入的数字下标一定比 $i$ 大，数值又比 $a[i]$ 小，所以刚好构成以 $a[i]$ 为左端点的逆序对。
+- **插入状态**：查询完后，用 `add(a[i], 1)` 将 $a[i]$ 的频次加 1，加入树状数组。
+
+*(注：如果数值较大（如 $a[i] \ge 10^9$），需要先离散化；以下代码假设数值在 $1 \sim N$ 范围内，若包含 0 或负数需统一做偏移或离散化。)*
+
+**时间复杂度**：$O(N \log M)$，其中 $N$ 为数组长度，$M$ 为数组元素的最大值（离散化后 $M = N$）
+
+```c++
+struct BIT{
+    ...
+};
+
+void solve(){
+    int n=5;
+    // 1-based 数组，样例数组为 {5,4,2,6,3}
+    vector<int> a={0,5,4,2,6,3};
+
+    // 树状数组的值域边界（假设最大数值为 max_val）
+    int max_val=6;
+    BIT bit(max_val);
+
+    long long ans=0; // 逆序对总数可能达到 O(N^2)，必须用 long long
+
+    // 倒序遍历数组
+    for(int i=n;i>=1;i--){
+        // 1. 查询当前树状数组中比 a[i] 严格小的数字个数（区间 [1, a[i]-1] 的和）
+        ans += bit.query(a[i]-1);
+
+        // 2. 将当前数值 a[i] 加入树状数组，频次 +1
+        bit.add(a[i],1);
+    }
+
+    cout << "逆序对数量: " << ans << "\n"; // 共 6 对
+}
+```
+
+
+
+### 线段树
+
+基于分治思想，专用于解决**区间批量修改与区间查询**（如区间加/乘/覆盖、求和/最值/GCD）的数据结构。支持所有满足**结合律**的运算，在 $O(\log N)$ 时间内完成更新与查询。
+
+**常见模式、写法与复杂度**
+
+| **使用模式**           | **维护对象 / 标记**               | **修改方式**                                            | **查询方式**                                  | **时间复杂度**                     | **空间复杂度**           |
+| ---------------------- | --------------------------------- | ------------------------------------------------------- | --------------------------------------------- | ---------------------------------- | ------------------------ |
+| **基础与复合区间修改** | 区间和 / 最值（加法、乘法、覆盖） | `add(1, L, R, v)`  `mul(1, L, R, v)`  `set(1, L, R, v)` | `sum(1, L, R)`  `mx(1, L, R)` / `mn(1, L, R)` | 修改 $O(\log N)$  查询 $O(\log N)$ | $O(N)$  （开 $4N$ 空间） |
+
+**基础版线段树（SegTree）：支持区间加、区间乘法、区间覆盖（Set）、区间和、区间最大值/最小值。**
+
+```c++
+// 计算左子节点与右子节点下标
+#define ls(p) (p<<1)
+#define rs(p) (p<<1|1)
+
+// 支持单点/区间的加、乘、覆盖与查询
+struct SegmentTree {
+    // 节点定义
+    struct Node {
+        int l,r;                  // 维护的区间左右边界[l,r]
+        int sum,mx,mn;           // 区间和、最大值、最小值
+        int lazy_add,lazy_mul,lazy_set; // 加法、乘法、覆盖懒标记
+        bool has_set;             // 是否存在覆盖标记
+    };
+
+    int n;
+    vector<int> arr;
+    vector<Node> tree;
+
+    // 构造函数：初始化并建树（a的下标需从1开始）
+    SegmentTree(const vector<int>& a) {
+        n=a.size()-1;
+        arr=a;
+        tree.resize((n+5)<<2); // 开4N空间
+        build(1,1,n);
+    }
+
+    // 向上更新：由子节点合并出父节点信息
+    void push_up(int p) {
+        tree[p].sum=tree[ls(p)].sum+tree[rs(p)].sum;
+        tree[p].mx=max(tree[ls(p)].mx,tree[rs(p)].mx);
+        tree[p].mn=min(tree[ls(p)].mn,tree[rs(p)].mn);
+    }
+
+    // 应用“覆盖”修改
+    void apply_set(int p,int val) {
+        tree[p].sum=val*(tree[p].r-tree[p].l+1);
+        tree[p].mx=tree[p].mn=val;
+        tree[p].lazy_set=val;
+        tree[p].has_set=true;
+        tree[p].lazy_mul=1;     // 清空乘法标记
+        tree[p].lazy_add=0;     // 清空加法标记
+    }
+
+    // 应用“乘法”修改（val非负情况下）
+    void apply_mul(int p,int val) {
+        tree[p].sum *= val;
+        tree[p].mx *= val;
+        tree[p].mn *= val;// 若val是负值记得比较后再更新
+        if(tree[p].has_set) {
+            tree[p].lazy_set *= val;
+        }
+        else{
+            tree[p].lazy_mul *= val;
+            tree[p].lazy_add *= val; // 乘法同时影响之前的加法标记
+        }
+    }
+
+    // 应用“加法”修改
+    void apply_add(int p,int val) {
+        tree[p].sum+=val*(tree[p].r-tree[p].l+1);
+        tree[p].mx+=val;
+        tree[p].mn+=val;
+        if(tree[p].has_set) {
+            tree[p].lazy_set+=val;
+        }
+        else{
+            tree[p].lazy_add+=val;
+        }
+    }
+
+    // 向下传递标记（优先级：覆盖 > 乘法 > 加法）
+    void push_down(int p) {
+        if(tree[p].has_set) {
+            apply_set(ls(p),tree[p].lazy_set);
+            apply_set(rs(p),tree[p].lazy_set);
+            tree[p].has_set=false;
+        }
+        if(tree[p].lazy_mul!=1) {
+            apply_mul(ls(p),tree[p].lazy_mul);
+            apply_mul(rs(p),tree[p].lazy_mul);
+            tree[p].lazy_mul=1;
+        }
+        if(tree[p].lazy_add!=0) {
+            apply_add(ls(p),tree[p].lazy_add);
+            apply_add(rs(p),tree[p].lazy_add);
+            tree[p].lazy_add=0;
+        }
+    }
+
+    // 建树
+    void build(int p,int l,int r) {
+        tree[p]={l,r,0,0,0,0,1,0,false};
+        if(l==r) {
+            tree[p].sum=tree[p].mx=tree[p].mn=arr[l];
+            return;
+        }
+        int mid=(l+r)>>1;
+        build(ls(p),l,mid);
+        build(rs(p),mid+1,r);
+        push_up(p);
+    }
+
+    // 区间/单点覆盖修改（单点传ql=qr=pos即可）
+    void set(int p,int ql,int qr,int val) {
+        if(ql<=tree[p].l && tree[p].r<=qr) {
+            apply_set(p,val);
+            return;
+        }
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        if(ql<=mid) set(ls(p),ql,qr,val);
+        if(qr>mid) set(rs(p),ql,qr,val);
+        push_up(p);
+    }
+
+    // 区间/单点乘法修改（单点传ql=qr=pos即可）
+    void mul(int p,int ql,int qr,int val) {
+        if(ql<=tree[p].l && tree[p].r<=qr) {
+            apply_mul(p,val);
+            return;
+        }
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        if(ql<=mid) mul(ls(p),ql,qr,val);
+        if(qr>mid) mul(rs(p),ql,qr,val);
+        push_up(p);
+    }
+
+    // 区间/单点加法修改（单点传ql=qr=pos即可）
+    void add(int p,int ql,int qr,int val) {
+        if(ql<=tree[p].l && tree[p].r<=qr) {
+            apply_add(p,val);
+            return;
+        }
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        if(ql<=mid) add(ls(p),ql,qr,val);
+        if(qr>mid) add(rs(p),ql,qr,val);
+        push_up(p);
+    }
+
+    // 区间/单点求和查询（单点传ql=qr=pos即可）
+    int sum(int p,int ql,int qr) {
+        if(ql<=tree[p].l && tree[p].r<=qr) return tree[p].sum;
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        int res=0;
+        if(ql<=mid) res+=sum(ls(p),ql,qr);
+        if(qr>mid) res+=sum(rs(p),ql,qr);
+        return res;
+    }
+
+    // 区间/单点最大值查询
+    int mx(int p,int ql,int qr) {
+        if(ql<=tree[p].l && tree[p].r<=qr) return tree[p].mx;
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        int res=INT_MIN;
+        if(ql<=mid) res=max(res,mx(ls(p),ql,qr));
+        if(qr>mid) res=max(res,mx(rs(p),ql,qr));
+        return res;
+    }
+
+    // 区间/单点最小值查询
+    int mn(int p,int ql,int qr) {
+        if(ql<=tree[p].l && tree[p].r<=qr) return tree[p].mn;
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        int res=INT_MAX;
+        if(ql<=mid) res=min(res,mn(ls(p),ql,qr));
+        if(qr>mid) res=min(res,mn(rs(p),ql,qr));
+        return res;
+    }
+};
+
+void solve() {
+    // 初始数据[1..5]: {1,2,3,4,5}
+    vector<int> a={0,1,2,3,4,5}; 
+    SegmentTree seg(a);
+
+    seg.add(1,1,3,2); // 区间加：[3,4,5,4,5]
+    seg.add(1,2,2,1); // 单点加：[3,5,5,4,5]
+    seg.mul(1,2,4,3); // 区间乘：[3,15,15,12,5]
+    seg.set(1,4,5,10);// 区间覆盖：[3,15,15,10,10]
+
+    // 查询[2,5]即{15,15,10,10}
+    cout<<"Sum: "<<seg.sum(1,2,5)<<"\n"; // 50
+    cout<<"Max: "<<seg.mx(1,2,5)<<"\n";  // 15
+    cout<<"Min: "<<seg.mn(1,2,5)<<"\n";  // 10
+}
+```
+
+
+
+### ST表
+
+**ST表核心定位**：静态数组 + 频繁查询 + 满足可重叠性的区间信息。
+
+- **静态数据**：建表后不可修改（无单点/区间修改）。
+- **极速查询**：预处理 $O(N \log N)$，查询 $O(1)$。
+- **可重叠性**：信息须满足重叠计算不影响结果，如 $\max$、$\min$、$\gcd$、按位与（&）、按位或（|）。
+
+**DP 预处理（倍增）**
+
+- 定义 $f[i][j]$ 为从 $i$ 开始长度为 $2^j$ 的区间信息 $[i, i+2^j-1]$。
+
+- 拆分为左右两段长为 $2^{j-1}$ 的子区间：左段 $f[i][j-1]$，右段 $f[i+2^{j-1}][j-1]$。
+
+- 转移方程：
+
+  $$f[i][j] = \max\left(f[i][j-1], \; f[i + 2^{j-1}][j-1]\right)$$
+
+**O(1) 区间查询**
+
+- 查询 $[l, r]$ 时，长度 $\text{len} = r - l + 1$，取 $k = \lfloor \log_2(\text{len}) \rfloor$。
+
+- 用两段长为 $2^k$ 的区间前后覆盖：左段 $f[l][k]$，右段 $f[r-2^k+1][k]$。
+
+- 拼合答案：
+
+  $$\text{Ans} = \max\left(f[l][k], \; f[r-2^k+1][k]\right)$$
+
+**位运算查询说明**
+
+- **`query_and(l, r)`**：求区间元素按位与（&），用于判断指定二进制位是否全为 1。
+- **`query_or(l, r)`**：求区间元素按位或（|），用于合并统计区间二进制位状态。
+
+```c++
+struct ST{
+    int n;
+    vector<vector<int>>stmax,stmin,stgcd,stand,stor;
+
+    ST(int n,const vector<int>&a):n(n){
+        if(n<=0)return;
+        int logn=__lg(n)+1;
+
+        stmax.assign(n+1,vector<int>(logn));
+        stmin.assign(n+1,vector<int>(logn));
+        stgcd.assign(n+1,vector<int>(logn));
+        stand.assign(n+1,vector<int>(logn));
+        stor.assign(n+1,vector<int>(logn));
+
+        for(int i=1;i<=n;i++){
+            stmax[i][0]=a[i];
+            stmin[i][0]=a[i];
+            stgcd[i][0]=a[i];
+            stand[i][0]=a[i];
+            stor[i][0]=a[i];
+        }
+
+        for(int p=1;p<logn;p++){
+            for(int i=1;i+(1<<p)-1<=n;i++){
+                int next_idx=i+(1<<(p-1));
+                stmax[i][p]=max(stmax[i][p-1],stmax[next_idx][p-1]);
+                stmin[i][p]=min(stmin[i][p-1],stmin[next_idx][p-1]);
+                stgcd[i][p]=std::gcd(stgcd[i][p-1],stgcd[next_idx][p-1]);
+                stand[i][p]=stand[i][p-1]&stand[next_idx][p-1];
+                stor[i][p]=stor[i][p-1]|stor[next_idx][p-1];
+            }
+        }
+    }
+
+    int query_max(int l,int r)const{
+        int k=__lg(r-l+1);
+        return max(stmax[l][k],stmax[r-(1<<k)+1][k]);
+    }
+
+    int query_min(int l,int r)const{
+        int k=__lg(r-l+1);
+        return min(stmin[l][k],stmin[r-(1<<k)+1][k]);
+    }
+
+    int query_gcd(int l,int r)const{
+        int k=__lg(r-l+1);
+        return std::gcd(stgcd[l][k],stgcd[r-(1<<k)+1][k]);
+    }
+
+    int query_and(int l,int r)const{
+        int k=__lg(r-l+1);
+        return stand[l][k]&stand[r-(1<<k)+1][k];
+    }
+
+    int query_or(int l,int r)const{
+        int k=__lg(r-l+1);
+        return stor[l][k]|stor[r-(1<<k)+1][k];
+    }
+};
+
+void solve(){
+    int n=6;
+    // 1-based 数组
+    vector<int>a={0,12,6,18,9,21,15};
+
+    ST st(n,a);// nlogn
+
+    // 查询闭区间 [2,5]
+    int l=2,r=5;
+
+    cout<<"[2, 5] 区间最大值: "<<st.query_max(l,r)<<"\n"; 
+    cout<<"[2, 5] 区间最小值: "<<st.query_min(l,r)<<"\n"; 
+    cout<<"[2, 5] 区间 GCD  : "<<st.query_gcd(l,r)<<"\n"; 
+    cout<<"[2, 5] 区间按位与: "<<st.query_and(l,r)<<"\n"; 
+    cout<<"[2, 5] 区间按位或: "<<st.query_or(l,r)<<"\n"; 
+}
+```
+
+
+
+### 离散化
+
+```c++
+struct Trans{
+    vector<int> F;
+    void init(const vector<int>& A){
+        // 可以适当调一下下标从0开始还是从1开始
+        for(int i=0;i<A.size();i++) F.push_back(A[i]);
+        sort(F.begin(),F.end());
+        F.erase(unique(F.begin(),F.end()),F.end());
+    }
+    // 找到val对应离散化之后的值
+    // ！！！注意val这个数必须参加过才能正确查询
+    int get(int val){
+        int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
+        return x;
+    }
+    // 找到第一个>=val的离散化后的值（也就是离散化之后的排名）
+    int findhigh(int val){
+        int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
+        return x;
+    }
+    // 找到最后一个<=val的离散化后的值
+    int findlow(int val){
+        int x=upper_bound(F.begin(),F.end(),val)-F.begin();
+        return x;
+    }
+    // 把数组A里面的数都替换成离散化之后的结果
+    void change(vector<int>& A,int n){
+        for(int i=1;i<=n;i++) A[i]=get(A[i]);
+    }
+    // 取原排名为rank的原数组中的值
+    int origin(int rank){
+        return F[rank-1];
+    }
+};
+```
+
+
 
 ### 单调栈
 
@@ -409,6 +856,26 @@ vector<int> slidingWindowMax(const vector<int>& a, int n, int k){
 
 #### 字符串字典树
 
+字典树（Trie）是一种利用字符串的**公共前缀**来减少无谓比较的数据结构，可以在 $O(L)$ 时间复杂度内（$L$ 为字符串长度）高效完成字符串的存储、检索与删除。
+
+**核心变量**
+
+- `tree[u][c]`：状态转移表，表示节点 $u$ 沿着字符 $c$（映射为 $0 \sim 25$）到达的子节点编号。
+- `cnt[u]`：经过节点 $u$ 的字符串数量（用于**前缀频次**统计）。
+- `endcnt[u]`：恰好以节点 $u$ 结尾的字符串数量（用于**完全匹配频次**统计）。
+- `have[u]`：标记是否有单词在节点 $u$ 结尾。
+- `max_idx`：记录历史使用过的最大节点编号（保证多组数据 $O(\text{max\_idx})$ 极速安全清空）。
+
+**函数功能**
+
+- `init()`：**重置字典树**。清空历史用到的所有节点信息，在多组测试数据（$T > 1$）时写在 `solve()` 开头。
+- `insert(s)`：**插入字符串** $s$。构建路径并维护沿途节点及结尾的计数。
+- `query_cnt(s)`：**精确匹配查询**。返回字典树中完全等于 $s$ 的字符串出现次数。
+- `query_pre(s)`：**前缀匹配查询**。返回字典树中所有以 $s$ 为前缀的字符串总数。
+- `delet(s)`：**删除字符串** $s$。若树中存在 $s$，将其沿途的频次计数均减 1。
+
+**时间复杂度：** 插入、查询、删除均为 $O(L)$（$L$ 为字符串长度）；`init()` 清空复杂度为 $O(\text{max\_idx})$。
+
 ```c++
 const int N=1e5+10;
 const int M=26;
@@ -544,6 +1011,11 @@ void solve(){
 
 #### 01字典树
 
+时间复杂度： 
+
+- 单次插入 / 删除 / 查询：O(BITS)  
+- 处理 N 个数：O(N * BITS)
+
 ```c++
 const int MOD=998244353;
 const int N=2e5+10; // 元素个数
@@ -670,34 +1142,6 @@ struct Trie01{
 
 
 
-### 逆序对
-
-#### 归并排序解法
-
-```c++
-int find(int l,int r){
-  if(l>=r) return 0;
-  int ret=0;
-  int mid=(l+r)/2;
-  ret += find(l,mid);
-  ret += find(mid+1,r);
-  int i=l,j=mid+1,k=0;
-  while(i<=mid && j<=r){
-    if(a[i]<=a[j]) temp[k++]=a[i++];
-    else{
-      temp[k++]=a[j++];
-      ret += mid-(i-1);
-    }
-  }
-  while(i<=mid) temp[k++]=a[i++];
-  while(j<=r) temp[k++]=a[j++];
-  for(int i=l,k=0;i<=r;k++,i++){
-    a[i]=temp[k];
-  }
-  return ret;
-}
-```
-
 ### 树的前中后序遍历
 
 **栈模拟树的前后序遍历**
@@ -706,102 +1150,64 @@ int find(int l,int r){
 
   **思路：**栈弹出时处理节点，然后把孩子**逆序**压入栈（保证最左边的孩子先被弹出处理）
 
-  ```c++
-  vector<int> preorder;
-  vector<int> st={root};
-  while (!st.empty()) {
-      int u = st.back();
-      st.pop_back();
-      preorder.push_back(u); // 处理根
-      
-      // 逆序压入孩子（保证正序弹出）
-      for (int i=ch[u].size()-1;i>=0;--i) {
-          st.push_back(ch[u][i]);
-      }
-  }
-  ```
+```c++
+vector<int> preorder;
+vector<int> st={root};
+while (!st.empty()) {
+    int u = st.back();
+    st.pop_back();
+    preorder.push_back(u); // 处理根
+    
+    // 逆序压入孩子（保证正序弹出）
+    for (int i=ch[u].size()-1;i>=0;--i) {
+        st.push_back(ch[u][i]);
+    }
+}
+```
 
 * 后序遍历（孩子->根）
 
   **思路：**利用“根 -> 右 -> 左”的遍历，最后把结果**反转**，就变成了“左 -> 右 -> 根”（后序）
 
-  ```c++
-  vector<int> order;
-  vector<int> st={root};
-  while (!st.empty()) {
-      int u=st.back();
-      st.pop_back();
-      order.push_back(u); // 先记录根
-      
-      // 这里正序压入孩子即可（出栈顺序无所谓，反正最后要反转）
-      for (int v:ch[u]){
-          st.push_back(v); 
-      }
-  }
-  reverse(order.begin(), order.end());
-  ```
+```c++
+vector<int> order;
+vector<int> st={root};
+while (!st.empty()) {
+    int u=st.back();
+    st.pop_back();
+    order.push_back(u); // 先记录根
+    
+    // 这里正序压入孩子即可（出栈顺序无所谓，反正最后要反转）
+    for (int v:ch[u]){
+        st.push_back(v); 
+    }
+}
+reverse(order.begin(), order.end());
+```
 
 * 二叉树的中序遍历（左根右）
 
   **思路：** 必须用一个指针 `cur` 一路向左走到底，模拟递归的压栈。
 
-  ```c++
-  vector<int> inorder;
-  stack<Node*> st;
-  Node* cur = root;
-  
-  while (cur != nullptr || !st.empty()) {
-      // 1. 一路向左，把所有左孩子压栈
-      while (cur != nullptr) {
-          st.push(cur);
-          cur = cur->left;
-      }
-      
-      // 2. 弹出最左节点，处理它
-      cur = st.top(); st.pop();
-      inorder.push_back(cur->val); // 处理根
-      
-      // 3. 转向右子树（下次循环会处理右子树的左链）
-      cur = cur->right;
-  }
-  ```
-
-### 离散化
-
 ```c++
-struct Trans{
-    vector<int> F;
-    void init(const vector<int>& A){
-        // 可以适当调一下下标从0开始还是从1开始
-        for(int i=0;i<A.size();i++) F.push_back(A[i]);
-        sort(F.begin(),F.end());
-        F.erase(unique(F.begin(),F.end()),F.end());
+vector<int> inorder;
+stack<Node*> st;
+Node* cur = root;
+
+while (cur != nullptr || !st.empty()) {
+    // 1. 一路向左，把所有左孩子压栈
+    while (cur != nullptr) {
+        st.push(cur);
+        cur = cur->left;
     }
-    // 找到val对应离散化之后的值
-    // ！！！注意val这个数必须参加过才能正确查询
-    int get(int val){
-        int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
-        return x;
-    }
-    // 找到第一个>=val的离散化后的值（也就是离散化之后的排名）
-    int findhigh(int val){
-        int x=lower_bound(F.begin(),F.end(),val)-F.begin()+1;
-        return x;
-    }
-    // 找到最后一个<=val的离散化后的值
-    int findlow(int val){
-        int x=upper_bound(F.begin(),F.end(),val)-F.begin();
-        return x;
-    }
-    // 把数组A里面的数都替换成离散化之后的结果
-    void change(vector<int>& A,int n){
-        for(int i=1;i<=n;i++) A[i]=get(A[i]);
-    }
-    // 取原排名为rank的原数组中的值
-    int origin(int rank){
-        return F[rank-1];
-    }
-};
+    
+    // 2. 弹出最左节点，处理它
+    cur = st.top(); st.pop();
+    inorder.push_back(cur->val); // 处理根
+    
+    // 3. 转向右子树（下次循环会处理右子树的左链）
+    cur = cur->right;
+}
 ```
 
 
@@ -1818,7 +2224,41 @@ void solve(){
 }
 ```
 
+
+
 #### 匈牙利算法
+
+**匹配：** “任意两条边都没有公共端点”的边的集合被称为图的一组匹配
+
+**最大匹配：** 二分图中，包含边数最多的一组匹配被称为二分图的最大匹配
+
+**增广路：** 对于任意组匹配 $S$（$S$ 是一个边集合），属于 $S$ 的边称为**匹配边**，不属于 $S$ 的边称为**非匹配边**。匹配边的端点称为**匹配点**，其他节点称为**非匹配点**。如果在二分图中存在一条连接**两个非匹配点**的路径 $\text{path}$，使得**非匹配边**与**匹配边**在 $\text{path}$ 上**交替出现**，那么称 $\text{path}$ 是匹配 $S$ 的**增广路**（也称交错路）。
+
+**增广路性质：**
+
+1. 长度 len 是奇数
+2. 路径上第 1、3、5…… len 奇数条边是非匹配边，第 2、4、6…… len-1 偶数条边是匹配边。
+
+
+
+**二分图的一组匹配 $S$ 是最大匹配，当且仅当该图中不存在 $S$ 的增广路。**
+
+**匈牙利算法**
+
+可以采用深搜实现：
+
+对于二分图的每一轮查找，我们的目标是：**尝试给左边的一个未匹配点 $u$ 找一个配偶。**
+
+1. 从左边的未匹配点 $u$ 出发，随便找一条连出去的边，到达右边的一个邻居节点 $v$。
+2. 这里会出现两种情况：
+   - **情况 A：$v$ 还没有被匹配过。**
+     - 直接连上，$u$ 和 $v$ 结成伴侣。这条路径（$u \to v$）就是一个长度为 1 的增广路（起点 $u$ 是非匹配点，终点 $v$ 也是非匹配点）。
+   - **情况 B：$v$ 已经被别人（比如 $w$）匹配了。**
+     - 此时不能放弃，我们要施展“腾位子”**策略：看看现在的占用者 $v$ 的原伴侣 $w$，能不能去勾搭**别人？
+     - 于是我们递归地去为 $w$ 寻找新伴侣。如果 $w$ 成功找到了新去处，那么 $v$ 就可以空出来让给 $u$。
+     - 如果成功了，就相当于找到了一条长一点的增广路，并且顺便完成了“状态取反”（也就是重新分配伴侣）。
+
+时间复杂度为 $O(N_1\times M)$
 
 ```c++
 vector<int> match;// 记录右顶点v匹配的是哪个左顶点
@@ -2546,6 +2986,35 @@ auto [a,b,c] = t1;
 - **二进制对数 $\log_2(x)$（以 $2$ 为底）：**
 
   使用 `std::log2(x)` （C++11 及以上支持）
+
+
+
+ **$\lfloor \log_2(x) \rfloor$ 的三种常用求法**
+
+```c++
+// 1
+inline int get_log2_safe(int x){
+    int k=0;
+    while((1<<(k+1))<=x)k++;
+    return k;
+}
+
+// 2（需 x >= 1）
+inline int get_log2_clz(int x){
+    return 31-__builtin_clz(x);
+}
+
+// 3
+inline int get_log2_lg(int x){
+    return __lg(x);
+}
+```
+
+**常用内置函数适用情况与依赖说明**
+
+- **`__builtin_clz(x)`**：仅限 GCC/Clang，计算 32 位整数前导零个数。用 `31 - __builtin_clz(x)` 在 $O(1)$ 时间内求 $\lfloor \log_2(x) \rfloor$。传入 $x = 0$ 会触发未定义行为（程序崩溃/异常）。
+- **`__lg(x)`**：仅限 GCC，直接返回 $\lfloor \log_2(x) \rfloor$（MSVC 或部分 Clang 环境不支持）。
+- **`__gcd(a, b)` 与 `gcd(a, b)`**：`__gcd` 仅限 GCC/Clang（属于 GNU 拓展，非标准库）；`gcd` 需要 **C++17** 标准（位于 `<numeric>`）。
 
 ### 快速读入
 
