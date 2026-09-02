@@ -1,7 +1,7 @@
 ---
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-08-31
+lastmod: 2026-09-02
 categories:
   - "总结 | conclusion"
 tags:
@@ -264,7 +264,7 @@ void solve(){
 #define rs(p) (p<<1|1)
 
 // 支持单点/区间的加、乘、覆盖与查询
-struct SegmentTree {
+struct SegTree {
     // 节点定义
     struct Node {
         int l,r;                  // 维护的区间左右边界[l,r]
@@ -278,7 +278,7 @@ struct SegmentTree {
     vector<Node> tree;
 
     // 构造函数：初始化并建树（a的下标需从1开始）
-    SegmentTree(const vector<int>& a) {
+    SegTree(const vector<int>& a) {
         n=a.size()-1;
         arr=a;
         tree.resize((n+5)<<2); // 开4N空间
@@ -437,7 +437,7 @@ struct SegmentTree {
 void solve() {
     // 初始数据[1..5]: {1,2,3,4,5}
     vector<int> a={0,1,2,3,4,5}; 
-    SegmentTree seg(a);
+    SegTree seg(a);
 
     seg.add(1,1,3,2); // 区间加：[3,4,5,4,5]
     seg.add(1,2,2,1); // 单点加：[3,5,5,4,5]
@@ -2254,7 +2254,7 @@ void solve(){
    - **情况 A：$v$ 还没有被匹配过。**
      - 直接连上，$u$ 和 $v$ 结成伴侣。这条路径（$u \to v$）就是一个长度为 1 的增广路（起点 $u$ 是非匹配点，终点 $v$ 也是非匹配点）。
    - **情况 B：$v$ 已经被别人（比如 $w$）匹配了。**
-     - 此时不能放弃，我们要施展“腾位子”**策略：看看现在的占用者 $v$ 的原伴侣 $w$，能不能去勾搭**别人？
+     - 此时不能放弃，我们要施展“腾位子”**策略：看看现在的占用者 $v$ 的原伴侣 $w$，能不能去匹配**别人？
      - 于是我们递归地去为 $w$ 寻找新伴侣。如果 $w$ 成功找到了新去处，那么 $v$ 就可以空出来让给 $u$。
      - 如果成功了，就相当于找到了一条长一点的增广路，并且顺便完成了“状态取反”（也就是重新分配伴侣）。
 
@@ -3138,4 +3138,54 @@ using namespace my128;
 **函数支持**：`abs()` 这种标准库函数可能不支持 `__int128`，建议自己写：`auto my_abs = [](int128 x) { return x < 0 ? -x : x; };`。
 
 **速度测试**：`__int128` 的乘法和加减法很快，但**除法和取模**相对较慢（比 `long long` 慢数倍），在有严格时限且大量取模的题目中要小心，并且不能直接cin/cout，需要转换成字符串（但一般只有中间过程会爆 long long，所以最后答案转成 long long 输出即可）。
+
+### getline
+
+* 使用 `getline` 读取整行，不要忘记吸收上一行行末换行符
+* 循环內部 `getline(cin,line)` 整行读取
+* `stringstream ss(line)` 把字符串 line 包装成一个输入流 ss ，ss 和 cin 一样，会跳过空格
+* **`ss >> l >> r` 与 `ss >> v`**：
+  * 先用 `ss >> l >> r` 提取前两个数
+  * 再利用 `if (ss >> v)` 进行尝试提取：如果这一行还有第 3 个数，提取成功返回 `true`（说明是修改）
+
+```c++
+int m;
+cin>>m;
+string line;
+getline(cin,line);
+
+while(m--){
+    int l,r,k;
+    string line;
+    getline(cin,line);
+    stringstream ss(line);
+    ss>>l>>r;
+
+    l++;
+    r++;
+    // 修改
+    if(ss>>k){
+        if(l<=r){
+            seg.add(1,l,r,k);
+        }
+        else{
+            seg.add(1,l,n,k);
+            seg.add(1,1,r,k);
+        }
+    }   
+    // 查询
+    else{
+        int ans=1e18;
+        if(l<=r){
+            ans=seg.mn(1,l,r);
+        }
+        else{
+            ans=min(ans,seg.mn(1,1,r));
+            ans=min(ans,seg.mn(1,l,n));
+        }
+        cout<<ans<<endl;
+    } 
+
+}
+```
 
