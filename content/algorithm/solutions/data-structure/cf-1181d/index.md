@@ -7,12 +7,13 @@ categories:
 tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"
-  - “树状数组 | BIT”
+  - "树状数组 | BIT"
+  - “二分查找 | Binary Search”
 
 difficulty: "⭐⭐⭐⭐"
 platform:
   - "Codeforces"
-problem_id: "cf1181"
+problem_id: "1181D"
 weight: 10
 pinned: false
 draft: false
