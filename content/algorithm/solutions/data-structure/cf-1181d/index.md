@@ -8,9 +8,9 @@ tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"
   - "树状数组 | BIT"
-  - “二分查找 | Binary Search”
+  - "二分查找 | Binary Search"
 
-difficulty: "⭐⭐⭐⭐"
+difficulty: ""
 platform:
   - "Codeforces"
 problem_id: "1181D"
