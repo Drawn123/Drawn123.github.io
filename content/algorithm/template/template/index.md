@@ -1,11 +1,11 @@
 ---
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-09-02
+lastmod: 2026-09-05
 categories:
   - "总结 | conclusion"
 tags:
-  - ""
+  - "ICPC"
 
 weight: 1
 pinned: true
@@ -2504,103 +2504,142 @@ void solve(){
 }
 ```
 
-### 重载运算符
 
-**优先队列**自定义排序方式：
+
+### 组合数
+
+**一：小数据 / 无模数 / 精确值**
+
+（$n \le 62$）
+
+- **应用场景**：结果在 `unsigned long long` 范围内，不取模。
+- **时间复杂度**：$O(m)$。
+- **核心技巧**：利用 $C(n, m) = \frac{n \times (n-1) \times \dots \times (n-m+1)}{1 \times 2 \times \dots \times m}$，**边乘边除**防止溢出
 
 ```c++
-// ============================================================
-// 1. 单一字段：价格小的在堆顶（小根堆效果）
-// ============================================================
-struct Product {
-    int price;
+#define ull unsigned long long
 
-    bool operator < (const Product& other) const {
-        return price > other.price;  // 价格小的在堆顶（反着写）
+ull C1(ull n,ull m){
+    if(m>n)return 0;
+    if(m>n-m)m=n-m;
+    ull res=1;
+    for(ull i=1;i<=m;i++){
+        res=res*(n-i+1)/i;
     }
-};
-
-// ============================================================
-// 2. 单一字段：优先级高的在堆顶（大根堆效果）
-// ============================================================
-struct Task {
-    int priority;  // 数字越大越紧急
-
-    bool operator < (const Task& other) const {
-        return priority < other.priority;  // 优先级高的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 3. 多字段：主要年级小的在堆顶 + 次要分数小的在堆顶
-// ============================================================
-struct Point {
-    int x, y;
-
-    bool operator < (const Point& other) const {
-        if (x != other.x) return x > other.x;  // x 小的在堆顶（反着写）
-        return y > other.y;                    // y 小的在堆顶（反着写）
-    }
-};
-
-// ============================================================
-// 4. 多字段：主要年级小的在堆顶 + 次要分数高的在堆顶
-// ============================================================
-struct Student {
-    int grade;  // 年级
-    int score;  // 分数
-
-    bool operator < (const Student& other) const {
-        if (grade != other.grade) return grade > other.grade;  // 年级小的在堆顶（反着写）
-        return score < other.score;  // 分数高的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 5. 多字段：主要关卡高的在堆顶 + 次要用时短的在堆顶
-// ============================================================
-struct Game {
-    int level;  // 关卡
-    int time;   // 用时
-
-    bool operator < (const Game& other) const {
-        if (level != other.level) return level < other.level;  // 关卡高的在堆顶（顺着写）
-        return time > other.time;   // 用时短的在堆顶（反着写）
-    }
-};
-
-// ============================================================
-// 6. 多字段：主要击杀多的在堆顶 + 次要助攻多的在堆顶
-// ============================================================
-struct Record {
-    int kills;   // 击杀数
-    int assists; // 助攻数
-
-    bool operator < (const Record& other) const {
-        if (kills != other.kills) return kills < other.kills;  // 击杀多的在堆顶（顺着写）
-        return assists < other.assists;  // 助攻多的在堆顶（顺着写）
-    }
-};
-
-// ============================================================
-// 7. 字符串：长度短的在堆顶，同长度字典序小的在堆顶
-// ============================================================
-struct Word {
-    string text;
-
-    bool operator < (const Word& other) const {
-        if (text.length() != other.text.length())
-            return text.length() > other.text.length();  // 长度短的在堆顶（反着写）
-        return text > other.text;  // 字典序小的在堆顶（反着写）
-    }
-};
+    return res;
+}
 ```
 
-1. **结构体排序的本质**：返回 `true` 代表**“前者留在前面”**
-2. **优先队列的本质**：返回 `true` 的元素代表**“优先级低，被压入堆底”**（如上）
-3. 优先队列
-   * 多字段直接定义大根堆
-   * 单一字段直接定义小根堆方便一点 `priority_queue<int,vector<int>,greater<int>>`
+**二：大数据 + 静态模质数**
+
+（$n, m \le 10^6$，$P$ 为大质数如 $10^9+7$ 或 $998244353$）
+
+- **应用场景**：竞赛中最常见的预处理场景，多组询问（$O(1)$ 回答）。
+- **时间复杂度**：预处理 $O(N)$，单次查询 $O(1)$。
+- **核心技巧**：根据费马小定理（$a^{P-2} \equiv a^{-1} \pmod P$），预处理阶乘 `fact` 和阶乘逆元 `invfact`
+
+```c++
+#define int long long
+
+const int MOD=1e9+7;
+const int N=1e6+5;
+int fact[N],inv[N];
+
+int qpow(int a,int b){
+    int res=1;
+    a%=MOD;
+    while(b){
+        if(b&1)res=res*a%MOD;
+        a=a*a%MOD;
+        b>>=1;
+    }
+    return res;
+}
+
+void init(){
+    fact[0]=1;
+    inv[0]=1;
+    for(int i=1;i<N;i++)fact[i]=fact[i-1]*i%MOD;
+    inv[N-1]=qpow(fact[N-1],MOD-2);
+    for(int i=N-2;i>=1;i--)inv[i]=inv[i+1]*(i+1)%MOD;
+}
+
+int C(int n,int m){
+    if(m<0||m>n)return 0;
+    return fact[n]*inv[m]%MOD*inv[n-m]%MOD;
+}
+```
+
+**三：超大数据 + 模小质数**
+
+（$n, m \le 10^{18}$，$P \le 10^5$ 且 $P$ 为质数）
+
+- **应用场景**：$n, m$ 极高但模数 $P$ 较小，需要用到 **卢卡斯定理（Lucas Theorem）**：
+
+  $$\binom{n}{m} \equiv \binom{n \bmod P}{m \bmod P} \times \binom{\lfloor n/P \rfloor}{\lfloor m/P \rfloor} \pmod P$$
+
+- **时间复杂度**：预处理 $O(P)$，单次查询 $O(\log_P n)$。
+
+```c++
+#define int long long
+
+int qpow(int a,int b,int p){
+    int res=1;
+    a%=p;
+    while(b){
+        if(b&1)res=res*a%p;
+        a=a*a%p;
+        b>>=1;
+    }
+    return res;
+}
+
+int C_small(int n,int m,int p){
+    if(m>n)return 0;
+    int num=1,den=1;
+    for(int i=0;i<m;i++){
+        num=num*(n-i)%p;
+        den=den*(i+1)%p;
+    }
+    return num*qpow(den,p-2,p)%p;
+}
+
+int lucas(int n,int m,int p){
+    if(m==0)return 1;
+    return C_small(n%p,m%p,p)*lucas(n/p,m/p,p)%p;
+}
+```
+
+**四：中等数据 + 动态模数/非质数**
+
+（$n, m \le 5000$）
+
+- **应用场景**：模数不固定，或者模数不为质数（无法使用逆元）。
+- **时间复杂度**：预处理 $O(N^2)$，单次查询 $O(1)$。
+- **核心技巧**：杨辉三角递推 $\binom{n}{m} = \binom{n-1}{m-1} + \binom{n-1}{m}$。
+
+```c++
+#define int long long
+
+const int N=5005;
+int C[N][N];
+
+void init(int mod){
+    for(int i=0;i<N;i++){
+        C[i][0]=1;
+        for(int j=1;j<=i;j++){
+            C[i][j]=(C[i-1][j-1]+C[i-1][j])%mod;
+        }
+    }
+}
+```
+
+**总结**
+
+- **$N \le 62$ 无模数** $\rightarrow$ **一**（直接计算 $O(M)$）
+- **$N \le 10^6$ 模大质数** $\rightarrow$ **二**（阶乘逆元预处理 $O(N) + O(1)$，**最常用**）
+- **$N \le 10^{18}$ 模小质数** $\rightarrow$ **三**（Lucas 定理 $O(\log_P N)$）
+- **$N \le 5000$ 模任意数** $\rightarrow$ **四**（杨辉三角递推 $O(N^2)$）
 
 
 
@@ -3189,3 +3228,30 @@ while(m--){
 }
 ```
 
+
+
+### 重载比较运算符
+
+1. **sort**
+   * **排序规则**：`sort` 默认使用 `operator<`（或你提供的自定义比较器）来决定顺序。
+     当 `a < b` 返回 `true` 时，表示 **`a` 应排在 `b` 的前面**（即按升序排列）。
+   * **重载 `operator<` 的语义**：
+     `*this` 对应左侧元素 `a`，`o` 对应右侧元素 `b`。
+   * 例如，若想让解题多（`cnt` 大），罚时少（`p` 小）的队伍排在最前面（`a[0]`）：
+
+```c++
+bool operator<(const Node& o) const {
+    if (cnt != o.cnt) return cnt > o.cnt; // 题多 排前面 返回true
+    return p < o.p;                       // 罚时少 排前面 返回true
+}
+```
+
+如果比较两个结构体元素，需要使用对应的重载符号，重载大于号就用大于号比较，反之用小于号比较
+
+2. **priority_queue**
+
+   `priority_queue<T>` 底层使用 `less<T>` 作为比较器（即 `operator<`），其行为与 `sort` **相反**：
+
+   * 在优先队列中，比较器用于判断 **优先级**。
+     若 `a < b` 返回 `true`，则队列认为 **`a` 的优先级低于 `b`**（即 `a` 更“小”），于是把 `a` 沉到堆底，而 `b` 浮到堆顶（`top()`）。
+   * 因此，默认情况下，**堆顶是 `operator<` 意义下的“最大”元素**（因为较大的元素会被认为优先级更高，被推到顶部）。
