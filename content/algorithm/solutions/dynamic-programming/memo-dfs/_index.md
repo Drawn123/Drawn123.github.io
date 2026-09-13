@@ -1,5 +1,5 @@
 ---
-title: "动态规划 / Dynamic Programming"
+title: "记忆化搜索 / Memoization Search"
 description: 
 weight: 20
 draft: false
