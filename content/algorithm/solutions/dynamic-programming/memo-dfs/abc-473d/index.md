@@ -21,6 +21,10 @@ draft: false
 
 [D - Coefficient Stair](https://atcoder.jp/contests/abc473/tasks/abc473_d)
 
+**题意：**
+
+给定正整数 $n,k$，输出所有满足 $a_1+2a_2+\cdots+na_n=k$ 的非负整数序列。
+
 **核心观察：**
 
 1. 需要输出所有满足
