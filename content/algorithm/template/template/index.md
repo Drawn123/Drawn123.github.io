@@ -271,6 +271,7 @@ struct SegTree {
         int sum,mx,mn;           // 区间和、最大值、最小值
         int lazy_add,lazy_mul,lazy_set; // 加法、乘法、覆盖懒标记
         bool has_set;             // 是否存在覆盖标记
+        int mxid,mnid;            // 最大值位置、最小值位置
     };
 
     int n;
@@ -288,14 +289,31 @@ struct SegTree {
     // 向上更新：由子节点合并出父节点信息
     void push_up(int p) {
         tree[p].sum=tree[ls(p)].sum+tree[rs(p)].sum;
-        tree[p].mx=max(tree[ls(p)].mx,tree[rs(p)].mx);
-        tree[p].mn=min(tree[ls(p)].mn,tree[rs(p)].mn);
+
+        if(tree[ls(p)].mx>=tree[rs(p)].mx){
+            tree[p].mx=tree[ls(p)].mx;
+            tree[p].mxid=tree[ls(p)].mxid;
+        }
+        else{
+            tree[p].mx=tree[rs(p)].mx;
+            tree[p].mxid=tree[rs(p)].mxid;
+        }
+
+        if(tree[ls(p)].mn<=tree[rs(p)].mn){
+            tree[p].mn=tree[ls(p)].mn;
+            tree[p].mnid=tree[ls(p)].mnid;
+        }
+        else{
+            tree[p].mn=tree[rs(p)].mn;
+            tree[p].mnid=tree[rs(p)].mnid;
+        }
     }
 
     // 应用“覆盖”修改
     void apply_set(int p,int val) {
         tree[p].sum=val*(tree[p].r-tree[p].l+1);
         tree[p].mx=tree[p].mn=val;
+        tree[p].mxid=tree[p].mnid=tree[p].l; // 覆盖后区间值相同，位置取左端点即可
         tree[p].lazy_set=val;
         tree[p].has_set=true;
         tree[p].lazy_mul=1;     // 清空乘法标记
@@ -305,8 +323,17 @@ struct SegTree {
     // 应用“乘法”修改（val非负情况下）
     void apply_mul(int p,int val) {
         tree[p].sum *= val;
-        tree[p].mx *= val;
-        tree[p].mn *= val;// 若val是负值记得比较后再更新
+
+        if(val >= 0) {
+            tree[p].mx *= val;
+            tree[p].mn *= val;// 若val是负值记得比较后再更新
+        } else {
+            swap(tree[p].mx,tree[p].mn);
+            swap(tree[p].mxid,tree[p].mnid);
+            tree[p].mx *= val;
+            tree[p].mn *= val;
+        }
+
         if(tree[p].has_set) {
             tree[p].lazy_set *= val;
         }
@@ -321,6 +348,7 @@ struct SegTree {
         tree[p].sum+=val*(tree[p].r-tree[p].l+1);
         tree[p].mx+=val;
         tree[p].mn+=val;
+        // 加法不改变最大值/最小值位置
         if(tree[p].has_set) {
             tree[p].lazy_set+=val;
         }
@@ -353,6 +381,7 @@ struct SegTree {
         tree[p]={l,r,0,0,0,0,1,0,false};
         if(l==r) {
             tree[p].sum=tree[p].mx=tree[p].mn=arr[l];
+            tree[p].mxid=tree[p].mnid=l;
             return;
         }
         int mid=(l+r)>>1;
@@ -412,26 +441,65 @@ struct SegTree {
     }
 
     // 区间/单点最大值查询
+    // 返回 {最大值, 最大值位置}
+    pii mx(int p,int ql,int qr) {
+        if(ql<=tree[p].l && tree[p].r<=qr) return {tree[p].mx,tree[p].mxid};
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        if(qr<=mid) return mx(ls(p),ql,qr);
+        if(ql>mid) return mx(rs(p),ql,qr);
+        pii L=mx(ls(p),ql,qr);
+        pii R=mx(rs(p),ql,qr);
+        if(L.first>=R.first) return L;
+        return R;
+    }
+
+    // 区间/单点最小值查询
+    // 返回 {最小值, 最小值位置}
+    pii mn(int p,int ql,int qr) {
+        if(ql<=tree[p].l && tree[p].r<=qr) return {tree[p].mn,tree[p].mnid};
+        push_down(p);
+        int mid=(tree[p].l+tree[p].r)>>1;
+        if(qr<=mid) return mn(ls(p),ql,qr);
+        if(ql>mid) return mn(rs(p),ql,qr);
+        pii L=mn(ls(p),ql,qr);
+        pii R=mn(rs(p),ql,qr);
+        if(L.first<=R.first) return L;
+        return R;
+    }
+
+    /*
+    如果不需要求最大值和最小值的位置，可以这样简化：
+
+    1. Node 里删掉 mxid、mnid；
+    2. push_up 里直接：
+       tree[p].mx=max(tree[ls(p)].mx,tree[rs(p)].mx);
+       tree[p].mn=min(tree[ls(p)].mn,tree[rs(p)].mn);
+    3. apply_set 里不用设置 mxid、mnid；
+    4. apply_mul 里如果只考虑非负数，直接：
+       tree[p].mx *= val;
+       tree[p].mn *= val;
+       如果考虑负数，则先 swap(mx,mn) 再乘；
+    5. 查询直接返回 int：
+
     int mx(int p,int ql,int qr) {
         if(ql<=tree[p].l && tree[p].r<=qr) return tree[p].mx;
         push_down(p);
         int mid=(tree[p].l+tree[p].r)>>1;
-        int res=INT_MIN;
-        if(ql<=mid) res=max(res,mx(ls(p),ql,qr));
-        if(qr>mid) res=max(res,mx(rs(p),ql,qr));
-        return res;
+        if(qr<=mid) return mx(ls(p),ql,qr);
+        if(ql>mid) return mx(rs(p),ql,qr);
+        return max(mx(ls(p),ql,qr),mx(rs(p),ql,qr));
     }
 
-    // 区间/单点最小值查询
     int mn(int p,int ql,int qr) {
         if(ql<=tree[p].l && tree[p].r<=qr) return tree[p].mn;
         push_down(p);
         int mid=(tree[p].l+tree[p].r)>>1;
-        int res=INT_MAX;
-        if(ql<=mid) res=min(res,mn(ls(p),ql,qr));
-        if(qr>mid) res=min(res,mn(rs(p),ql,qr));
-        return res;
+        if(qr<=mid) return mn(ls(p),ql,qr);
+        if(ql>mid) return mn(rs(p),ql,qr);
+        return min(mn(ls(p),ql,qr),mn(rs(p),ql,qr));
     }
+    */
 };
 
 void solve() {
@@ -446,8 +514,8 @@ void solve() {
 
     // 查询[2,5]即{15,15,10,10}
     cout<<"Sum: "<<seg.sum(1,2,5)<<"\n"; // 50
-    cout<<"Max: "<<seg.mx(1,2,5)<<"\n";  // 15
-    cout<<"Min: "<<seg.mn(1,2,5)<<"\n";  // 10
+    cout<<"Max: "<<seg.mx(1,2,5).first<<"\n";  // 15
+    cout<<"Min: "<<seg.mn(1,2,5).first<<"\n";  // 10
 }
 ```
 
@@ -1371,6 +1439,71 @@ void dijkstra(int s){
 
 * 稠密图边数 m 接近 $n^2$
 * 稀疏图边数 m 远小于 $n^2$
+
+如果要输出路径，可以记录前驱点，也就是父亲节点，然后进行路径回溯 
+
+```c++
+#define pii pair<int,int>
+
+int n,m;
+struct p{
+    int v,w;
+};
+vector<vector<p>> g;
+
+void solve(){
+    cin>>n>>m;
+    g.resize(n+1,vector<p> ());
+    for(int i=0;i<m;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        if(v==u) continue;
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+    }
+
+    priority_queue<pii,vector<pii>,greater<pii>> q;
+    vector<int> fa(n+1,-1);
+    vector<int> dis(n+1,1e18);
+    vector<int> vis(n+1,0);
+    dis[1]=0;
+    q.push({0,1});
+
+    while(!q.empty()){
+        auto [d,u]=q.top();
+        q.pop();
+        
+        if(vis[u]) continue;
+        vis[u]=1;// .
+
+        for(auto [v,w]:g[u]){
+            if(dis[v]>dis[u]+w){
+                dis[v]=dis[u]+w;
+                fa[v]=u;
+                q.push({dis[v],v});
+            }
+        }
+        
+    }
+    if(dis[n]==1e18){
+        cout<<-1<<endl;
+        return ;
+    }
+    
+    // 路径回溯
+    vector<int> path;
+    for(int v=n;v!=-1;v=fa[v]){
+        path.push_back(v);
+    }
+    reverse(path.begin(),path.end());
+    for(auto x:path){
+        cout<<x<<" ";
+    }
+    cout<<endl;
+}
+```
+
+
 
 **如果要从点1到n的路径：**
 
@@ -2594,7 +2727,7 @@ int qpow(int a,int b,int p){
     return res;
 }
 
-int C_small(int n,int m,int p){
+int C(int n,int m,int p){
     if(m>n)return 0;
     int num=1,den=1;
     for(int i=0;i<m;i++){
@@ -2606,7 +2739,7 @@ int C_small(int n,int m,int p){
 
 int lucas(int n,int m,int p){
     if(m==0)return 1;
-    return C_small(n%p,m%p,p)*lucas(n/p,m/p,p)%p;
+    return C(n%p,m%p,p)*lucas(n/p,m/p,p)%p;
 }
 ```
 
