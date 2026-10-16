@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2023shandong-d"
+url: "/algorithm/solutions/basic-algorithms/2023shandong-d/"
 title: "2023山东省赛 D"
 date: 2026-05-16
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "二分 | Binary Search"
   - "贪心 | Greedy"

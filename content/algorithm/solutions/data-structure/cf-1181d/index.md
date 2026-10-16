@@ -1,19 +1,19 @@
 ---
+knowledge_id: "solution-cf-1181d"
+url: "/algorithm/solutions/data-structure/cf-1181d/"
 title: "CF 1181D Irrigation"
 date: 2026-09-02
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"
   - "树状数组 | BIT"
-  - "二分查找 | Binary Search"
+  - "二分 | Binary Search"
 
 difficulty: ""
 platform:
   - "Codeforces"
-problem_id: "1181D"
+problem_id: "CF1181D"
 weight: 10
 pinned: false
 draft: false

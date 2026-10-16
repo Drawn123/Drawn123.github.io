@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2026online1-l"
+url: "/algorithm/solutions/data-structure/trie/2026online1-l/"
 title: "2026 ICPC网络赛第一场 L"
 date: 2026-09-11
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "字典树 | Trie"
   - "最长公共前缀 | LCP"

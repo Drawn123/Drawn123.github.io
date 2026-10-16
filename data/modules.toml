@@ -1,0 +1,36 @@
+# Also add content sections to mainSections for search, archives and feeds.
+[[modules]]
+path = "algorithm"
+title = "算法竞赛"
+label = "Algorithm"
+description = "按知识点查题解，结合原理笔记与竞赛模板练习。"
+
+[[modules]]
+path = "notes"
+title = "课程与工具笔记"
+label = "Notes"
+description = "数据结构、Linux 与专业课，按主题和章节持续整理。"
+
+[[modules]]
+path = "machine-learning"
+title = "机器学习与 NLP"
+label = "Machine Learning"
+description = "从数学与机器学习基础，到深度学习和自然语言处理。"
+
+[[modules]]
+path = "projects"
+title = "项目实践"
+label = "Projects"
+description = "记录项目设计、实现过程、关键取舍与复盘。"
+
+[[modules]]
+path = "research"
+title = "科研记录"
+label = "Research"
+description = "论文阅读、复现过程与可追溯的实验记录。"
+
+[[modules]]
+path = "post"
+title = "随笔与问答"
+label = "Posts"
+description = "学习中的问题、思考，以及其他值得记录的内容。"

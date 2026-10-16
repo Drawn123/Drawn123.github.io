@@ -1,0 +1,119 @@
+.drawn-back-to-top {
+  background: var(--card-background);
+  bottom: 5rem;
+  box-shadow: var(--shadow-l2);
+  color: var(--accent-color);
+  cursor: pointer;
+  height: 3.7rem;
+  opacity: 0;
+  pointer-events: none;
+  position: fixed;
+  right: 1.4rem;
+  transform: translateY(12px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+  width: 3.7rem;
+  z-index: 40;
+}
+
+.drawn-back-to-top svg {
+  fill: none;
+  height: 2.05rem;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.2;
+  width: 2.05rem;
+}
+
+.drawn-back-to-top:hover svg { transform: translateY(-0.15rem); }
+
+.drawn-back-to-top.is-visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+/* Use a cool raised surface for content cards in dark mode. */
+[data-scheme="dark"] .article-list > article,
+[data-scheme="dark"] .article-list--compact article,
+[data-scheme="dark"] .article-details,
+[data-scheme="dark"] .drawn-archive-year,
+[data-scheme="dark"] .drawn-archive-month,
+[data-scheme="dark"] .right-sidebar .widget--toc {
+  background: var(--drawn-card-dark) !important;
+  border-color: rgba(186, 196, 226, 0.2) !important;
+}
+
+/* The archive widget uses the same raised surface as the other sidebar panels. */
+[data-scheme="dark"] .right-sidebar .widget.archives,
+[data-scheme="dark"] .right-sidebar .widget.archives .widget-archive--list,
+[data-scheme="dark"] .right-sidebar .widget.archives .archives-year,
+[data-scheme="dark"] .right-sidebar .widget.archives .archives-year a {
+  background: var(--drawn-card-dark) !important;
+}
+
+[data-scheme="dark"] .right-sidebar .widget.archives {
+  background: transparent !important;
+}
+
+[data-scheme="dark"] .right-sidebar .widget.archives .archives-year:not(:last-of-type) {
+  border-bottom-color: rgba(186, 196, 226, 0.18) !important;
+}
+
+[data-scheme="dark"] .right-sidebar .widget.archives .archives-year a:hover {
+  background: var(--drawn-card-dark-raised) !important;
+}
+
+/* The hash icon is a small heading mark, never a full-size panel graphic. */
+[data-scheme="dark"] .right-sidebar .widget.archives .widget-icon {
+  color: #a9d9ea;
+}
+
+/* Final article-surface override: list-card styling must not recolor a post header. */
+[data-scheme="dark"] .main-article .article-header,
+[data-scheme="dark"] .main-article .article-header .article-details,
+[data-scheme="dark"] .main-article .article-header .article-meta {
+  background: #303447 !important;
+}
+
+[data-scheme="dark"] .drawn-archives-page .drawn-archive-year,
+[data-scheme="dark"] .drawn-archives-page .drawn-archive-month {
+  background: transparent !important;
+  border-color: var(--drawn-border) !important;
+  box-shadow: none !important;
+}
+
+[data-scheme="dark"] .drawn-archives-page .drawn-archive-year {
+  border-left-color: var(--drawn-purple) !important;
+}
+
+[data-scheme="dark"] .drawn-archives-page .drawn-archive-year::before {
+  border-color: var(--body-background);
+}
+
+[data-scheme="dark"] .drawn-archives-page .drawn-archive-year > h2 {
+  color: #e9edf8 !important;
+}
+
+@media (max-width: 620px) {
+  .drawn-archives-header {
+    padding: 1.8rem;
+  }
+
+  .drawn-archive-list {
+    padding: 0 0.4rem 2.4rem;
+  }
+}
+
+[data-scheme="dark"] .article-list > article,
+[data-scheme="dark"] .article-list--compact article,
+[data-scheme="dark"] .drawn-archive-year,
+[data-scheme="dark"] .right-sidebar .widget--toc {
+  box-shadow: 0 10px 24px rgba(17, 21, 34, 0.16) !important;
+}
+
+[data-scheme="dark"] .article-list > article:hover,
+[data-scheme="dark"] .article-list--compact article:hover {
+  background: var(--drawn-card-dark-raised) !important;
+}
+

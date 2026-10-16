@@ -1,13 +1,15 @@
 ---
+knowledge_id: "notes-data-structure-05"
+url: "/notes/data-structure/05-树和二叉树/"
+series_id: "data-structure"
+series_order: 5
 title: "【数据结构】 第五章 树和二叉树"
 date: 2026-10-03
 lastmod: 
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: 数据结构"
 
-weight: 10
+weight: 50
 pinned: false
 draft: false
 ---

@@ -10,9 +10,9 @@
     {{- range sort $root.Sections "Weight" "asc" -}}
         {{- $active := or (eq .RelPermalink $current.RelPermalink) (in $current.RelPermalink .RelPermalink) -}}
         <li class="knowledge-tree-node is-folder {{ if $active }}is-active{{ end }}">
-            <details {{ if $active }}open{{ end }}>
+            <details>
                 <summary>
-                    <a class="knowledge-tree-label" href="{{ .RelPermalink }}">{{ .Title }}</a>
+                    <span class="knowledge-tree-label">{{ .Title }}</span>
                     <span class="knowledge-tree-count">{{ len .RegularPagesRecursive }}</span>
                 </summary>
                 {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" $current "Depth" (add $depth 1)) }}

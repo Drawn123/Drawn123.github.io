@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-2167e"
+url: "/algorithm/solutions/basic-algorithms/cf-2167e/"
 title: "CF 1062 div4 E"
 date: 2026-04-20
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "二分 | Binary Search"
   - "贪心 | Greedy"

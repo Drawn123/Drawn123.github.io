@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1004"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1004/"
 title: "P1004 方格取数"
 date: 2026-07-23
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"

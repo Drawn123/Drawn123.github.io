@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p2580"
+url: "/algorithm/solutions/data-structure/trie/lg-p2580/"
 title: "P2580 于是他错误的点名开始了"
 date: 2026-07-24
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "字符串 | String"
   - "字典树 | Trie"

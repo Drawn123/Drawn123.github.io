@@ -1,9 +1,11 @@
 ---
+knowledge_id: "notes-data-structure-04"
+url: "/notes/data-structure/04-串数组和广义表/"
+series_id: "data-structure"
+series_order: 4
 title: "【数据结构】 第四章 串、数组和广义表"
 date: 2026-09-28
 lastmod: 
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: 数据结构"
 

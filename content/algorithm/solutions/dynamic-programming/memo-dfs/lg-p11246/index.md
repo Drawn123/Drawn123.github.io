@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p11246"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p11246/"
 title: "P11246 小杨和整数拆分"
 date: 2026-07-21
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"

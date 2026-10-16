@@ -1,0 +1,4 @@
+{{- $articles := partialCached "drawn/article-index.html" site -}}
+{{- $page := index $articles .ID -}}
+{{- if not $page -}}{{ errorf "Unknown article ID %q (referenced by %s)" .ID .Source }}{{- end -}}
+{{- return $page -}}

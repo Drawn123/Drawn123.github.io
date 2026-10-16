@@ -15,6 +15,13 @@
     </button>
 </form>
 
+<div class="drawn-search-scope">
+    <label for="search-section">搜索范围</label>
+    <select id="search-section" data-search-section><option value="">全部方向</option>
+        {{ range hugo.Data.modules.modules }}<option value="{{ .path }}">{{ .title }}</option>{{ end }}
+    </select>
+    <p>支持文章标题、正文、标签、平台和题号。</p>
+</div>
 <div class="search-result hidden">
     <h3 class="search-result--title section-title"></h3>
     <div class="search-result--list article-list--compact"></div>

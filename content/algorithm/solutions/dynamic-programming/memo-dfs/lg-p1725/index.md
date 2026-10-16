@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1725"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1725/"
 title: "P1725 琪露诺"
 date: 2026-07-26
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "单调队列 | Monotonic Queue"

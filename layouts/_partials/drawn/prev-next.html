@@ -1,28 +1,20 @@
-{{- $root := .FirstSection -}}
-{{- $pages := slice -}}
-{{- with $root -}}
-    {{- $weighted := sort (where .RegularPagesRecursive "Weight" "gt" 0) "Weight" "asc" -}}
-    {{- $unweighted := sort (where .RegularPagesRecursive "Weight" "eq" 0) "Date" "asc" -}}
-    {{- $pages = $weighted | append $unweighted -}}
-{{- end -}}
-{{- $prev := false -}}
-{{- $next := false -}}
-{{- range $index, $page := $pages -}}
-    {{- if eq $page.RelPermalink $.RelPermalink -}}
-        {{- if gt $index 0 -}}{{- $prev = index $pages (sub $index 1) -}}{{- end -}}
-        {{- if lt (add $index 1) (len $pages) -}}{{- $next = index $pages (add $index 1) -}}{{- end -}}
+{{- $page := . -}}
+{{- with .Params.series_id -}}
+    {{- $pages := sort (where (partial "drawn/content-pages.html" site) "Params.series_id" .) "Params.series_order" "asc" -}}
+    {{- $prev := false -}}{{- $next := false -}}
+    {{- range $index, $entry := $pages -}}
+        {{- if eq $entry.RelPermalink $page.RelPermalink -}}
+            {{- if gt $index 0 -}}{{ $prev = index $pages (sub $index 1) }}{{- end -}}
+            {{- if lt (add $index 1) (len $pages) -}}{{ $next = index $pages (add $index 1) }}{{- end -}}
+        {{- end -}}
     {{- end -}}
+    <nav class="drawn-series-nav" aria-label="系列阅读导航">
+        {{ with $page.CurrentSection }}<a class="drawn-series-directory" href="{{ .RelPermalink }}">{{ .Title }} · 完整目录 →</a>{{ end }}
+        {{ if or $prev $next }}
+        <div class="drawn-prev-next">
+            {{ with $prev }}<a class="drawn-prev" href="{{ .RelPermalink }}"><span>← 上一篇</span><strong>{{ .Title }}</strong></a>{{ else }}<span></span>{{ end }}
+            {{ with $next }}<a class="drawn-next" href="{{ .RelPermalink }}"><span>下一篇 →</span><strong>{{ .Title }}</strong></a>{{ end }}
+        </div>
+        {{ end }}
+    </nav>
 {{- end -}}
-{{- if or $prev $next -}}
-<nav class="drawn-prev-next" aria-label="Previous and next article">
-    {{- with $prev -}}
-        <a class="drawn-prev" href="{{ .RelPermalink }}"><span>← Previous</span><strong>{{ .Title }}</strong></a>
-    {{- else -}}
-        <span></span>
-    {{- end -}}
-    {{- with $next -}}
-        <a class="drawn-next" href="{{ .RelPermalink }}"><span>Next →</span><strong>{{ .Title }}</strong></a>
-    {{- end -}}
-</nav>
-{{- end -}}
-

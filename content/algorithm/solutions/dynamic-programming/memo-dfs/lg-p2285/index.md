@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p2285"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p2285/"
 title: "P2285 打鼹鼠"
 date: 2026-07-26
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"

@@ -1,0 +1,11 @@
+{{- $destination := .Destination -}}
+{{- if strings.HasPrefix $destination "knowledge:" -}}
+    {{- $reference := strings.TrimPrefix "knowledge:" $destination -}}
+    {{- $parts := split $reference "#" -}}
+    {{- $target := partial "drawn/resolve-article.html" (dict "ID" (index $parts 0) "Source" .Page.Path) -}}
+    {{- with $target -}}
+        {{- $destination = .RelPermalink -}}
+        {{- if gt (len $parts) 1 -}}{{ $destination = printf "%s#%s" $destination (index $parts 1) }}{{- end -}}
+    {{- end -}}
+{{- end -}}
+<a class="link" href="{{ $destination | safeURL }}"{{ with .Title }} title="{{ . }}"{{ end }}{{ if or (strings.HasPrefix $destination "https://") (strings.HasPrefix $destination "http://") }} target="_blank" rel="noopener noreferrer"{{ end }}>{{ .Text | safeHTML }}</a>

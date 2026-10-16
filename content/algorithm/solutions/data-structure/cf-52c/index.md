@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-52c"
+url: "/algorithm/solutions/data-structure/cf-52c/"
 title: "CF 52C Circular RMQ"
 date: 2026-08-31
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"

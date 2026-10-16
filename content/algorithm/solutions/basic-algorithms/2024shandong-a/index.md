@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2024shandong-a"
+url: "/algorithm/solutions/basic-algorithms/2024shandong-a/"
 title: "2024山东省赛 A"
 date: 2026-05-13
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "二分 | Binary Search"
   - "贪心 | Greedy"

@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1839"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1839/"
 title: "P1839 Play with Power"
 date: 2026-07-21
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "博弈论 | Game Theory"
   - "记忆化搜索 | Memoized DFS"

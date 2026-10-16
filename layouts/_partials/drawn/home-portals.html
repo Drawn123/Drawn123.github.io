@@ -1,19 +1,5 @@
-{{- $sections := slice (dict "Page" (site.GetPage "section" "blog") "Label" "Blog" "Text" "算法题解、学习笔记、随笔与项目记录的统一入口") -}}
 <section class="drawn-home-panel">
-    <div class="drawn-section-heading">
-        <p>Start Here</p>
-        <h2>内容入口 / Content Portals</h2>
-    </div>
-    <div class="drawn-portal-grid drawn-portal-grid--primary">
-        {{- range $sections -}}
-            {{- $item := . -}}
-            {{- with $item.Page -}}
-            <a class="drawn-portal" href="{{ .RelPermalink }}">
-                <span>{{ $item.Label }}</span>
-                <strong>{{ .Title }}</strong>
-                <em>{{ $item.Text }}</em>
-            </a>
-            {{- end -}}
-        {{- end -}}
-    </div>
+    <div class="drawn-section-heading"><p>Explore</p><h2>从一个方向开始</h2></div>
+    {{ partial "drawn/module-portals.html" (dict "ShowEmpty" false) }}
+    {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">浏览全部方向与目录 →</a></p>{{ end }}
 </section>

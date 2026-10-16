@@ -1,13 +1,15 @@
 ---
+knowledge_id: "notes-data-structure-02"
+url: "/notes/data-structure/02-线性表/"
+series_id: "data-structure"
+series_order: 2
 title: "【数据结构】 第二章 线性表"
 date: 2026-09-16
 lastmod: 
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: 数据结构"
 
-weight: 10
+weight: 20
 pinned: false
 draft: false
 ---

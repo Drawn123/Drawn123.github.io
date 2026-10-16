@@ -1,0 +1,33 @@
+<div class="drawn-ocean" aria-hidden="true">
+    <svg class="drawn-sea-waves sea-layer-back" viewBox="0 0 2880 160" preserveAspectRatio="none" focusable="false"><path d="M0 106C120 78 240 78 360 106S600 134 720 106S960 78 1080 106S1320 134 1440 106S1680 78 1800 106S2040 134 2160 106S2400 78 2520 106S2760 134 2880 106V160H0Z" /></svg>
+    <div class="drawn-sea-specks"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+    {{ range $index, $whale := slice (dict "Name" "parent" "Direction" 1) (dict "Name" "calf" "Direction" -1) }}
+    <div class="drawn-swimmer whale-{{ $whale.Name }}" data-swimmer data-direction="{{ $whale.Direction }}">
+        <svg class="drawn-whale-facing" viewBox="0 0 250 166" focusable="false">
+            <defs>
+                <linearGradient id="whale-body-{{ $index }}" x1="0" y1="0" x2="0.6" y2="1"><stop class="whale-back-stop" offset="0" /><stop class="whale-body-stop" offset="1" /></linearGradient>
+                <linearGradient id="whale-belly-{{ $index }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5f8fc" /><stop offset="1" stop-color="#acdce8" /></linearGradient>
+            </defs>
+            <ellipse class="whale-wake" cx="157" cy="137" rx="75" ry="7" />
+            <g class="whale-tail">
+                <path class="whale-tail-fill" d="M76 94C59 82 52 64 48 47C32 48 15 38 9 23C26 19 44 27 53 37C49 21 55 10 68 6C81 21 80 39 66 50C63 67 68 78 86 85Z" />
+                <path class="whale-tail-highlight" d="M17 27C33 28 45 36 53 45M65 15Q72 31 61 43" />
+            </g>
+            <g class="whale-spout">
+                <path d="M173 43C174 24 166 14 155 15M173 43C175 23 187 15 196 19" />
+                <circle cx="151" cy="11" r="2.3" /><circle cx="198" cy="13" r="2" /><circle cx="176" cy="5" r="1.8" />
+            </g>
+            <path class="whale-body" fill="url(#whale-body-{{ $index }})" d="M66 88C86 86 97 53 122 42C154 25 197 28 218 49C237 67 239 94 218 113C193 137 149 139 117 125C92 115 79 100 66 88Z" />
+            <path class="whale-belly" fill="url(#whale-belly-{{ $index }})" d="M99 109C134 125 183 128 224 105C211 126 183 139 153 133C129 130 111 121 99 109Z" />
+            <path class="whale-back-shine" d="M116 51C143 34 177 34 197 43" />
+            <g class="whale-flipper"><path class="whale-flipper-fill" d="M154 102C139 101 126 118 126 132C142 132 161 121 167 109Z" /><path class="whale-fin-shine" d="M151 108Q139 117 134 124" /></g>
+            <ellipse class="whale-cheek" cx="207" cy="87" rx="8" ry="4" />
+            <circle class="whale-eye" cx="204" cy="73" r="3.7" /><circle class="whale-eye-shine" cx="205.3" cy="71.8" r="1.2" />
+            <path class="whale-smile" d="M216 87Q225 94 231 83" />
+            <path class="whale-belly-lines" d="M172 122L176 129M183 120L187 126M194 117L198 122" />
+        </svg>
+    </div>
+    {{ end }}
+    <svg class="drawn-sea-waves sea-layer-middle" viewBox="0 0 2880 160" preserveAspectRatio="none" focusable="false"><path d="M0 128C120 112 240 112 360 128S600 144 720 128S960 112 1080 128S1320 144 1440 128S1680 112 1800 128S2040 144 2160 128S2400 112 2520 128S2760 144 2880 128V160H0Z" /></svg>
+    <svg class="drawn-sea-waves sea-layer-front" viewBox="0 0 2880 160" preserveAspectRatio="none" focusable="false"><path d="M0 145C120 134 240 134 360 145S600 156 720 145S960 134 1080 145S1320 156 1440 145S1680 134 1800 145S2040 156 2160 145S2400 134 2520 145S2760 156 2880 145V160H0Z" /><path class="sea-foam" d="M40 141Q108 135 167 138M390 147Q450 154 513 151M760 141Q828 135 887 138M1110 147Q1170 154 1233 151M1480 141Q1548 135 1607 138M1830 147Q1890 154 1953 151M2200 141Q2268 135 2327 138M2550 147Q2610 154 2673 151" /></svg>
+</div>

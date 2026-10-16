@@ -1,47 +1,77 @@
-<img align="right" width="150" alt="logo" src="https://user-images.githubusercontent.com/5889006/190859553-5b229b4f-c476-4cbd-928f-890f5265ca4c.png">
+# Drawn123 的博客
 
-# Hugo Theme Stack Starter Template
+使用 Hugo Extended **0.165.0** 与 Hugo Stack **v4.0.3**，通过 GitHub Actions 部署到 GitHub Pages。
 
-This is a quick start template for [Hugo theme Stack](https://github.com/CaiJimmy/hugo-theme-stack). It uses [Hugo modules](https://gohugo.io/hugo-modules/) feature to load the theme.
+## 内容放在哪里
 
-It comes with a basic theme structure and configuration. GitHub action has been set up to deploy the theme to a public GitHub page automatically. Also, there's a cron job to update the theme automatically everyday.
+| 目录 | 内容 |
+| --- | --- |
+| `content/algorithm/solutions/` | 算法题解，按主要知识点归档 |
+| `content/algorithm/learning-notes/` | 算法原理笔记 |
+| `content/algorithm/template/` | 竞赛模板与速查 |
+| `content/notes/<科目或主题>/` | Linux、数据结构等课程与工具笔记 |
+| `content/machine-learning/` | 机器学习基础、深度学习、NLP |
+| `content/projects/<项目>/` | 项目介绍、设计与复盘 |
+| `content/research/` | 论文阅读、复现与实验 |
+| `content/post/` | 随笔与通用问答 |
+| `content/topics/` | 跨模块学习路线，只引用已有文章 |
 
-## Video Tutorial
+每个可浏览的目录放 `_index.md`；每篇文章使用 `<文章名>/index.md`，图片就近保存在同一个目录。新方向已有目录时直接添加文章；首页自动显示有文章的模块。
 
-In case you got lost during the setup process, here's a video tutorial that setups a new Hugo site using this template, and deploys it to GitHub Pages: https://www.youtube.com/watch?v=8qDdQQ6Ifxo
+## 本地预览与检查
 
-## Get started
+安装上述版本的 Hugo Extended 和 Go，然后运行：
 
-1. Click *Use this template*, and create your repository as `<username>.github.io` on GitHub. (You can also use a different repository name, but then the resulting website will be available at `https://<username>.github.io/<repository-name>`. )
-![Step 1](https://user-images.githubusercontent.com/5889006/156916624-20b2a784-f3a9-4718-aa5f-ce2a436b241f.png)
-
-2. Once the repository is created, create a GitHub codespace associated with it.
-![Create codespace](https://user-images.githubusercontent.com/5889006/156916672-43b7b6e9-4ffb-4704-b4ba-d5ca40ffcae7.png)
-
-3. While waiting for the codespace to be created, go to `Settings` -> `Pages` of your newly created repository, and set `Build and deployment` -> `Source` to `GitHub Actions`.
-![Change build and deployment source](https://github.com/user-attachments/assets/192459bf-25d8-441e-8029-c108d789e449)
-
-4. After the codespace is created, you can test that the site is built successfully by running `hugo server` in the terminal and see your new site in action. 
-
-5. Check `config` folder for the configuration files. You can edit them to suit your needs. Make sure to update the `baseurl` property in `config/_default/config.toml` to your site's URL. For example, if your new repository is named `my-blog`, then the `baseurl` should be `https://<username>.github.io/my-blog/`.
-
-6. Once you're done editing the site, just commit it and push it. GitHub action will deploy the site automatically to GitHub page asociated with the repository.
-
----
-
-In case you don't want to use GitHub codespace, you can also run this template in your local machine. **You need to install Git, Go and Hugo extended locally.** For more information, check official Hugo documentation: https://gohugo.io/installation/
-
-## Update theme manually
-
-Run:
-
-```bash
-hugo mod get -u github.com/CaiJimmy/hugo-theme-stack/v4
-hugo mod tidy
+```powershell
+hugo server
 ```
 
-> This starter template has been configured with `v4` version of theme. Due to the limitation of Go module, once the `v4` or up version of theme is released, you need to update the theme manually. (Modifying `config/module.toml` file)
+在浏览器中打开终端显示的本机地址。构建与检查：
 
-## Deploy to another static page hostings
+```powershell
+hugo --destination work/check --cleanDestinationDir --panicOnWarning
+python scripts/check_site.py --site work/check
+```
 
-Check official Hugo documentation: https://gohugo.io/host-and-deploy/
+`work/`、`public/`、`resources/` 都是忽略的生成目录。检查会验证站内链接、锚点、文章标识，以及 `docs/url-baseline.json` 记录的旧路径。
+
+## 新文章
+
+一个最小示例：
+
+```yaml
+---
+title: "梯度下降"
+date: 2026-10-16T20:00:00+08:00
+knowledge_id: "ml-gradient-descent"
+url: "/p/ml-gradient-descent/"
+tags:
+  - "梯度下降"
+draft: true
+---
+```
+
+- 分类由所属模块自动继承，不需要填写 `categories`。标签表达具体知识点，系列负责章节顺序。
+- `knowledge_id` 全站唯一，只用小写字母、数字和连字符，确定后不随文章改名。
+- `url` 是公开地址，发布后保持稳定。已有文章保留本次重构前的路径。
+- `date` 是首次发布日期；有实质修订时手动更新 `lastmod`，不要用文件移动时间替代。
+- 标题、文件位置、网址是不同的概念；更换分类目录不应顺便修改已发布网址。
+- 草稿确认后再设为 `draft: false`。没有真实内容时只建栏目，不编造文章。
+
+完整规范见 [维护说明](docs/maintenance.md)。
+
+## 常改的位置
+
+- 模块入口：`data/modules.toml`；新增顶层文章栏目时同时更新 `config/_default/params.toml` 的 `mainSections`。
+- 首页常用入口：`data/featured.toml`。
+- 系列介绍：各科目 `_index.md`；文章顺序使用 `series_id` 与 `series_order`。
+- 样式：`assets/scss/custom.scss` 只负责按顺序引入 `drawn/` 下的分层文件。
+- 内容筛选与标签交互：`assets/js/drawn-discovery.js`；阅读辅助：`assets/js/drawn-site.js`；星空、鲸鱼与光标动效：`assets/js/drawn-atmosphere.js`。
+
+## 发布与主题升级
+
+提交并推送到 `master` 或 `main` 会触发部署。构建版本已固定，站内检查失败会阻止上传部署产物。
+
+构建依赖 Hugo Extended 与 Go，样式和脚本由 Hugo 内置工具处理，无需安装 Node 或额外的 Dart Sass。`work/` 中的旧测试构建与截图可以删除；本机仍在使用的主题依赖缓存不属于博客源码，不提交到 Git。
+
+主题检查工作流改为手动运行，只报告可用版本，不再每日自动修改依赖。升级时单独更新 `go.mod` / `go.sum`，构建并检查桌面、手机、公式与代码展示后再发布。

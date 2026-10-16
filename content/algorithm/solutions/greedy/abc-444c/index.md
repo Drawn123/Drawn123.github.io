@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-444c"
+url: "/algorithm/solutions/greedy/abc-444c/"
 title: "ABC 444C AtCoder Riko"
 date: 2026-02-08
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "贪心 | Greedy"
   - "排序 | Sorting"

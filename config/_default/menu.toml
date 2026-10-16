@@ -2,7 +2,7 @@
 
 [[main]]
     identifier = "categories"
-    name       = "分类 | Categories"
+    name       = "内容分类 | Categories"
     url        = "/categories/"
     weight     = 4
 

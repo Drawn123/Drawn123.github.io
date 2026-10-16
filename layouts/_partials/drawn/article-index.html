@@ -1,0 +1,10 @@
+{{- $index := dict -}}
+{{- range site.RegularPages -}}
+    {{- $page := . -}}
+    {{- with .Params.knowledge_id -}}
+        {{- if not (findRE `^[a-z0-9][a-z0-9-]*$` .) -}}{{ errorf "Invalid knowledge_id %q" . }}{{- end -}}
+        {{- if index $index . -}}{{ errorf "Duplicate knowledge_id %q" . }}{{- end -}}
+        {{- $index = merge $index (dict . $page) -}}
+    {{- end -}}
+{{- end -}}
+{{- return $index -}}

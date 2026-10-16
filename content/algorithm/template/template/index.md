@@ -1,9 +1,11 @@
 ---
+aliases:
+  - "/categories/总结--conclusion/"
+knowledge_id: "algorithm-template"
+url: "/algorithm/template/template/"
 title: "ICPC 算法模板"
 date: 2025-12-23
 lastmod: 2026-09-20
-categories:
-  - "总结 | conclusion"
 tags:
   - "ICPC"
 

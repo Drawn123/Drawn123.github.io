@@ -1,4 +1,5 @@
 <footer class="article-meta article-footer">
+    {{ partial "drawn/article-connections.html" . }}
     {{ partial "article/components/tags" . }}
 
     {{ if and (.Site.Params.article.license.enabled) (not (eq .Params.license false)) }}

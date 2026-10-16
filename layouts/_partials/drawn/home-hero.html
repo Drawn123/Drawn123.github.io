@@ -1,16 +1,18 @@
-{{- $algorithm := site.GetPage "section" "algorithm" -}}
-{{- $notes := site.GetPage "section" "notes" -}}
-{{- $blog := site.GetPage "section" "blog" -}}
-{{- $allPages := where site.RegularPages "Type" "in" site.Params.mainSections -}}
 <section class="drawn-home-hero">
     <div>
         <p class="drawn-kicker">Code · Learn · Share</p>
-        <h1>Drawn123</h1>
-        <p>个人主页、算法题解知识库、学习笔记库和 GitHub 项目展示站。</p>
-        <div class="drawn-hero-actions">
-            {{ with $blog }}<a href="{{ .RelPermalink }}">博客总览 / Blog</a>{{ end }}
-            <a href="/search/">搜索 / Search</a>
-            {{ with index (shuffle $allPages) 0 }}<a href="{{ .RelPermalink }}">随机 / Random</a>{{ end }}
+        <h1>学习、实践，持续记录。</h1>
+        <p>这里是 Drawn123 的知识笔记。从算法竞赛出发，把课程、机器学习与项目实践逐步连成体系。</p>
+        {{ with site.GetPage "/page/search" }}
+        <form class="drawn-home-search" action="{{ .RelPermalink }}" role="search">
+            <label class="drawn-visually-hidden" for="home-keyword">搜索文章、知识点或题号</label>
+            <input id="home-keyword" name="keyword" type="search" placeholder="搜索文章、知识点或题号…" required>
+            <button type="submit">搜索</button>
+        </form>
+        {{ end }}
+        <div class="drawn-home-links">
+            {{ with site.GetPage "/blog" }}<a href="{{ .RelPermalink }}">全部文章 →</a>{{ end }}
+            {{ with site.GetPage "/tags" }}<a href="{{ .RelPermalink }}">全部标签 →</a>{{ end }}
         </div>
     </div>
 </section>

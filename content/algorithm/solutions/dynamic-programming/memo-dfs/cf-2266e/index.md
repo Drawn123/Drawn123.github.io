@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-2266e"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/cf-2266e/"
 title: "CF 2266E Prime Destruction"
 date: 2026-10-03
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -12,7 +12,7 @@ tags:
 difficulty: 
 platform:
   - "Codeforces"
-problem_id: "2266E"
+problem_id: "CF2266E"
 weight: 10
 pinned: false
 draft: false

@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-1063b"
+url: "/algorithm/solutions/graph-theory/shortest-path/cf-1063b/"
 title: "CF 1063 B Labyrinth"
 date: 2026-09-23
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "图论 | Graph Theory"
   - "最短路 | Shortest Path"

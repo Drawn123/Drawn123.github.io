@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-287e"
+url: "/algorithm/solutions/data-structure/abc-287e/"
 title: "ABC 287E Karuta"
 date: 2026-09-08
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "数据结构 | Data Structure"
   - "字典树 | Trie"

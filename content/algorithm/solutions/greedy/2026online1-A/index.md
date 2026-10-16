@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2026online1-a"
+url: "/algorithm/solutions/greedy/2026online1-a/"
 title: "2026 ICPC网络赛第一场 A"
 date: 2026-09-07
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "栈 | Stack"
   - "贪心 | Greedy"

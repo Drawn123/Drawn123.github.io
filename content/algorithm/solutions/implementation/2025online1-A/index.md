@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2025online1-a"
+url: "/algorithm/solutions/implementation/2025online1-a/"
 title: "2025 ICPC网络赛第一场 A"
 date: 2026-09-03
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "模拟 | Implementation"
   - "ICPC"

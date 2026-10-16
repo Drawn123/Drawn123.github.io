@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1164"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1164/"
 title: "P1164 小 A 点菜"
 date: 2026-07-21
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"

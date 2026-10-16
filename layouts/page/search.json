@@ -1,4 +1,4 @@
-{{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+{{- $pages := partial "drawn/content-pages.html" . -}}
 {{- $result := slice -}}
 
 {{- range $pages -}}

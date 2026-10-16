@@ -1,9 +1,11 @@
 ---
+aliases:
+  - "/algorithm/solutions/graph-theory/2026online1-c/"
+knowledge_id: "solution-2026online1-c"
+url: "/algorithm/solutions/graph-theory/topo/2026online1-c/"
 title: "2026 ICPC网络赛第一场 C"
 date: 2026-09-07
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "ICPC"
   - "拓扑排序 | Topological Sort"

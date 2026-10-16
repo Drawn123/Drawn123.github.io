@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-473d"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/abc-473d/"
 title: "ABC 473D Coefficient Stair"
 date: 2026-08-29
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "搜索 | Search"
   - "枚举 | Enumeration"

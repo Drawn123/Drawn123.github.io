@@ -1,12 +1,14 @@
 ---
+knowledge_id: "notes-linux-01"
+url: "/notes/linux/01-命令行基础与常用命令/"
+series_id: "linux"
+series_order: 1
 title: "【Linux】命令行基础与常用命令"
 date: 2026-10-11
 lastmod:
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: Linux"
-weight: 20
+weight: 10
 pinned: false
 draft: false
 ---

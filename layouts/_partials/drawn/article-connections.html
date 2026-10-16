@@ -1,0 +1,32 @@
+{{- $page := . -}}
+{{- $prerequisites := .Params.prerequisites | default slice -}}
+{{- $related := .Params.related_ids | default slice -}}
+{{- $backlinks := slice -}}
+{{- with .Params.knowledge_id -}}
+    {{- $id := . -}}
+    {{- range site.RegularPages -}}
+        {{- $body := string .Content -}}
+        {{- $linked := or (strings.Contains $body (printf `href="%s"` $page.RelPermalink)) (strings.Contains $body (printf `href="%s#` $page.RelPermalink)) -}}
+        {{- if and (ne .RelPermalink $page.RelPermalink) (or (in (.Params.prerequisites | default slice) $id) (in (.Params.related_ids | default slice) $id) $linked) -}}
+            {{- $backlinks = $backlinks | append . -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- if or $prerequisites $related $backlinks -}}
+<aside class="drawn-connections" aria-label="知识关联">
+    <h2>知识关联</h2>
+    {{- range slice (dict "Title" "建议先读" "IDs" $prerequisites) (dict "Title" "延伸阅读" "IDs" $related) -}}
+        {{- if .IDs -}}
+        <section><h3>{{ .Title }}</h3><ul>
+            {{- range .IDs -}}
+                {{- $target := partial "drawn/resolve-article.html" (dict "ID" . "Source" $page.Path) -}}
+                {{- with $target -}}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>{{- end -}}
+            {{- end -}}
+        </ul></section>
+        {{- end -}}
+    {{- end -}}
+    {{- with $backlinks -}}
+    <section><h3>引用这篇文章</h3><ul>{{ range .ByTitle }}<li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>{{ end }}</ul></section>
+    {{- end -}}
+</aside>
+{{- end -}}

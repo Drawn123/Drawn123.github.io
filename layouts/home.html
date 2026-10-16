@@ -1,61 +1,45 @@
 {{ define "main" }}
-    {{- partial "drawn/home-hero.html" . -}}
-    {{- partial "drawn/home-portals.html" . -}}
-    {{- partial "drawn/home-explorer.html" . -}}
-
-    {{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
-    {{- $pinned := partial "drawn/pinned-pages.html" $pages -}}
-    {{- $regular := $pages -}}
-    {{- if gt (len $pinned) 0 -}}
-        {{- $regular = $pages | complement $pinned -}}
-    {{- end -}}
-
-    {{- with $pinned -}}
+    {{ partial "drawn/home-hero.html" . }}
+    {{ partial "drawn/home-portals.html" . }}
     <section class="drawn-home-panel">
-        <div class="drawn-section-heading">
-            <p>Pinned</p>
-            <h2>置顶文章 / Pinned Posts</h2>
-        </div>
-        <section class="article-list">
-            {{ range first 4 . }}
-                {{ partial "article-list/default" . }}
-            {{ end }}
-        </section>
-    </section>
-    {{- end -}}
-
-    <section class="drawn-home-panel">
-        <div class="drawn-section-heading">
-            <p>Recent Posts</p>
-            <h2>最新文章 / Recent Posts</h2>
-        </div>
-        <section class="article-list">
-            {{ range first 8 ($regular.ByDate.Reverse) }}
-                {{ partial "article-list/default" . }}
-            {{ end }}
-        </section>
-    </section>
-
-    <section class="drawn-home-panel drawn-activity">
-        <div class="drawn-section-heading">
-            <p>Learning Activity</p>
-            <h2>学习动态 / Learning Activity</h2>
-        </div>
-        <div class="drawn-activity-panel">
-            <div class="drawn-activity-strip">
-                {{ range first 10 $pages.ByDate.Reverse }}
-                    <a href="{{ .RelPermalink }}">
-                        <time>{{ .Date | time.Format "01-02" }}</time>
-                        <span>{{ .Title }}</span>
-                    </a>
+        <div class="drawn-section-heading"><p>Start Here</p><h2>常用入口</h2></div>
+        <div class="drawn-featured-grid">
+            {{ range hugo.Data.featured.paths }}
+                {{ with site.GetPage . }}
+                <a class="drawn-featured-card" href="{{ .RelPermalink }}">
+                    <span>{{ if .IsSection }}系列目录{{ else }}置顶速查{{ end }}</span>
+                    <strong>{{ .Title }}</strong>
+                    {{ with .Description }}<p>{{ . }}</p>{{ end }}
+                    <small>开始阅读 →</small>
+                </a>
                 {{ end }}
-            </div>
+            {{ end }}
         </div>
     </section>
-
-    {{- partial "footer/footer" . -}}
+    {{ $pages := partial "drawn/content-pages.html" . }}
+    <section class="drawn-home-panel" data-recent-panel>
+        <div class="drawn-section-heading"><p>Recently Updated</p><h2>最近更新</h2></div>
+        <div class="drawn-filter-bar" data-recent-filters hidden aria-label="按方向筛选最近更新">
+            <button type="button" data-section="all" aria-pressed="true">全部</button>
+            {{ range hugo.Data.modules.modules }}
+                {{ $module := . }}
+                {{ with site.GetPage .path }}
+                    {{ if gt (len .RegularPagesRecursive) 0 }}<button type="button" data-section="{{ $module.path }}" aria-pressed="false">{{ $module.title }}</button>{{ end }}
+                {{ end }}
+            {{ end }}
+        </div>
+        <div class="drawn-recent-grid" data-recent-list>
+            {{ range $index, $page := $pages.ByLastmod.Reverse }}
+            <article class="drawn-recent-card" data-section="{{ .Section }}"{{ if ge $index 6 }} hidden{{ end }}>
+                <div class="drawn-recent-meta"><span>{{ .FirstSection.Title }}</span><time datetime="{{ .Lastmod.Format "2006-01-02" }}">{{ .Lastmod.Format "2006-01-02" }}{{ if gt .Lastmod.Unix .Date.Unix }} · 更新{{ end }}</time></div>
+                <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
+                {{ with .Description }}<p>{{ . }}</p>{{ end }}
+                <div class="drawn-recent-tags">{{ range first 3 (.GetTerms "tags") }}<a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a>{{ end }}</div>
+            </article>
+            {{ end }}
+        </div>
+        <div class="drawn-recent-actions"><button type="button" data-recent-more hidden>再看 6 篇</button>{{ with site.GetPage "/blog" }}<a href="{{ .RelPermalink }}">进入文章总览 →</a>{{ end }}</div>
+    </section>
+    {{ partial "footer/footer" . }}
 {{ end }}
-
-{{ define "right-sidebar" }}
-    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
-{{ end }}
+{{ define "right-sidebar" }}{{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}{{ end }}

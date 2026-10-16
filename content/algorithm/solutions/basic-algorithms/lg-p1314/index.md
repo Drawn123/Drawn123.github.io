@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1314"
+url: "/algorithm/solutions/basic-algorithms/lg-p1314/"
 title: "洛谷 P1314 聪明的质检员"
 date: 2026-03-09
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "二分 | Binary Search"
   - "前缀和 | Prefix Sum"

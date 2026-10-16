@@ -1,0 +1,17 @@
+{{- $showEmpty := .ShowEmpty | default false -}}
+<div class="drawn-portal-grid drawn-module-grid">
+    {{- range hugo.Data.modules.modules -}}
+        {{- $module := . -}}
+        {{- with site.GetPage .path -}}
+            {{- $count := len .RegularPagesRecursive -}}
+            {{- if or $showEmpty (gt $count 0) -}}
+            <a class="drawn-portal{{ if eq $count 0 }} is-planned{{ end }}" href="{{ .RelPermalink }}">
+                <span>{{ $module.label }}</span>
+                <strong>{{ $module.title }}</strong>
+                <em>{{ $module.description }}</em>
+                <small>{{ if gt $count 0 }}{{ $count }} 篇文章 · 进入目录 →{{ else }}目录已准备 · 暂无文章{{ end }}</small>
+            </a>
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+</div>

@@ -1,12 +1,14 @@
 ---
+knowledge_id: "notes-linux-02"
+url: "/notes/linux/02-文件与目录管理/"
+series_id: "linux"
+series_order: 2
 title: "【Linux】文件与目录管理常用命令"
 date: 2026-10-16
 lastmod:
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: Linux"
-weight: 30
+weight: 20
 pinned: false
 draft: false
 ---

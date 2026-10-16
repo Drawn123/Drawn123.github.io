@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-lg-p1278"
+url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1278/"
 title: "P1278 单词游戏"
 date: 2026-07-23
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "状压动态规划 | Bitmask DP"
   - "记忆化搜索 | Memoized DFS"

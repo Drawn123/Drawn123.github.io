@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2025online1-m"
+url: "/algorithm/solutions/graph-theory/shortest-path/2025online1-m/"
 title: "2025 ICPC网络赛第一场 M"
 date: 2026-09-11
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "分层图最短路 | Layered Shortest Path"
   - "ICPC"

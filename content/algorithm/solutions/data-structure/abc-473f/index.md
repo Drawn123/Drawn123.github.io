@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-473f"
+url: "/algorithm/solutions/data-structure/abc-473f/"
 title: "ABC 473F A/AB Insertion"
 date: 2026-09-01
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"

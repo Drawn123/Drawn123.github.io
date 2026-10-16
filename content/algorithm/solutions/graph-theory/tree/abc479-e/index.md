@@ -1,9 +1,11 @@
 ---
+related_ids:
+  - "algorithm-template"
+knowledge_id: "solution-abc479-e"
+url: "/algorithm/solutions/graph-theory/tree/abc479-e/"
 title: "ABC 479E Cut and Add"
 date: 2026-10-16
 lastmod:
-categories:
-  - "算法 | Algorithm"
 tags:
   - "树 | Tree"
   - "树上差分 | Tree Difference"

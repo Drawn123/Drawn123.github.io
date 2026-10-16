@@ -1,0 +1,77 @@
+// Stars stay behind the reading surface; click particles never capture input.
+.drawn-bg-canvas, .drawn-click-canvas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.drawn-bg-canvas { z-index: 0; }
+.drawn-click-canvas { z-index: 1000; }
+[data-scheme="dark"] .drawn-home-search { background: rgba(21, 32, 54, 0.72); border-color: rgba(158, 192, 234, 0.2); }
+[data-scheme="dark"] .drawn-home-search input::placeholder { color: #a3b3cd; }
+[data-scheme="dark"] .drawn-home-search button { background: rgba(139, 180, 226, 0.12); color: #d2e6fb; }
+
+// One shared surface for both rows of home cards, in either theme.
+.drawn-portal, .drawn-featured-card, .drawn-recent-card, .drawn-category-card {
+  background: var(--drawn-panel);
+  border-color: var(--drawn-border);
+  box-shadow: var(--shadow-l1);
+}
+.drawn-ocean { position: fixed; inset: auto 0 0; height: 136px; overflow: hidden; pointer-events: none; z-index: 2; contain: layout paint; }
+.drawn-sea-waves { position: absolute; bottom: 0; left: 0; width: 200%; height: 100%; animation: drawn-sea-travel 24s linear infinite; }
+.sea-layer-back { z-index: 0; fill: rgba(111, 190, 215, 0.14); }
+.sea-layer-middle { z-index: 2; fill: rgba(83, 161, 197, 0.15); animation-duration: 18s; animation-direction: reverse; }
+.sea-layer-front { z-index: 3; fill: rgba(75, 134, 188, 0.19); animation-duration: 13s; }
+.sea-foam { fill: none; stroke: rgba(240, 253, 255, 0.6); stroke-width: 1.5; stroke-linecap: round; }
+:root[data-scheme="dark"] .sea-layer-back { fill: rgba(95, 181, 211, 0.12); }
+:root[data-scheme="dark"] .sea-layer-middle { fill: rgba(77, 150, 192, 0.17); }
+:root[data-scheme="dark"] .sea-layer-front { fill: rgba(59, 119, 171, 0.25); }
+:root[data-scheme="dark"] .sea-foam { stroke: rgba(166, 222, 239, 0.4); }
+.drawn-swimmer { position: absolute; left: 18%; bottom: -8px; width: 170px; height: 113px; will-change: transform; z-index: 1; opacity: 0.56; }
+:root[data-scheme="dark"] .drawn-swimmer { opacity: 0.62; }
+.whale-calf { width: 106px; height: 70px; left: 74%; bottom: -2px; }
+.drawn-whale-facing { display: block; width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 4px 5px rgba(33, 87, 135, 0.12)); --whale-back: #8ed3e5; --whale-body: #5b9ac4; --whale-tail: #6aaecb; --whale-fin: #4d91b8; }
+[data-direction="-1"] .drawn-whale-facing { transform: scaleX(-1); }
+.whale-calf .drawn-whale-facing { --whale-back: #b6c4ed; --whale-body: #859bc9; --whale-tail: #96aed8; --whale-fin: #7d96c1; }
+:root[data-scheme="dark"] .drawn-whale-facing { --whale-back: #a3e0ed; --whale-body: #70afcf; --whale-tail: #82c5dd; --whale-fin: #5e9fc6; filter: drop-shadow(0 0 8px rgba(132, 216, 238, 0.12)); }
+:root[data-scheme="dark"] .whale-calf .drawn-whale-facing { --whale-back: #ccd1f5; --whale-body: #99b3dc; --whale-tail: #b2c1e8; --whale-fin: #8ba6d1; }
+.whale-back-stop { stop-color: var(--whale-back); }
+.whale-body-stop { stop-color: var(--whale-body); }
+.whale-body { stroke: rgba(62, 128, 168, 0.25); stroke-width: 0.8; }
+.whale-tail-fill { fill: var(--whale-tail); }
+.whale-flipper-fill { fill: var(--whale-fin); }
+.whale-belly { opacity: 0.94; }
+.whale-tail-highlight, .whale-fin-shine, .whale-back-shine { fill: none; stroke: rgba(241, 253, 255, 0.42); stroke-width: 2.5; stroke-linecap: round; }
+.whale-back-shine { stroke-width: 3.5; }
+.whale-eye { fill: #284b68; }
+.whale-eye-shine { fill: #fff; }
+.whale-smile { fill: none; stroke: #386d8b; stroke-width: 2; stroke-linecap: round; }
+.whale-cheek { fill: #f2bbc4; opacity: 0.45; }
+.whale-belly-lines { fill: none; stroke: rgba(72, 138, 167, 0.26); stroke-width: 1.3; stroke-linecap: round; }
+.whale-tail { transform-box: view-box; transform-origin: 74px 88px; animation: drawn-whale-tail 1.8s ease-in-out infinite alternate; }
+.whale-flipper { transform-box: view-box; transform-origin: 158px 105px; animation: drawn-whale-fin 2.8s ease-in-out infinite alternate; }
+.whale-calf .whale-tail { animation-duration: 1.2s; animation-delay: -0.6s; }
+.whale-spout { transform-box: view-box; transform-origin: 174px 43px; animation: drawn-whale-spout 12s ease-out -8s infinite; }
+.whale-spout path { stroke: #87cadd; stroke-width: 3; stroke-linecap: round; fill: none; }
+.whale-spout circle { fill: #9ddce9; }
+.whale-calf .whale-spout { animation-delay: -3s; animation-duration: 16s; }
+.whale-wake { fill: none; stroke: rgba(157, 219, 233, 0.5); stroke-width: 1.5; animation: drawn-whale-wake 3s ease-in-out infinite; }
+.drawn-sea-specks { position: absolute; inset: 0; z-index: 1; }
+.drawn-sea-specks i { position: absolute; bottom: 5px; left: 12%; width: 3px; height: 3px; background: #9bdaeb; border-radius: 50%; animation: drawn-sea-shimmer 7s ease-out infinite; }
+.drawn-sea-specks i:nth-child(2) { left: 29%; animation-delay: -2s; }
+.drawn-sea-specks i:nth-child(3) { left: 45%; animation-delay: -5s; }
+.drawn-sea-specks i:nth-child(4) { left: 62%; animation-delay: -1s; }
+.drawn-sea-specks i:nth-child(5) { left: 79%; animation-delay: -4s; }
+.drawn-sea-specks i:nth-child(6) { left: 91%; animation-delay: -6s; }
+[data-atmosphere-paused="true"] .drawn-ocean * { animation-play-state: paused !important; }
+@keyframes drawn-sea-travel { to { transform: translateX(-50%); } }
+@keyframes drawn-whale-tail { from { transform: rotate(-7deg); } to { transform: rotate(8deg); } }
+@keyframes drawn-whale-fin { from { transform: rotate(-5deg); } to { transform: rotate(8deg); } }
+@keyframes drawn-whale-spout { 0%, 62%, 100% { opacity: 0; transform: scaleY(0.35); } 68%, 76% { opacity: 0.85; transform: scaleY(1); } 87% { opacity: 0; transform: translateY(-5px) scaleY(1.12); } }
+@keyframes drawn-whale-wake { 0%, 100% { opacity: 0.3; transform: scaleX(0.9); } 50% { opacity: 0.7; transform: scaleX(1.08); } }
+@keyframes drawn-sea-shimmer { 0% { opacity: 0; transform: translate(0, 0) scale(0.5); } 20% { opacity: 0.7; } 100% { opacity: 0; transform: translate(12px, -70px) scale(0); } }
+@media (max-width: 620px) {
+  .drawn-ocean { height: 108px; }
+  .drawn-swimmer { width: 132px; height: 88px; bottom: -9px; opacity: 0.5; }
+  :root[data-scheme="dark"] .drawn-swimmer { opacity: 0.56; }
+  .whale-calf { width: 84px; height: 56px; bottom: -2px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .drawn-ocean * { animation: none !important; }
+  .whale-spout, .drawn-sea-specks { display: none; }
+}

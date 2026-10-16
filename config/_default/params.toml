@@ -1,5 +1,5 @@
 # Pages placed under these sections will be shown on homepage and archive page.
-mainSections = ["algorithm", "notes", "post"]
+mainSections = ["algorithm", "notes", "machine-learning", "projects", "research", "post"]
 # Output page's full content in RSS.
 rssFullContent = true
 favicon        = "img/favicon.png"
@@ -35,7 +35,7 @@ SortBy              = "default"
     homepage = [
         { type = "search" },
         { type = "archives", params = { limit = 5 } },
-        { type = "categories", params = { limit = 10 } },
+        { type = "categories" },
         { type = "tag-cloud", params = { limit = 10 } },
     ]
     page = [{ type = "toc" }]
@@ -51,7 +51,3 @@ SortBy              = "default"
 ## Comments
 [comments]
     enabled  = false
-    provider = "disqus"
-
-    # See all the available configurations at https://github.com/CaiJimmy/hugo-theme-stack/blob/master/config/_default/params.toml
-    # Copy the configurations you need from there and paste it here.

@@ -1,13 +1,14 @@
 {{ define "main" }}
-    <article class="main-article drawn-archives-page">
-        {{ partial "drawn/page-breadcrumb.html" . }}
-        <header class="drawn-archives-header">
-            <p class="drawn-archives-eyebrow">A TIMELINE OF NOTES AND POSTS</p>
-            <h1>归档 <span>/ Archives</span></h1>
-            <p class="drawn-archives-description">按文章日期整理的知识记录与创作轨迹</p>
+    {{- $pages := partial "drawn/content-pages.html" . -}}
+    <div class="drawn-archives-page">
+        <header class="section-card drawn-archives-header">
+            <div class="section-details">
+                <p class="section-count">共 {{ len $pages }} 篇文章</p>
+                <h1 class="section-term">{{ .Title }}</h1>
+                <p class="section-description">按文章日期整理的知识记录与创作轨迹</p>
+            </div>
         </header>
 
-        {{- $pages := where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
         {{- $archiveEntries := slice -}}
         {{- range $page := $pages -}}
             {{- $date := $page.Date -}}
@@ -47,7 +48,8 @@
             {{- end -}}
             {{- if gt (len $pages) 0 -}}</div></div></div></section>{{- end -}}
         </section>
-    </article>
+    </div>
+    {{ partialCached "footer/footer" . }}
 {{ end }}
 
 {{ define "right-sidebar" }}

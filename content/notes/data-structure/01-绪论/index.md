@@ -1,9 +1,11 @@
 ---
+knowledge_id: "notes-data-structure-01"
+url: "/notes/data-structure/01-绪论/"
+series_id: "data-structure"
+series_order: 1
 title: "【数据结构】 第一章 绪论"
 date: 2026-09-14
 lastmod: 
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: 数据结构"
 

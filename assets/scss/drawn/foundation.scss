@@ -1,0 +1,213 @@
+html {
+  font-size: 12px !important;
+  max-width: 100%;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+}
+
+html::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+:root {
+  --drawn-pink: #f4a7c8;
+  --drawn-purple: #9d8cff;
+  --drawn-blue: #79c9ff;
+  --drawn-mint: #8ee6d1;
+  --drawn-ink-soft: rgba(69, 61, 92, 0.72);
+  --drawn-border: rgba(157, 140, 255, 0.22);
+  --drawn-panel: var(--card-background);
+}
+
+:root[data-scheme="dark"] {
+  --body-background: #292d3d;
+  --card-background: #323b52;
+  --drawn-card-dark: var(--card-background);
+  --drawn-card-dark-raised: #3b4760;
+  --card-background-selected: rgba(146, 216, 208, 0.13);
+  --card-separator-color: rgba(196, 204, 232, 0.14);
+  --drawn-ink-soft: rgba(232, 232, 248, 0.76);
+  --drawn-border: rgba(166, 185, 220, 0.24);
+  --drawn-panel: var(--card-background);
+}
+
+body {
+  background: radial-gradient(ellipse at 12% 12%, rgba(188, 185, 244, 0.16), transparent 50%), radial-gradient(ellipse at 86% 72%, rgba(130, 209, 221, 0.13), transparent 48%), linear-gradient(155deg, #f9faff, #f0f5ff 65%, #f4f4fc);
+}
+[data-scheme="dark"] body {
+  background: radial-gradient(ellipse at 15% 5%, rgba(99, 78, 163, 0.24), transparent 55%), radial-gradient(ellipse at 88% 70%, rgba(36, 117, 141, 0.18), transparent 52%), linear-gradient(150deg, #161c30, #1b2540 65%, #22223d);
+}
+
+@media (min-width: 1024px) {
+  [data-scheme="dark"] .main-container > .left-sidebar.sticky,
+  [data-scheme="dark"] .main-container > .right-sidebar.sticky {
+    background: linear-gradient(180deg, rgba(61, 62, 83, 0.46), rgba(48, 57, 73, 0.28));
+    border-inline: 1px solid rgba(190, 199, 226, 0.08);
+    box-shadow: 0 0 30px rgba(19, 23, 34, 0.08);
+  }
+
+  [data-scheme="dark"] .main-container > .left-sidebar.sticky {
+    border-radius: 0 0 14px 0;
+    border-left-color: transparent;
+    padding-left: 0.7rem;
+    padding-right: 0.7rem;
+  }
+
+  [data-scheme="dark"] .main-container > .right-sidebar.sticky {
+    border-radius: 0 0 0 14px;
+  }
+
+  /* The left profile rail keeps its surface; the right utility rail blends into the page. */
+  .main-container > .right-sidebar.sticky,
+  [data-scheme="dark"] .main-container > .right-sidebar.sticky {
+    background: transparent !important;
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+}
+
+.drawn-bg-canvas {
+  inset: 0;
+  pointer-events: none;
+  position: fixed;
+  z-index: 0;
+}
+
+.main-container {
+  position: relative;
+  z-index: 1;
+}
+
+/* Fixed sidebars keep their own scroll context while their scrollbars stay visually hidden. */
+.main-container > .left-sidebar,
+.main-container > .right-sidebar {
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+#main-menu {
+  scrollbar-width: none;
+}
+
+/* Keep the profile content comfortably inside the sidebar edge. */
+@media (min-width: 1024px) {
+  .main-container > .left-sidebar.sticky {
+    border-left-color: transparent;
+    padding-inline: 0.7rem;
+  }
+
+  .main-container > .left-sidebar.sticky > header,
+  .main-container > .left-sidebar.sticky > .menu-social,
+  .main-container > .left-sidebar.sticky > #main-menu {
+    width: 100%;
+  }
+}
+
+.main-container > .left-sidebar::-webkit-scrollbar,
+.main-container > .right-sidebar::-webkit-scrollbar,
+#main-menu::-webkit-scrollbar {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+/* Desktop uses a real fixed-sidebar layout so only the center column scrolls. */
+@media (min-width: 1024px) {
+  .main-container {
+    display: block;
+    max-width: 1536px;
+    padding-left: var(--container-padding);
+    padding-right: var(--container-padding);
+  }
+
+  .main-container > .left-sidebar.sticky,
+  .main-container > .right-sidebar.sticky {
+    box-sizing: border-box;
+    display: flex;
+    height: 100vh;
+    max-height: 100vh;
+    min-height: 0;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    overscroll-behavior: contain;
+    position: fixed;
+    scrollbar-width: none;
+    top: 0;
+    z-index: 20;
+  }
+
+  .main-container > .left-sidebar.sticky::-webkit-scrollbar,
+  .main-container > .right-sidebar.sticky::-webkit-scrollbar {
+    display: none;
+    height: 0;
+    width: 0;
+  }
+
+  .main-container > main.main {
+    box-sizing: border-box;
+    min-height: 100vh;
+    margin-left: calc(17% + var(--section-separation));
+    margin-right: calc(21% + var(--section-separation));
+    max-width: none;
+    width: auto;
+  }
+
+  .main-container > .left-sidebar.sticky {
+    left: unquote("max(var(--container-padding), calc((100vw - 1536px) / 2 + var(--container-padding)))");
+    width: unquote("min(17vw, 261.12px)");
+  }
+
+  .main-container > .right-sidebar.sticky {
+    right: unquote("max(var(--container-padding), calc((100vw - 1536px) / 2 + var(--container-padding)))");
+    width: unquote("min(21vw, 322.56px)");
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .main-container {
+    max-width: 1280px;
+  }
+
+  .main-container > main.main {
+    margin-left: calc(20% + var(--section-separation));
+    margin-right: calc(24% + var(--section-separation));
+  }
+
+  .main-container > .left-sidebar.sticky {
+    left: var(--container-padding);
+    width: 20%;
+  }
+
+  .main-container > .right-sidebar.sticky {
+    right: var(--container-padding);
+    width: 24%;
+  }
+}
+
+.sidebar header .site-avatar img {
+  animation: drawn-fade-up 0.7s ease both;
+}
+
+.site-name,
+.site-description,
+.article-list > article,
+.drawn-home-panel,
+.drawn-home-hero {
+  animation: drawn-fade-up 0.68s ease both;
+}
+
+@keyframes drawn-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

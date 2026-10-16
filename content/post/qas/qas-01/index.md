@@ -1,12 +1,12 @@
 ---
+knowledge_id: "post-qas-01"
+url: "/p/qas-01/"
 title: "动态规划和有向无环图的联系"
 description: ""
 date: 2026-08-25
 lastmod: 2026-08-26
 slug: "qas-01"
 image: "" 
-categories:
-    - 问答录 | Q & A
 tags:
     - 动态规划 | DP
     - 图论 | Graph Theory

@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-1027d"
+url: "/algorithm/solutions/graph-theory/topo/cf-1027d/"
 title: "CF 1027D Mouse Hunt"
 date: 2026-09-20
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "图论 | Graph Theory"
   - "拓扑排序 | Topological Sort"
@@ -12,7 +12,7 @@ tags:
 difficulty: ""
 platform:
   - "Codeforces"
-problem_id: "1027D"
+problem_id: "CF1027D"
 weight: 10
 pinned: false
 draft: false

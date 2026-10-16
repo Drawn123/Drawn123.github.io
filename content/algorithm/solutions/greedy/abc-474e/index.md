@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-474e"
+url: "/algorithm/solutions/greedy/abc-474e/"
 title: "ABC 474E One Time Coupon"
 date: 2026-09-09
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "贪心 | Greedy"
   - "前缀和 | Prefix Sum"

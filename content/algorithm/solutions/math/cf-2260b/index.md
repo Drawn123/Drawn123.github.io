@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-2260b"
+url: "/algorithm/solutions/math/cf-2260b/"
 title: "CF edu194 B"
 date: 2026-09-09
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "数论 | Number Theory"
 

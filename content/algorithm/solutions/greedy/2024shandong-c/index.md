@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-2024shandong-c"
+url: "/algorithm/solutions/greedy/2024shandong-c/"
 title: "2024山东省赛 C"
 date: 2026-05-14
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "贪心 | Greedy"
   - "排序 | Sorting"

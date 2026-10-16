@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-2232c1"
+url: "/algorithm/solutions/basic-algorithms/cf-2232c1/"
 title: "CF 1101 div2 C1 C2"
 date: 2026-07-17
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "二分 | Binary Search"
   - "贪心 | Greedy"

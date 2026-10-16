@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-abc-477e"
+url: "/algorithm/solutions/graph-theory/shortest-path/abc-477e/"
 title: "ABC 477 E"
 date: 2026-09-26
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "图论 | Graph Theory"
   - "最短路 | Shortest Path"
@@ -12,7 +12,7 @@ tags:
 difficulty: ""
 platform:
   - "AtCoder"
-problem_id: "477E"
+problem_id: "ABC477E"
 weight: 10
 pinned: false
 draft: false

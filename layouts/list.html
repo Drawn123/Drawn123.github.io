@@ -2,8 +2,10 @@
     {{- $sourcePages := partial "helper/pages.html" . -}}
     {{- $pager := partial "helper/paginator.html" . -}}
     {{- $isTagIndex := and (eq .Kind "taxonomy") (eq .Type "tags") -}}
+    {{- $isCategoryIndex := and (eq .Kind "taxonomy") (eq .Type "categories") -}}
 
     <header>
+        {{ if not (or $isCategoryIndex $isTagIndex) }}
         <h3 class="section-title">
             {{ if eq .Parent (.GetPage "/") }}
                 {{ T "list.section" }}
@@ -11,10 +13,11 @@
                 {{ .Parent.Title }}
             {{ end }}
         </h3>
+        {{ end }}
 
         <div class="section-card">
             <div class="section-details">
-                <h3 class="section-count">{{ T "list.page" (len $sourcePages) }}</h3>
+                <h3 class="section-count">{{ if $isCategoryIndex }}{{ len hugo.Data.modules.modules }} 个内容方向{{ else }}{{ T "list.page" (len $sourcePages) }}{{ end }}</h3>
                 <h1 class="section-term">{{ .Title }}</h1>
                 {{ with .Params.description }}
                     <h2 class="section-description">{{ . }}</h2>
@@ -23,21 +26,30 @@
         </div>
     </header>
 
-    {{ if in (slice "algorithm" "notes" "demo") .Section }}
+    {{ with .Content }}<section class="drawn-section-intro article-content">{{ . }}</section>{{ end }}
+
+    {{- $treeRoot := false -}}
+    {{ if and (eq .Kind "section") (in (slice "algorithm" "notes" "machine-learning" "projects" "research" "post" "topics") .Section) }}
+        {{ $treeRoot = . }}
+    {{ else if and (eq .Kind "term") (eq .Type "categories") }}
+        {{ with site.GetPage (printf "/%s" .Data.Term) }}{{ $treeRoot = . }}{{ end }}
+    {{ end }}
+    {{ with $treeRoot }}
         <section class="drawn-home-panel drawn-section-tree">
             <div class="drawn-section-heading">
-                <p>{{ if eq .Section "demo" }}Sample Tree{{ else }}Knowledge Tree{{ end }}</p>
-                <h2>{{ if eq .Section "demo" }}示例内容树 / Sample Tree{{ else }}知识树 / Knowledge Tree{{ end }}</h2>
+                <p>Knowledge Tree</p>
+                <h2>知识树 / Knowledge Tree</h2>
             </div>
             {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
         </section>
     {{ end }}
 
     {{ if and (eq .Section "blog") (eq .RelPermalink "/blog/") }}
-        {{ partial "drawn/blog-portals.html" . }}
+        {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">按方向浏览内容分类 →</a></p>{{ end }}
     {{ end }}
 
     {{- $subsections := .Sections -}}
+    {{ if not (in (slice "algorithm" "notes" "machine-learning" "projects" "research" "post" "topics") .Section) }}
     {{- with $subsections -}}
         <aside>
             <h2 class="section-title">{{ T "list.subsection" (len $subsections) }}</h2>
@@ -50,13 +62,23 @@
             </div>
         </aside>
     {{- end -}}
+    {{ end }}
 
-    {{- if $isTagIndex -}}
+    {{- if $isCategoryIndex -}}
+        {{ partial "drawn/category-directory.html" . }}
+    {{- else if $isTagIndex -}}
         {{- if gt (len $sourcePages) 0 -}}
-        <section class="article-list--compact taxonomy-term-grid">
-            {{ range $sourcePages }}
-                {{ partial "article-list/compact" . }}
-            {{ end }}
+        <section class="drawn-tag-directory" data-tag-directory>
+            <div class="drawn-tag-tools" hidden data-tag-tools>
+                <label for="tag-filter">查找标签<input id="tag-filter" type="search" placeholder="输入标签名称…" data-tag-filter></label>
+                <label for="tag-sort">排序<select id="tag-sort" data-tag-sort><option value="count">文章数量</option><option value="name">标签名称</option></select></label>
+            </div>
+            <p data-tag-status role="status">共 {{ len $sourcePages }} 个标签</p>
+            <div class="drawn-tag-grid" data-tag-list>
+                {{ range .Site.Taxonomies.tags.ByCount }}
+                <a href="{{ .Page.RelPermalink }}" data-tag-name="{{ .Page.Title }}" data-tag-count="{{ .Count }}"><strong>{{ .Page.Title }}</strong><span>{{ .Count }} 篇文章 →</span></a>
+                {{ end }}
+            </div>
         </section>
         {{- end -}}
     {{- else if gt $pager.TotalNumberOfElements 0 -}}
@@ -67,6 +89,8 @@
         </section>
         {{ partial "drawn/pagination.html" $pager }}
     {{- end -}}
+
+    {{ if and (eq .Kind "section") (eq (len .RegularPagesRecursive) 0) (not (eq .Section "blog")) }}<p class="drawn-section-empty">这个方向的目录已准备好，文章会在整理后陆续加入。</p>{{ end }}
 
     {{ partialCached "footer/footer" . }}
 {{ end }}

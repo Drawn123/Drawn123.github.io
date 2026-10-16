@@ -3,9 +3,9 @@
 {{- $isFormalSection := and (eq .Kind "section") (in .Site.Params.mainSections .Section) -}}
 
 {{- if .IsHome -}}
-    {{- $pages = where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+    {{- $pages = partial "drawn/content-pages.html" . -}}
 {{- else if $isBlog -}}
-    {{- $pages = where .Site.RegularPages "Type" "in" .Site.Params.mainSections -}}
+    {{- $pages = partial "drawn/content-pages.html" . -}}
 {{- else if $isFormalSection -}}
     {{- $pages = .RegularPagesRecursive -}}
 {{- else if or (eq .Kind "section") (eq .Kind "taxonomy") (eq .Kind "term") -}}
@@ -27,7 +27,9 @@
     {{- $pages = $nonEmptyTerms -}}
 {{- end -}}
 
-{{- if or .IsHome $isBlog $isFormalSection (eq .Kind "term") -}}
+{{- if .Params.learning_series -}}
+    {{- $pages = sort .RegularPagesRecursive "Params.series_order" "asc" -}}
+{{- else if or .IsHome $isBlog $isFormalSection (eq .Kind "term") -}}
     {{- $pinned := partial "drawn/pinned-pages.html" $pages -}}
     {{- $regular := $pages -}}
     {{- if gt (len $pinned) 0 -}}

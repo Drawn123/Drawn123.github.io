@@ -1,12 +1,14 @@
 ---
+knowledge_id: "notes-data-structure-03"
+url: "/notes/data-structure/03-栈和队列/"
+series_id: "data-structure"
+series_order: 3
 title: "【数据结构】 第三章 栈和队列"
 date: 2026-09-27
 lastmod:
-categories:
-  - "学习笔记 | Learning Notes"
 tags:
   - "notes: 数据结构"
-weight: 20
+weight: 30
 pinned: false
 draft: false
 ---

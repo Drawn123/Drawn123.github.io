@@ -1,9 +1,9 @@
 ---
+knowledge_id: "solution-cf-1857g"
+url: "/algorithm/solutions/graph-theory/mst/cf-1857g/"
 title: "CF 891div3 G"
 date: 2026-09-14
 lastmod: 
-categories:
-  - "算法 | Algorithm"
 tags:
   - "图论 | Graph Theory"
   - "最小生成树 | MST"
