@@ -29,11 +29,14 @@ hugo server
 在浏览器中打开终端显示的本机地址。构建与检查：
 
 ```powershell
-hugo --destination work/check --cleanDestinationDir --panicOnWarning
+hugo --gc --minify --destination work/check --cleanDestinationDir --panicOnWarning
+python -m unittest discover -s scripts -p "test_*.py"
 python scripts/check_site.py --site work/check
 ```
 
 `work/`、`public/`、`resources/` 都是忽略的生成目录。检查会验证站内链接、锚点、文章标识，以及 `docs/url-baseline.json` 记录的旧路径。
+
+本地验证采用与发布相同的压缩模式。分类校验解析文章标题区的实际分类链接，兼容压缩后不带引号的 HTML 属性；侧栏导航与相关文章中的分类链接不参与这项判断。
 
 ## 新文章
 

@@ -16,10 +16,20 @@ class Page(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.links = []
         self.ids = set()
+        self.category_links = []
+        self._article_depth = 0
+        self._in_category_header = False
         self.feed(text)
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
+        if tag == "article":
+            if self._article_depth or "main-article" in attrs.get("class", "").split():
+                self._article_depth += 1
+        if tag == "header" and self._article_depth and "article-category" in attrs.get("class", "").split():
+            self._in_category_header = True
+        if tag == "a" and self._in_category_header and attrs.get("href"):
+            self.category_links.append(attrs["href"])
         if attrs.get("id"):
             self.ids.add(attrs["id"])
         for key in ("href", "src"):
@@ -29,6 +39,14 @@ class Page(HTMLParser):
             match = re.search(r"url=(.+)", attrs.get("content", ""), re.I)
             if match:
                 self.links.append(match[1])
+
+    def handle_endtag(self, tag):
+        if tag == "header":
+            self._in_category_header = False
+        if tag == "article" and self._article_depth:
+            self._article_depth -= 1
+            if not self._article_depth:
+                self._in_category_header = False
 
 
 def check(site, baseline):
@@ -67,9 +85,16 @@ def check(site, baseline):
             if len(article.get("categories", [])) != 1:
                 errors.add(f"Article must inherit exactly one content category: {article['title']}")
             rel = destination(urlsplit(article["permalink"]).path)
-            html = site / rel
-            expected = f'href="/categories/{article["section"]}/"'
-            if html.is_file() and expected not in html.read_text(encoding="utf-8"):
+            page = pages.get(rel)
+            expected = f'/categories/{article["section"]}/'
+            origin = urljoin("https://drawn123.github.io", article["permalink"])
+            categories = set()
+            if page:
+                for link in page.category_links:
+                    target = urlsplit(urljoin(origin, link))
+                    if target.scheme in ("http", "https") and target.netloc.lower() == "drawn123.github.io":
+                        categories.add(unquote(target.path))
+            if categories != {expected}:
                 errors.add(f"Article category does not match its section: {article['title']}")
 
     protected = json.loads(baseline.read_text(encoding="utf-8"))["urls"]
