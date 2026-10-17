@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p2580"
 url: "/algorithm/solutions/data-structure/trie/lg-p2580/"
 title: "P2580 于是他错误的点名开始了"
 date: 2026-07-24
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "字符串 | String"
   - "字典树 | Trie"
@@ -21,9 +21,11 @@ draft: false
 
 [P2580 于是他错误的点名开始了](https://www.luogu.com.cn/problem/P2580)
 
-**题意：**
+### 题意
 
 先给出学生名单，再按顺序点名；对每个名字判断它是否在名单中、是否已经被点过，并分别输出对应结果。
+
+### 思路
 
 **核心观察：**
 
@@ -39,7 +41,7 @@ draft: false
 
 **时间复杂度：**$O(\sum |s|)$，其中求和包含所有插入和查询字符串。
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

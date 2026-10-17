@@ -7,8 +7,8 @@
 {{ define "main" }}
 <form action="{{ .RelPermalink }}" class="search-form"{{ with .OutputFormats.Get "json" -}} data-json="{{ .RelPermalink }}"{{- end }}>
     <p>
-        <label>{{ T "search.title" }}</label>
-        <input name="keyword" placeholder="{{ T `search.placeholder` }}" />
+        <label for="search-keyword">{{ T "search.title" }}</label>
+        <input id="search-keyword" name="keyword" placeholder="{{ T `search.placeholder` }}" />
     </p>
     <button title="{{ T `search.title` }}">
         {{ partial "helper/icon" "search" }}
@@ -16,19 +16,31 @@
 </form>
 
 <div class="drawn-search-scope">
+    <div class="drawn-search-field">
     <label for="search-section">搜索范围</label>
-    <select id="search-section" data-search-section><option value="">全部方向</option>
+    <select id="search-section" data-search-section disabled><option value="">全部方向</option>
         {{ range hugo.Data.modules.modules }}<option value="{{ .path }}">{{ .title }}</option>{{ end }}
     </select>
-    <p>支持文章标题、正文、标签、平台和题号。</p>
+    </div>
+    <div class="drawn-search-field">
+    <label for="search-platform">做题平台</label>
+    <select id="search-platform" data-search-platform disabled><option value="">全部平台</option></select>
+    </div>
+    <div class="drawn-search-field">
+    <label for="search-tag">知识点 / 标签</label>
+    <select id="search-tag" data-search-tag disabled><option value="">全部知识点</option></select>
+    </div>
+    <button type="button" data-search-reset disabled>清除筛选</button>
+    <p>可直接筛选，无需输入关键词；方向、平台、知识点与关键词可组合使用。平台和知识点来自文章已填写的信息。</p>
 </div>
 <div class="search-result hidden">
-    <h3 class="search-result--title section-title"></h3>
+    <h3 class="search-result--title section-title" role="status" aria-live="polite"></h3>
+    <p class="drawn-search-empty" hidden data-search-empty>没有匹配的文章，试试其他关键词或清除筛选。</p>
     <div class="search-result--list article-list--compact"></div>
     <nav class="drawn-search-pagination hidden" aria-label="Search result pagination">
-        <button type="button" data-search-prev>‹ Prev</button>
+        <button type="button" data-search-prev>‹ 上一页</button>
         <span data-search-page>1 / 1</span>
-        <button type="button" data-search-next>Next ›</button>
+        <button type="button" data-search-next>下一页 ›</button>
     </nav>
 </div>
 

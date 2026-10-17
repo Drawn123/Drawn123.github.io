@@ -3,7 +3,7 @@ knowledge_id: "solution-abc-287e"
 url: "/algorithm/solutions/data-structure/abc-287e/"
 title: "ABC 287E Karuta"
 date: 2026-09-08
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "数据结构 | Data Structure"
   - "字典树 | Trie"
@@ -21,13 +21,32 @@ draft: false
 
 [E - Karuta](https://atcoder.jp/contests/abc287/tasks/abc287_e)
 
+### 题意
+
+给定 $N$ 个只含小写字母的字符串 $S_1,\ldots,S_N$。对于每一个 $S_i$，在其他字符串中选择一个 $S_j$（$j\ne i$），求它们最长公共前缀长度的最大值。
+
+按输入顺序输出 $N$ 个答案。注意不能与自己比较，但两个不同位置的字符串可以完全相同。
+
+$2\le N\le5\times10^5$，所有字符串的长度总和不超过 $5\times10^5$。
+
+### 思路
+
 核心是求每个字符串与列表中**其他某个字符串**的最长公共前缀（LCP）。
 
 在 Trie 树上，对于字符串 $S_i$，我们沿着它的字符逐节点向下走。只要某个节点 $u$ 的 `cnt[u] >= 2`，就说明**除了 $S_i$ 自身之外，至少还有一个字符串也经过了这个节点**。
 
 只要找到沿着 $S_i$ 路径能走到的、且满足 `cnt[u] >= 2` 的**最大深度**，这个深度就是 $S_i$ 与其他字符串能达到的最长 LCP。
 
+**时间复杂度：**$O(L)$，其中 $L$ 为所有字符串的长度总和；固定字符集下空间复杂度也是 $O(L)$。
+
+### AC代码
+
+以下省略头文件、命名空间和主函数，单组输入调用一次 `solve()`。
+
 ```c++
+const int N=5e5+10;
+const int M=26;
+
 struct Trie{
     int tree[N][M]; // 表示从节点u沿字符c走到的子节点编号 
     int cnt[N];     // 经过该节点的字符串总数（包含了穿过它的和在这里结尾的）

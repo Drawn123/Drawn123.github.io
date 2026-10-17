@@ -3,7 +3,7 @@ knowledge_id: "solution-abc-473d"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/abc-473d/"
 title: "ABC 473D Coefficient Stair"
 date: 2026-08-29
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "搜索 | Search"
   - "枚举 | Enumeration"
@@ -21,9 +21,13 @@ draft: false
 
 [D - Coefficient Stair](https://atcoder.jp/contests/abc473/tasks/abc473_d)
 
-**题意：**
+### 题意
 
-给定正整数 $n,k$，输出所有满足 $a_1+2a_2+\cdots+na_n=k$ 的非负整数序列。
+给定正整数 $n,k$，输出所有满足 $a_1+2a_2+\cdots+na_n=k$ 的长度为 $n$ 的非负整数序列。
+
+每个序列占一行，必须按字典序从小到大输出。$1\le n\le10$，$1\le k\le2\times10^5$，题目保证合法序列总数不超过 $3\times10^5$。
+
+### 思路
 
 **核心观察：**
 
@@ -32,6 +36,7 @@ draft: false
    的非负整数序列 $(a_1,a_2,\ldots,a_n)$。
 2. 按下标从小到大确定系数。确定 $a_u$ 时，若当前还剩 `rem`，则 $a_u$ 只能在 $[0,\lfloor rem/u\rfloor]$ 中取值。
 3. 当枚举到最后一个位置 $n$ 时，剩余值必须能被 $n$ 整除，此时 $a_n=rem/n$ 唯一确定，可以直接输出方案。
+4. 每一层都按从小到大的顺序枚举当前系数，并先输出这个前缀下的所有方案，再枚举下一个系数，因此输出顺序自然满足字典序要求。
 
 **算法步骤：**
 
@@ -41,7 +46,7 @@ draft: false
 
 **时间复杂度：**与合法的搜索状态数成正比；若记访问的状态数为 $S$、输出方案数为 $K$，则复杂度为 $O(S+NK)$。
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

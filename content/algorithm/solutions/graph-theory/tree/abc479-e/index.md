@@ -5,7 +5,7 @@ knowledge_id: "solution-abc479-e"
 url: "/algorithm/solutions/graph-theory/tree/abc479-e/"
 title: "ABC 479E Cut and Add"
 date: 2026-10-16
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "树 | Tree"
   - "树上差分 | Tree Difference"
@@ -22,6 +22,20 @@ draft: false
 ## E - Cut and Add
 
 [E - Cut and Add](https://atcoder.jp/contests/abc479/tasks/abc479_e)
+
+### 题意
+
+给定一棵有 $N$ 个点的树，$N$ 为奇数，边按输入顺序编号为 $1\sim N-1$，每个点的初值均为 $0$。
+
+依次处理每条边 $i$：
+
+1. 暂时删除边 $i$，树被分成两个连通块。
+2. 给点数较多的连通块中的每个点都加上 $i$。
+3. 恢复这条边，再进行下一次操作。
+
+因为 $N$ 是奇数，两侧点数不会相等。输出所有操作结束后每个点的值。
+
+$3\le N\le2\times10^5-1$，答案可能超过 32 位整数范围。
 
 ### 思路
 

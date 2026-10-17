@@ -3,7 +3,7 @@ knowledge_id: "solution-cf-2232c1"
 url: "/algorithm/solutions/basic-algorithms/cf-2232c1/"
 title: "CF 1101 div2 C1 C2"
 date: 2026-07-17
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "二分 | Binary Search"
   - "贪心 | Greedy"
@@ -24,9 +24,17 @@ draft: false
 
 [Problem - C1 - Codeforces](https://codeforces.com/contest/2232/problem/C1)   [Problem - C2 - Codeforces](https://codeforces.com/contest/2232/problem/C2)
 
-### 思路
+### 题意
 
-* 题意：$n$ 个人排队入座，最多 $t$ 张桌子且每张限坐 $s$ 人。`I` 必须开新桌，`E` 必须填旧桌空缺，而 `A` 既能开新桌也能填空缺；在队列时序不可逆下，求如何抉择每个 `A` 的行为，使最终入座总人数最大。
+$n$ 个人依次入场，有 $x$ 张桌子，每张桌子有 $s$ 个座位，最初所有桌子都为空。每个人的类型由字符串给出：
+
+- `I`：只能坐到尚未有人入座的空桌。
+- `E`：只能坐到已经有人入座、且仍有空位的桌子。
+- `A`：两种桌子都可以选择。
+
+不能改变入场顺序。处理每个人时，可以给他安排符合要求的座位，也可以让他离开；已经入座的人不能移动。求最终最多有多少人成功入座。C1、C2 的规则相同，数据范围不同。
+
+### 思路
 
 #### C1暴力
 
@@ -256,7 +264,15 @@ void solve_binary(){
   2. 遇到 `'I'` 时，必须消耗一张桌子。若最少桌数已满则无法入座；否则上下限桌数均加 1，人数加 1。
   3. 遇到 `'E'` 时，不具备开桌能力，上限不变。若能入座则人数加 1，且同样在人数突破最小容量时让 `l_table` 加 1。
 
+### AC代码
+
+下面对应法三的线性做法，单组时间复杂度 $O(n)$、空间复杂度 $O(n)$。
+
+以下省略头文件、命名空间和主函数。在 `signed main()` 中读入测试组数 $T$，每组调用一次 `solve_linear()`。
+
 ```c++
+#define int long long
+
 const int N=2e5+10;
 string ss;
 int n,x,s;

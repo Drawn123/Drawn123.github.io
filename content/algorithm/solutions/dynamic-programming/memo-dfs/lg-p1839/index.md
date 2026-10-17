@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1839"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1839/"
 title: "P1839 Play with Power"
 date: 2026-07-21
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "博弈论 | Game Theory"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,15 @@ draft: false
 
 [P1839 Play with Power](https://www.luogu.com.cn/problem/P1839)
 
-**题意：**
+### 题意
 
-给定当前幂 $a^b$ 和上限 $n$，两名玩家轮流将 $a$ 或 $b$ 加一，但幂不能超过 $n$。判断每组状态最终由谁获胜，或是否平局。
+给定上限 $n$ 和初始状态 $(a,b)$，满足 $a^b\le n$。Masha 先手，与 Stas 轮流将 $a$ 或 $b$ 中恰好一个数加 $1$，使幂超过 $n$ 的玩家输。
+
+双方都采用最优策略。对于同一个 $n$ 下的每组初始状态，先手获胜输出 `Masha`，后手获胜输出 `Stas`，若游戏可以无限持续且双方都无法强制获胜，则输出 `Missing`。
+
+$1\le n\le10^8$，询问数 $t\le100$。注意当 $a=1$ 时，指数可以不断增加而幂仍为 $1$，所以确实可能平局。
+
+### 思路
 
 **核心观察：**
 
@@ -41,7 +47,7 @@ draft: false
 
 **时间复杂度：**设实际访问的底数上界为 $A$、指数上界为 $B$，复杂度为 $O(AB^2+t)$，空间复杂度为 $O(AB)$；代码中取 $A=10^5$、$B=32$。
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

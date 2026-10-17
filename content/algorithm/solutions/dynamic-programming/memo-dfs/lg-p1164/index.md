@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1164"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1164/"
 title: "P1164 小 A 点菜"
 date: 2026-07-21
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,11 @@ draft: false
 
 [P1164 小 A 点菜](https://www.luogu.com.cn/problem/P1164)
 
-**题意：**
+### 题意
 
 有 $n$ 道菜，每道菜价格已知，要求从中选择若干道，使总价恰好为 $m$，求选择方案数。
+
+### 思路
 
 **核心观察：**
 
@@ -39,7 +41,7 @@ draft: false
 
 **时间复杂度：**$O(NM)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

@@ -3,7 +3,7 @@ knowledge_id: "solution-cf-1027d"
 url: "/algorithm/solutions/graph-theory/topo/cf-1027d/"
 title: "CF 1027D Mouse Hunt"
 date: 2026-09-20
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "图论 | Graph Theory"
   - "拓扑排序 | Topological Sort"
@@ -21,6 +21,16 @@ draft: false
 ## D. Mouse Hunt
 
 [D. Mouse Hunt](https://codeforces.com/contest/1027/problem/D)
+
+### 题意
+
+有 $n$ 个房间，在第 $i$ 个房间放置捕鼠夹的费用为 $c_i$。老鼠如果当前在房间 $i$，下一秒一定移动到房间 $a_i$；允许 $a_i=i$，此时老鼠会留在原地。
+
+老鼠的起点未知，可能是任意房间。一旦进入放有捕鼠夹的房间就会被抓住，包括初始时就在捕鼠夹所在房间的情况。
+
+选择若干房间放置捕鼠夹，使老鼠无论从哪里出发，最终都一定会被抓住，求最小总费用。
+
+$1\le n\le2\times10^5$，$1\le c_i\le10^4$。
 
 ### 思路
 

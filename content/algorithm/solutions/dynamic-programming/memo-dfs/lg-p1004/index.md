@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1004"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1004/"
 title: "P1004 方格取数"
 date: 2026-07-23
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,11 @@ draft: false
 
 [P1004 方格取数](https://www.luogu.com.cn/problem/P1004)
 
-**题意：**
+### 题意
 
 在棋盘中从左上角到右下角走两次，每次只能向右或向下，同一个格子的数字最多计算一次，求两条路线取得的数字总和最大值。
+
+### 思路
 
 **核心观察：**
 
@@ -41,7 +43,7 @@ draft: false
 
 **时间复杂度：**$O(N^4)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

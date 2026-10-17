@@ -3,7 +3,7 @@ knowledge_id: "solution-2026online1-l"
 url: "/algorithm/solutions/data-structure/trie/2026online1-l/"
 title: "2026 ICPC网络赛第一场 L"
 date: 2026-09-11
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "字典树 | Trie"
   - "最长公共前缀 | LCP"
@@ -28,9 +28,9 @@ draft: false
 
 依次输出每一个 $i$ 对应的 $\sum_{j=1}^{i}(f_{i,j} \oplus j)$ 的值。
 
-### 暴力做法
+### 思路
 
-#### 思路
+#### 暴力做法
 
 Trie 树正常插入。每加入第 $i$ 个串，跑一遍 $O(i)$ 的倒序循环 `mx = max(ans[j], mx)` 来维护单调性，同时累加异或和。
 
@@ -107,9 +107,7 @@ void solve(){
 
 
 
-### AC做法
-
-#### 思路
+#### AC做法
 
 1. **直击更新**：走到节点 $u$ 令 $cnt[u]++$。此时恰有 $j = cnt[u]$ 个串共享长度为 $dep[u]$ 的前缀，直接尝试刷新 $f_j$。
 
@@ -119,7 +117,7 @@ void solve(){
 
 时间复杂度 $O(\sum \vert{}s_i\vert{})$
 
-#### AC代码
+### AC代码
 
 ```c++
 const int N=5e5+10;

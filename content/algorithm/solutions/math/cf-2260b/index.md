@@ -3,7 +3,7 @@ knowledge_id: "solution-cf-2260b"
 url: "/algorithm/solutions/math/cf-2260b/"
 title: "CF edu194 B"
 date: 2026-09-09
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "数论 | Number Theory"
 
@@ -38,7 +38,9 @@ Monocarp 经营一家公司，需要规划未来 $k$ 个月的工作：
 
 
 
-### **数学原理**
+### 思路
+
+#### 数学原理
 
 在第 $i$ 个月（从 $i = 0$ 开始），员工数为 $x+i$，项目数为 $y+i$。
 
@@ -57,7 +59,7 @@ $$\begin{aligned} (y+i) \bmod (x+i) &= (y+i) - \left\lfloor \frac{y+i}{x+i} \rig
 
 
 
-### **法一**
+#### 法一：暴力模拟与截断
 
 **基于 $y \le 10^6$ 范围（暴力模拟 + 截断）**
 
@@ -67,6 +69,22 @@ $$\begin{aligned} (y+i) \bmod (x+i) &= (y+i) - \left\lfloor \frac{y+i}{x+i} \rig
 - 一旦 $x+i > d$，商必定降为 $1$，余数永久变为 $d$。此时直接用乘法计算剩下的 $k - pos - 1$ 个月并退出循环。
 
 - **时间复杂度：** $O(\min(k, y - x))$。最坏情况下循环 $10^6$ 次。
+
+#### 法二：整除分块
+
+**基于 $y \le 10^{12}$ 范围（数论分块跳跃）**
+
+当 $y \le 10^{12}$ 时，$d = y - x$ 最大可达 $10^{12}$。逐月循环会导致 TLE，必须采用数论分块（整除分块）思想：
+
+1. **确定相同商的边界：** 设当前员工数为 $x' = x + i$，当前的商为 $L = \left\lfloor \frac{d}{x'} \right\rfloor$。使下取整结果依然为 $L$ 的最大员工数为 $max\_x = \left\lfloor \frac{d}{L} \right\rfloor$。
+2. **批量处理等差数列：** 在员工数从 $x'$ 增加到 $max\_x$ 的这段时间内（共 $cnt = \min(k, max\_x - x' + 1)$ 个月），余数是一个首项为 $ft = d - L \cdot x'$，末项为 $ed = d - L \cdot (x' + cnt - 1)$ 的等差数列。利用公式 $\frac{(ft + ed) \times cnt}{2}$ 进行快速累加。
+3. **快速跳跃：** 每次计算后，将 $k$ 扣除 $cnt$，$x'$ 增加 $cnt$，直接“跳”到下一个不同的商。当 $x' > d$ 时，剩余月份一次性乘上 $d$。
+
+- **时间复杂度：** $O(\sqrt{y - x})$。数论分块的不同商最多只有 $2\sqrt{d}$ 个。当 $d = 10^{12}$ 时，循环最多跑 $2 \times 10^6$ 次。
+
+### AC代码
+
+#### 法一
 
 ```c++
 void solve(){
@@ -94,21 +112,7 @@ void solve(){
 }
 ```
 
-
-
-### **法二**
-
-**基于 $y \le 10^{12}$ 范围（数论分块跳跃）**
-
-当 $y \le 10^{12}$ 时，$d = y - x$ 最大可达 $10^{12}$。逐月循环会导致 TLE，必须采用数论分块（整除分块）思想：
-
-1. **确定相同商的边界：** 设当前员工数为 $x' = x + i$，当前的商为 $L = \left\lfloor \frac{d}{x'} \right\rfloor$。使下取整结果依然为 $L$ 的最大员工数为 $max\_x = \left\lfloor \frac{d}{L} \right\rfloor$。
-2. **批量处理等差数列：** 在员工数从 $x'$ 增加到 $max\_x$ 的这段时间内（共 $cnt = \min(k, max\_x - x' + 1)$ 个月），余数是一个首项为 $ft = d - L \cdot x'$，末项为 $ed = d - L \cdot (x' + cnt - 1)$ 的等差数列。利用公式 $\frac{(ft + ed) \times cnt}{2}$ 进行快速累加。
-3. **快速跳跃：** 每次计算后，将 $k$ 扣除 $cnt$，$x'$ 增加 $cnt$，直接“跳”到下一个不同的商。当 $x' > d$ 时，剩余月份一次性乘上 $d$。
-
-- **时间复杂度：** $O(\sqrt{y - x})$。数论分块的不同商最多只有 $2\sqrt{d}$ 个。当 $d = 10^{12}$ 时，循环最多跑 $2 \times 10^6$ 次。
-
-
+#### 法二
 
 ```c++
 void solve(){
@@ -137,4 +141,3 @@ void solve(){
     cout<<ans<<endl;
 }
 ```
-

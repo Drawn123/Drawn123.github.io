@@ -18,8 +18,13 @@
         <span class="drawn-meta-pill">难度 / {{ . }}</span>
     {{- end -}}
     {{- with .Params.platform -}}
-        {{- range . -}}
-            <span class="drawn-meta-pill">平台 / {{ . }}</span>
+        {{- $platforms := . -}}
+        {{- if not (reflect.IsSlice $platforms) -}}{{- $platforms = slice $platforms -}}{{- end -}}
+        {{- range $platforms -}}
+            {{- $platform := . -}}
+            {{- with site.GetPage "/page/search" -}}
+                <a class="drawn-meta-pill" href="{{ printf "%s?%s" .RelPermalink (querify "platform" $platform) }}">平台 / {{ $platform }}</a>
+            {{- end -}}
         {{- end -}}
     {{- end -}}
     {{- with .Params.problem_id -}}

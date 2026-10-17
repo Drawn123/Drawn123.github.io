@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p11246"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p11246/"
 title: "P11246 小杨和整数拆分"
 date: 2026-07-21
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,11 @@ draft: false
 
 [P11246 小杨和整数拆分](https://www.luogu.com.cn/problem/P11246)
 
-**题意：**
+### 题意
 
 将整数 $n$ 拆分成若干个完全平方数之和，求所需平方数的最少个数。
+
+### 思路
 
 **核心观察：**
 
@@ -40,7 +42,7 @@ draft: false
 
 **时间复杂度：**$O(N\sqrt N)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

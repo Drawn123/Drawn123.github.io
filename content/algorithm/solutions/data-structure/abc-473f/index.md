@@ -3,7 +3,7 @@ knowledge_id: "solution-abc-473f"
 url: "/algorithm/solutions/data-structure/abc-473f/"
 title: "ABC 473F A/AB Insertion"
 date: 2026-09-01
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "数据结构 | Data Structure"
   - "线段树 | Segment Tree"
@@ -22,6 +22,19 @@ draft: false
 
 [F - A/AB Insertion](https://atcoder.jp/contests/abc473/tasks/abc473_f)
 
+### 题意
+
+给定长度为 $N$、只含 `A` 和 `B` 的字符串 $S$，按顺序处理 $Q$ 次操作：
+
+1. `1 i c`：把第 $i$ 个字符改成 $c$。
+2. `2 l r`：判断当前子串 $S[l..r]$ 能否从空串出发，通过在任意位置插入 `A` 或 `AB` 得到，可以则输出 `Yes`，否则输出 `No`。
+
+每次判断都从空串重新考虑构造，不会修改原字符串。插入位置可以在开头、结尾或两个字符之间，操作次数可以为 $0$。
+
+$1\le N\le5\times10^5$，$1\le Q\le2\times10^5$。
+
+### 思路
+
 **核心观察：**
 
 1. 令 `A=+1`、`B=-1`。插入单个 `A` 会让从插入位置起的部分前缀和 $+1$；插入 `AB` 相当于在该处先 $+1$ 再 $-1$，任何前缀和都不会变小。所以能构造出的串，所有前缀和都非负。
@@ -36,8 +49,16 @@ draft: false
 
 **时间复杂度：**$O((N+Q)\log N)$
 
+### AC代码
+
+以下省略头文件、命名空间和主函数，单组输入调用一次 `solve()`；使用 64 位整数宏时，主函数写作 `signed main()`。
+
 ```c++
-// 支持单点/区间的加、乘、覆盖与查询
+#define int long long
+#define ls(p) (p<<1)
+#define rs(p) (p<<1|1)
+
+// 维护区间加与区间最小值
 struct SegTree {
     struct Node {
         int l,r;              
@@ -69,7 +90,7 @@ struct SegTree {
         tree[p].lazy_add+=val;
     }
 
-    // 向下传递标记（优先级：覆盖 > 乘法 > 加法）
+    // 向下传递区间加标记
     void push_down(int p) {
         if(tree[p].lazy_add!=0) {
             apply_add(ls(p),tree[p].lazy_add);

@@ -3,7 +3,7 @@ knowledge_id: "solution-abc-474e"
 url: "/algorithm/solutions/greedy/abc-474e/"
 title: "ABC 474E One Time Coupon"
 date: 2026-09-09
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "贪心 | Greedy"
   - "前缀和 | Prefix Sum"
@@ -38,7 +38,9 @@ $i$ 种产品 $(1\le i\le N)$ 可以通过以下两种方式购买：
 
 
 
-### 问题转化
+### 思路
+
+#### 问题转化
 
 题目的难点在于：**商品可以重复购买来“刷券”，且优惠券可以跨商品通用**。这导致我们无法在遍历单个商品时单独决定“它买原价还是优惠价”。
 
@@ -57,7 +59,7 @@ $i$ 种产品 $(1\le i\le N)$ 可以通过以下两种方式购买：
 
 
 
-### 易错点
+#### 易错点
 
 在思考这道题时，容易陷入以下三个逻辑误区：
 

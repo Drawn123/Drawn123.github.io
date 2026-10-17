@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1278"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1278/"
 title: "P1278 单词游戏"
 date: 2026-07-23
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "状压动态规划 | Bitmask DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,11 @@ draft: false
 
 [P1278 单词游戏](https://www.luogu.com.cn/problem/P1278)
 
-**题意：**
+### 题意
 
 给出若干单词，每个单词最多使用一次，后一个单词的首字母必须等于前一个单词的尾字母，求能组成的单词链最大总长度。
+
+### 思路
 
 **核心观察：**
 
@@ -39,7 +41,7 @@ draft: false
 
 **时间复杂度：**$O(N^2 2^N)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

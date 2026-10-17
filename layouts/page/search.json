@@ -29,6 +29,7 @@
         "difficulty" (.Params.difficulty | default "")
         "platform" $platform
         "problem_id" (.Params.problem_id | default "")
+        "knowledge_id" (.Params.knowledge_id | default "")
         "pinned" (.Params.pinned | default false)
     -}}
 

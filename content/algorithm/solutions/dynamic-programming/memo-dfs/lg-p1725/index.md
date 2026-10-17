@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1725"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1725/"
 title: "P1725 琪露诺"
 date: 2026-07-26
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "单调队列 | Monotonic Queue"
@@ -21,9 +21,15 @@ draft: false
 
 [P1725 琪露诺](https://www.luogu.com.cn/problem/P1725)
 
-**题意：**
+### 题意
 
-从起点出发，每次向前跳 $l$ 到 $r$ 格，每个格子有一个冰冻指数，要求到达终点区域时获得的总指数最大。
+有编号为 $0\sim n$ 的格子，第 $i$ 格的冰冻指数为 $a_i$，可能为负，且 $a_0=0$。从第 $0$ 格出发，每次只能向前跳 $l\sim r$ 格，落到某个格子时就获得它的冰冻指数。
+
+当下一步跳到编号大于 $n$ 的位置时到达对岸，求此时获得的冰冻指数总和最大值。跳出后不再计入新的格子分数，不能提前停在河中间。
+
+$1\le l\le r\le n\le2\times10^5$，$-10^3\le a_i\le10^3$。
+
+### 思路
 
 **核心观察：**
 
@@ -42,7 +48,7 @@ draft: false
 
 **时间复杂度：**$O(N)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

@@ -3,7 +3,7 @@ knowledge_id: "solution-2025online1-m"
 url: "/algorithm/solutions/graph-theory/shortest-path/2025online1-m/"
 title: "2025 ICPC网络赛第一场 M"
 date: 2026-09-11
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "分层图最短路 | Layered Shortest Path"
   - "ICPC"
@@ -156,7 +156,7 @@ void solve(){
 
 时间复杂度降到 $O(N \cdot N \log N)$
 
-##### AC代码
+### AC代码
 
 ```c++
 const int inf=1e18;

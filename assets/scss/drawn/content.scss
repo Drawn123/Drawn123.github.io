@@ -55,9 +55,16 @@
 .drawn-tag-grid > a { display: flex; flex-direction: column; gap: 0.65rem; padding: 1.2rem; border: 1px solid var(--drawn-border); border-radius: 10px; background: var(--card-background); color: var(--card-text-color-main); overflow-wrap: anywhere; }
 .drawn-tag-grid span { color: var(--drawn-ink-soft); font-size: 1rem; }
 .drawn-tag-directory > p { color: var(--drawn-ink-soft); }
-.drawn-search-scope { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; color: var(--card-text-color-main); margin-bottom: 1.5rem; }
-.drawn-search-scope select { min-height: 44px; padding: 0.6rem 1rem; font: inherit; border: 1px solid var(--drawn-border); border-radius: 10px; background: var(--card-background); color: var(--card-text-color-main); }
-.drawn-search-scope p { width: 100%; color: var(--drawn-ink-soft); margin: 0; }
+.drawn-search-scope { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; color: var(--card-text-color-main); margin-bottom: 1.5rem; }
+.drawn-search-field { display: grid; gap: 0.6rem; min-width: 0; }
+.drawn-search-field select { width: 100%; }
+.drawn-search-scope select, .drawn-search-scope button { max-width: 100%; min-width: 0; min-height: 44px; padding: 0.6rem 1rem; font: inherit; border: 1px solid var(--drawn-border); border-radius: 10px; background: var(--card-background); color: var(--card-text-color-main); }
+.drawn-search-scope button { cursor: pointer; justify-self: start; grid-column: 1 / -1; }
+.drawn-search-scope :focus-visible { outline: 3px solid var(--drawn-purple); outline-offset: 3px; }
+.drawn-search-scope p { grid-column: 1 / -1; color: var(--drawn-ink-soft); margin: 0; line-height: 1.7; }
+.search-result--list { display: flex; flex-direction: column; }
+.drawn-search-empty { color: var(--drawn-ink-soft); line-height: 1.8; }
+.drawn-search-meta { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin-top: 0.8rem; color: var(--drawn-ink-soft); font-size: 1.2rem; }
 .drawn-more-tags { margin-top: 1rem; }
 .drawn-more-tags summary { cursor: pointer; color: var(--accent-color); padding: 0.8rem 0; line-height: 1.6; }
 .drawn-more-tags .tagCloud-tags { margin-top: 0.7rem; }
@@ -91,6 +98,8 @@
   .drawn-home-search input, .drawn-tag-tools input, .drawn-tag-tools select { font-size: 16px; }
   .drawn-home-search button { padding-inline: 0.85rem; }
   .drawn-tag-grid { grid-template-columns: 1fr; }
+  .drawn-search-scope { grid-template-columns: minmax(0, 1fr); }
+  .drawn-search-scope select { width: 100%; font-size: 16px; }
   .drawn-back-to-top { right: 16px; bottom: calc(20px + env(safe-area-inset-bottom)); }
   .drawn-filter-bar button { flex: 1 1 auto; }
 }

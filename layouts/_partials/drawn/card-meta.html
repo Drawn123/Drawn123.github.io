@@ -1,0 +1,41 @@
+{{- $page := .Page -}}
+{{- $linked := .Linked | default false -}}
+<div class="drawn-card-meta">
+    <div class="drawn-card-facts">
+        {{- if .ShowDate -}}
+            {{- if gt $page.Lastmod.Unix $page.Date.Unix -}}
+                <time datetime="{{ $page.Lastmod.Format "2006-01-02" }}">更新于 {{ $page.Lastmod.Format "2006-01-02" }}</time>
+            {{- else if not $page.Date.IsZero -}}
+                <time datetime="{{ $page.Date.Format "2006-01-02" }}">发布于 {{ $page.Date.Format "2006-01-02" }}</time>
+            {{- end -}}
+        {{- end -}}
+        {{- if $page.Params.readingTime | default site.Params.article.readingTime -}}
+            <span>约 {{ $page.ReadingTime }} 分钟阅读</span>
+        {{- end -}}
+    </div>
+    {{- if or $page.Params.platform $page.Params.problem_id $page.Params.difficulty -}}
+    <div class="drawn-card-badges">
+        {{- with $page.Params.platform -}}
+            {{- $platforms := . -}}
+            {{- if not (reflect.IsSlice $platforms) -}}{{- $platforms = slice $platforms -}}{{- end -}}
+            {{- range $platforms -}}
+                <span class="drawn-card-badge drawn-card-platform">{{ . }}</span>
+            {{- end -}}
+        {{- end -}}
+        {{- with $page.Params.problem_id -}}<span class="drawn-card-badge">题号 {{ . }}</span>{{- end -}}
+        {{- with $page.Params.difficulty -}}<span class="drawn-card-badge">难度 {{ . }}</span>{{- end -}}
+    </div>
+    {{- end -}}
+    {{- with $page.GetTerms "tags" -}}
+    <div class="drawn-card-tags">
+        {{- range first 3 . -}}
+            {{- $label := index (split .LinkTitle " | ") 0 -}}
+            {{- if $linked -}}
+                <a href="{{ .RelPermalink }}" title="{{ .LinkTitle }}"># {{ $label }}</a>
+            {{- else -}}
+                <span title="{{ .LinkTitle }}"># {{ $label }}</span>
+            {{- end -}}
+        {{- end -}}
+    </div>
+    {{- end -}}
+</div>

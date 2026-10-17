@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p1466"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p1466/"
 title: "P1466 集合 Subset Sums"
 date: 2026-07-23
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,11 @@ draft: false
 
 [P1466 集合 Subset Sums](https://www.luogu.com.cn/problem/P1466)
 
-**题意：**
+### 题意
 
 把 $1\sim n$ 划分成两个集合，使两个集合的元素和相等，求不同划分的数量。
+
+### 思路
 
 **核心观察：**
 
@@ -39,7 +41,7 @@ draft: false
 
 **时间复杂度：**$O(N\cdot tar)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long

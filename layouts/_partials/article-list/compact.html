@@ -1,0 +1,41 @@
+<article{{ if .IsPage }} class="drawn-article-card"{{ end }}>
+    <a href="{{ .RelPermalink }}">
+        <div class="article-details">
+            {{ if .IsPage }}
+            <div class="drawn-card-eyebrow">
+                <span>{{ .FirstSection.Title }}</span>
+                {{ if .Params.pinned }}<span class="drawn-card-pinned">置顶</span>{{ end }}
+            </div>
+            {{ end }}
+            <h2 class="article-title">{{ .Title }}</h2>
+            {{ if .IsPage }}
+                {{ with .Description }}<p class="drawn-card-description">{{ . }}</p>{{ end }}
+                {{ partial "drawn/card-meta.html" (dict "Page" . "ShowDate" true) }}
+            {{ else }}
+                {{- $description := .Params.description -}}
+                {{- if eq .Kind "term" -}}
+                    {{- $description = $description | default (T "list.page" (len .Pages)) -}}
+                {{- end -}}
+                {{ if $description }}<footer class="article-meta"><span class="article-description">{{ $description }}</span></footer>{{ end }}
+            {{ end }}
+        </div>
+        {{- $image := partial "helper/image" (dict "Image" .Params.image "Resources" .Resources "Context" .) -}}
+        {{ if $image }}
+        <div class="article-image">
+            {{ partial "helper/thumbnail-image" (dict
+                "Resource" $image.Resource
+                "Width" 60
+                "Height" 60
+                "Resize" .Site.Params.ImageProcessing.Thumbnail.Enabled
+                "Attributes" (dict
+                    "src" $image.Permalink
+                    "alt" .Title
+                    "loading" "lazy"
+                    "width" $image.Width
+                    "height" $image.Height
+                )
+            ) }}
+        </div>
+        {{ end }}
+    </a>
+</article>

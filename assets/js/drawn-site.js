@@ -44,40 +44,10 @@
         });
     }
 
-    function initSearchPagination() {
-        const list = document.querySelector(".search-result--list");
-        const nav = document.querySelector(".drawn-search-pagination");
-        if (!list || !nav) return;
-        const previous = nav.querySelector("[data-search-prev]");
-        const next = nav.querySelector("[data-search-next]");
-        const status = nav.querySelector("[data-search-page]");
-        const pageSize = 10;
-        let page = 1;
-
-        const render = () => {
-            const items = Array.from(list.children);
-            const total = Math.max(1, Math.ceil(items.length / pageSize));
-            page = Math.min(page, total);
-            items.forEach((item, index) => {
-                item.hidden = index < (page - 1) * pageSize || index >= page * pageSize;
-            });
-            nav.classList.toggle("hidden", items.length <= pageSize);
-            status.textContent = `${page} / ${total}`;
-            previous.disabled = page === 1;
-            next.disabled = page === total;
-        };
-
-        previous.addEventListener("click", () => { page -= 1; render(); });
-        next.addEventListener("click", () => { page += 1; render(); });
-        new MutationObserver(() => { page = 1; render(); }).observe(list, { childList: true });
-        render();
-    }
-
     document.addEventListener("DOMContentLoaded", () => {
         initBackToTop();
         initReadingProgress();
         initColorSchemeLabel();
         initSearchShortcut();
-        initSearchPagination();
     });
 })();

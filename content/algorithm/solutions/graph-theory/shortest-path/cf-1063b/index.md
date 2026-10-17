@@ -3,7 +3,7 @@ knowledge_id: "solution-cf-1063b"
 url: "/algorithm/solutions/graph-theory/shortest-path/cf-1063b/"
 title: "CF 1063 B Labyrinth"
 date: 2026-09-23
-lastmod: 
+lastmod: 2026-10-17
 tags:
   - "图论 | Graph Theory"
   - "最短路 | Shortest Path"
@@ -21,6 +21,16 @@ draft: false
 ## B. Labyrinth
 
 [B. Labyrinth](https://codeforces.com/problemset/problem/1063/B)
+
+### 题意
+
+给定一个 $n\times m$ 的迷宫，`.` 表示空地，`*` 表示障碍。从空地 $(r,c)$ 出发，每步可以向上、下、左、右移动一格，不能穿过障碍或走出迷宫。
+
+其中向左移动的总次数不能超过 $x$，向右不能超过 $y$，向上和向下的次数不限。
+
+求有多少个格子可以从起点到达，起点本身也计入答案。每个格子的可达性分别判断，不要求用同一条路线访问所有格子。
+
+$1\le n,m\le2000$，$0\le x,y\le10^9$。
 
 ### 思路
 

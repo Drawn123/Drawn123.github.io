@@ -3,7 +3,7 @@ knowledge_id: "solution-lg-p2285"
 url: "/algorithm/solutions/dynamic-programming/memo-dfs/lg-p2285/"
 title: "P2285 打鼹鼠"
 date: 2026-07-26
-lastmod:
+lastmod: 2026-10-17
 tags:
   - "动态规划 | DP"
   - "记忆化搜索 | Memoized DFS"
@@ -21,9 +21,15 @@ draft: false
 
 [P2285 打鼹鼠](https://www.luogu.com.cn/problem/P2285)
 
-**题意：**
+### 题意
 
-按时间给出鼹鼠出现的位置，锤子每单位时间最多移动一格，求最多能打到多少只鼹鼠。
+在 $n\times n$ 的棋盘上，有 $m$ 只鼹鼠，第 $i$ 只在时刻 $t_i$ 出现在位置 $(x_i,y_i)$。机器人只有在该时刻恰好位于这个格子，才能打到它。
+
+机器人每单位时间可以上下左右移动一格，也可以原地停留，不能走出棋盘。游戏开始前可以自由选择初始位置，求最多能打到多少只鼹鼠。
+
+$n\le10^3$，$m\le10^4$，事件按时间不降序给出；同一时刻可以有多只鼹鼠，但不会在同一地点重复出现。初始位置自由意味着任意一只鼹鼠都可以作为第一只。
+
+### 思路
 
 **核心观察：**
 
@@ -41,7 +47,7 @@ draft: false
 
 **时间复杂度：**$O(M^2)$
 
-**代码：**
+### AC代码
 
 ```c++
 #define int long long
