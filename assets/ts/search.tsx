@@ -83,13 +83,11 @@ class Search {
     private async initialize() {
         try {
             const data = await this.getData();
-            for (const name of ['platform', 'tag']) {
-                const values = new Set<string>();
-                data.forEach(item => (name === 'tag' ? item.tags || [] : item.platform || []).forEach(value => values.add(value)));
-                Array.from(values).sort((a, b) => a.localeCompare(b, 'zh-CN')).forEach(value => {
-                    this.filters[name].add(new Option(value, value));
-                });
-            }
+            const platforms = new Set<string>();
+            data.forEach(item => (item.platform || []).forEach(value => platforms.add(value)));
+            Array.from(platforms).sort((a, b) => a.localeCompare(b, 'zh-CN')).forEach(value => {
+                this.filters.platform.add(new Option(value, value));
+            });
             Object.values(this.filters).forEach(select => select.disabled = false);
             (document.querySelector('[data-search-reset]') as HTMLButtonElement).disabled = false;
             this.bindQueryStringChange();
@@ -103,6 +101,23 @@ class Search {
             this.resultTitle.innerText = '搜索数据加载失败，请刷新页面重试。';
             console.error(error);
         }
+    }
+
+    private updateTagOptions(selectedTag = this.filters.tag.value) {
+        const section = this.filters.section.value;
+        const values = new Set<string>();
+        this.data.forEach(item => {
+            if (!section || item.section === section) {
+                (item.tags || []).forEach(value => values.add(value));
+            }
+        });
+
+        const select = this.filters.tag;
+        select.options.length = 1;
+        Array.from(values).sort((a, b) => a.localeCompare(b, 'zh-CN')).forEach(value => {
+            select.add(new Option(value, value));
+        });
+        select.value = values.has(selectedTag) ? selectedTag : '';
     }
 
     /**
@@ -292,6 +307,7 @@ class Search {
         const eventHandler = (e: Event) => {
             e.preventDefault();
             if ((e as InputEvent).isComposing) return;
+            if (e.target === this.filters.section) this.updateTagOptions();
             const keywords = this.input.value.trim();
 
             this.updateQueryString(keywords);
@@ -303,6 +319,7 @@ class Search {
         document.querySelector('[data-search-reset]')?.addEventListener('click', event => {
             this.input.value = '';
             Object.values(this.filters).forEach(select => select.value = '');
+            this.updateTagOptions();
             eventHandler(event);
         });
         this.input.addEventListener('input', eventHandler);
@@ -320,6 +337,7 @@ class Search {
         const keywords = pageURL.searchParams.get('keyword') || '';
         this.input.value = keywords;
         for (const [name, select] of Object.entries(this.filters)) {
+            if (name === 'tag') continue;
             const value = pageURL.searchParams.get(name) || '';
             // Preserve an unknown value so an old shared link yields zero results instead of all articles.
             if (value && !Array.from(select.options).some(option => option.value === value)) {
@@ -327,6 +345,9 @@ class Search {
             }
             select.value = value;
         }
+        const tag = pageURL.searchParams.get('tag') || '';
+        this.updateTagOptions(tag);
+        if (tag !== this.filters.tag.value) this.updateQueryString(keywords);
         await this.doSearch(keywords.split(/\s+/));
     }
 
