@@ -6,7 +6,7 @@ series_order: 3
 title: "【数据结构】 第三章 栈和队列"
 date: 2026-09-27
 lastmod: 2026-10-17
-description: "栈与队列的操作限制，顺序栈、链栈、循环队列和链队列的实现，以及表达式求值与递归。"
+description: 
 tags:
   - "notes: 数据结构"
 prerequisites:
