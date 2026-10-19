@@ -1,6 +1,5 @@
 ---
-title: "分类模型评价指标：定义、公式与结果分析"
-description: "分类模型常用指标的定义、公式与聚合方式，附多标签实验结果分析。"
+title: "【实验评估】分类模型评价指标：定义、公式与结果分析"
 date: 2026-10-18
 lastmod: 2026-10-19
 knowledge_id: "research-experiment-metrics-laat"

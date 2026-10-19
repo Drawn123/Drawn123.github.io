@@ -4,7 +4,7 @@ cascade:
       kind: "page"
     categories:
       - "research"
-title: "科研记录"
+title: "科研记录 | Research"
 description: "论文阅读、复现与实验记录。"
 weight: 50
 ---
