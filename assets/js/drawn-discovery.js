@@ -5,8 +5,9 @@
             const filters = panel.querySelector("[data-recent-filters]");
             const more = panel.querySelector("[data-recent-more]");
             const articles = Array.from(panel.querySelectorAll("[data-recent-list] > article"));
+            const pageSize = Number(panel.dataset.pageSize);
             let section = "all";
-            let limit = 6;
+            let limit = pageSize;
             const render = () => {
                 let count = 0;
                 articles.forEach(article => {
@@ -21,11 +22,11 @@
                 const button = event.target.closest("button[data-section]");
                 if (!button) return;
                 section = button.dataset.section;
-                limit = 6;
+                limit = pageSize;
                 filters.querySelectorAll("button").forEach(item => item.setAttribute("aria-pressed", String(item === button)));
                 render();
             });
-            more.addEventListener("click", () => { limit += 6; render(); });
+            more.addEventListener("click", () => { limit += pageSize; render(); });
             render();
         }
 

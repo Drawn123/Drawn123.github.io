@@ -2,35 +2,33 @@
     {{ partial "drawn/home-hero.html" . }}
     {{ partial "drawn/home-portals.html" . }}
     <section class="drawn-home-panel">
-        <div class="drawn-section-heading"><p>Start Here</p><h2>常用入口</h2></div>
+        <div class="drawn-section-heading"><h2>常用入口</h2></div>
         <div class="drawn-featured-grid">
             {{ range hugo.Data.featured.paths }}
                 {{ with site.GetPage . }}
                 <a class="drawn-featured-card" href="{{ .RelPermalink }}">
-                    <span>{{ if .IsSection }}系列目录{{ else }}置顶速查{{ end }}</span>
+                    <span>{{ if .IsSection }}目录{{ else }}文章{{ end }}</span>
                     <strong>{{ .Title }}</strong>
                     {{ with .Description }}<p>{{ . }}</p>{{ end }}
-                    <small>开始阅读 →</small>
+                    <small>阅读 →</small>
                 </a>
                 {{ end }}
             {{ end }}
         </div>
     </section>
     {{ $pages := partial "drawn/content-pages.html" . }}
-    <section class="drawn-home-panel" data-recent-panel>
-        <div class="drawn-section-heading"><p>Recently Updated</p><h2>最近更新</h2></div>
+    {{ $pageSize := site.Params.homepage.recentPageSize | default 6 }}
+    <section class="drawn-home-panel" data-recent-panel data-page-size="{{ $pageSize }}">
+        <div class="drawn-section-heading"><h2>最近更新</h2></div>
         <div class="drawn-filter-bar" data-recent-filters hidden aria-label="按方向筛选最近更新">
             <button type="button" data-section="all" aria-pressed="true">全部</button>
-            {{ range hugo.Data.modules.modules }}
-                {{ $module := . }}
-                {{ with site.GetPage .path }}
-                    {{ if gt (len .RegularPagesRecursive) 0 }}<button type="button" data-section="{{ $module.path }}" aria-pressed="false">{{ $module.title }}</button>{{ end }}
-                {{ end }}
+            {{ range partial "drawn/modules.html" . }}
+                {{ if gt (len .RegularPagesRecursive) 0 }}<button type="button" data-section="{{ .Section }}" aria-pressed="false">{{ .LinkTitle }}</button>{{ end }}
             {{ end }}
         </div>
         <div class="drawn-recent-grid" data-recent-list>
             {{ range $index, $page := $pages.ByLastmod.Reverse }}
-            <article class="drawn-recent-card" data-section="{{ .Section }}"{{ if ge $index 6 }} hidden{{ end }}>
+            <article class="drawn-recent-card" data-section="{{ .Section }}"{{ if ge $index (int $pageSize) }} hidden{{ end }}>
                 <div class="drawn-recent-meta"><span>{{ .FirstSection.Title }}</span><time datetime="{{ .Lastmod.Format "2006-01-02" }}">{{ .Lastmod.Format "2006-01-02" }}{{ if gt .Lastmod.Unix .Date.Unix }} · 更新{{ end }}</time></div>
                 <h3><a href="{{ .RelPermalink }}">{{ .Title }}</a></h3>
                 {{ with .Description }}<p>{{ . }}</p>{{ end }}
@@ -38,7 +36,7 @@
             </article>
             {{ end }}
         </div>
-        <div class="drawn-recent-actions"><button type="button" data-recent-more hidden>再看 6 篇</button>{{ with site.GetPage "/blog" }}<a href="{{ .RelPermalink }}">进入文章总览 →</a>{{ end }}</div>
+        <div class="drawn-recent-actions"><button type="button" data-recent-more hidden>加载更多</button>{{ with site.GetPage "/blog" }}<a href="{{ .RelPermalink }}">全部文章 →</a>{{ end }}</div>
     </section>
     {{ partial "footer/footer" . }}
 {{ end }}

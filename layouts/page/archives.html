@@ -5,7 +5,7 @@
             <div class="section-details">
                 <p class="section-count">共 {{ len $pages }} 篇文章</p>
                 <h1 class="section-term">{{ .Title }}</h1>
-                <p class="section-description">按文章日期整理的知识记录与创作轨迹</p>
+                {{ with .Description }}<p class="section-description">{{ . }}</p>{{ end }}
             </div>
         </header>
 

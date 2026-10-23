@@ -9,6 +9,9 @@ favicon        = "img/favicon.png"
 # lastmod = sort by last modified date, in descending order
 SortBy              = "default"
 
+[homepage]
+    recentPageSize = 6
+
 [footer]
     since      = 2026
     customText = ""

@@ -19,7 +19,7 @@
     <div class="drawn-search-field">
     <label for="search-section">搜索范围</label>
     <select id="search-section" data-search-section disabled><option value="">全部方向</option>
-        {{ range hugo.Data.modules.modules }}<option value="{{ .path }}">{{ .title }}</option>{{ end }}
+        {{ range partial "drawn/modules.html" . }}<option value="{{ .Section }}">{{ .LinkTitle }}</option>{{ end }}
     </select>
     </div>
     <div class="drawn-search-field">
@@ -31,7 +31,7 @@
     <select id="search-tag" data-search-tag disabled><option value="">全部知识点</option></select>
     </div>
     <button type="button" data-search-reset disabled>清除筛选</button>
-    <p>可直接筛选，无需输入关键词；方向、平台、知识点与关键词可组合使用。知识点仅显示所选方向下文章包含的标签，切换方向时会自动清除不适用的知识点。</p>
+    <p>筛选条件可组合使用，也可留空。标签随搜索范围变化。</p>
 </div>
 <div class="search-result hidden">
     <h3 class="search-result--title section-title" role="status" aria-live="polite"></h3>

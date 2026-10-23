@@ -5,6 +5,8 @@ cascade:
     categories:
       - "notes"
 title: "学习笔记 | Learning Notes"
-description: "按科目与主题整理的专业课、基础知识和工具笔记"
+linkTitle: "课程与工具笔记"
+label: "Notes"
+description: "课程笔记与工具用法。"
 weight: 20
 ---

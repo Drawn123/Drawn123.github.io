@@ -1,8 +1,8 @@
 <section class="drawn-home-hero">
     <div>
-        <p class="drawn-kicker">Code · Learn · Share</p>
-        <h1>学习、实践，持续记录。</h1>
-        <p>这里是 Drawn123 的知识笔记。从算法竞赛出发，把课程、机器学习与项目实践逐步连成体系。</p>
+        <h1>{{ .Title | default site.Title }}</h1>
+        {{ with .Description }}<p>{{ . }}</p>{{ end }}
+        {{ with .Content }}<div class="article-content">{{ . }}</div>{{ end }}
         {{ with site.GetPage "/page/search" }}
         <form class="drawn-home-search" action="{{ .RelPermalink }}" role="search">
             <label class="drawn-visually-hidden" for="home-keyword">搜索文章、知识点或题号</label>

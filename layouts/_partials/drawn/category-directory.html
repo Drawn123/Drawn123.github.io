@@ -1,20 +1,17 @@
 <div class="drawn-category-grid">
-    {{ range hugo.Data.modules.modules }}
-        {{ $module := . }}
-        {{ $term := site.GetPage (printf "/categories/%s" .path) }}
-        {{ with site.GetPage .path }}
-            {{ $count := len .RegularPagesRecursive }}
-            <article class="drawn-category-card{{ if eq $count 0 }} is-planned{{ end }}">
-                <div class="drawn-category-heading"><span>{{ $module.label }}</span><small>{{ if gt $count 0 }}{{ $count }} 篇{{ else }}暂无文章{{ end }}</small></div>
-                <h2>{{ if gt $count 0 }}<a href="{{ $term.RelPermalink }}">{{ $module.title }}</a>{{ else }}{{ $module.title }}{{ end }}</h2>
-                <p>{{ $module.description }}</p>
-                {{ if gt $count 0 }}
-                    {{ with .Sections }}
-                    <ul>{{ range sort . "Weight" "asc" }}{{ if gt (len .RegularPagesRecursive) 0 }}<li><a href="{{ .RelPermalink }}">{{ .Title }} <span>{{ len .RegularPagesRecursive }}</span></a></li>{{ end }}{{ end }}</ul>
-                    {{ end }}
-                    <div class="drawn-category-actions"><a href="{{ .RelPermalink }}">知识目录 →</a><a href="{{ $term.RelPermalink }}">全部文章 →</a></div>
+    {{ range partial "drawn/modules.html" . }}
+        {{ $term := site.GetPage (printf "/categories/%s" .Section) | default . }}
+        {{ $count := len .RegularPagesRecursive }}
+        <article class="drawn-category-card{{ if eq $count 0 }} is-planned{{ end }}">
+            <div class="drawn-category-heading">{{ with .Params.label }}<span>{{ . }}</span>{{ end }}<small>{{ if gt $count 0 }}{{ $count }} 篇{{ else }}暂无文章{{ end }}</small></div>
+            <h2>{{ if gt $count 0 }}<a href="{{ $term.RelPermalink }}">{{ .LinkTitle }}</a>{{ else }}{{ .LinkTitle }}{{ end }}</h2>
+            {{ with .Description }}<p>{{ . }}</p>{{ end }}
+            {{ if gt $count 0 }}
+                {{ with .Sections }}
+                <ul>{{ range sort . "Weight" "asc" }}{{ if gt (len .RegularPagesRecursive) 0 }}<li><a href="{{ .RelPermalink }}">{{ .Title }} <span>{{ len .RegularPagesRecursive }}</span></a></li>{{ end }}{{ end }}</ul>
                 {{ end }}
-            </article>
-        {{ end }}
+                <div class="drawn-category-actions"><a href="{{ .RelPermalink }}">目录 →</a><a href="{{ $term.RelPermalink }}">全部文章 →</a></div>
+            {{ end }}
+        </article>
     {{ end }}
 </div>

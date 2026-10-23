@@ -1,0 +1,7 @@
+{{- $modules := slice -}}
+{{- range site.Params.mainSections -}}
+    {{- with site.GetPage . -}}
+        {{- $modules = $modules | append . -}}
+    {{- end -}}
+{{- end -}}
+{{- return $modules -}}

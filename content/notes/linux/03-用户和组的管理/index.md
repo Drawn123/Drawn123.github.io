@@ -10,7 +10,7 @@ description: "部署账号、服务账号、用户组和项目目录的权限配
 tags:
   - "notes: Linux"
 weight: 30
-draft: true
+draft: false
 ---
 
 ## 部署账号与服务账号

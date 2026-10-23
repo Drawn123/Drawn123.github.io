@@ -1,5 +1,5 @@
 <section class="drawn-home-panel">
-    <div class="drawn-section-heading"><p>Explore</p><h2>从一个方向开始</h2></div>
+    <div class="drawn-section-heading"><h2>文章分类</h2></div>
     {{ partial "drawn/module-portals.html" (dict "ShowEmpty" false) }}
-    {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">浏览全部方向与目录 →</a></p>{{ end }}
+    {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">全部分类 →</a></p>{{ end }}
 </section>

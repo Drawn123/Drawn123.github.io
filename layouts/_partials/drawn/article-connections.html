@@ -13,8 +13,8 @@
     {{- end -}}
 {{- end -}}
 {{- if or $prerequisites $related $backlinks -}}
-<aside class="drawn-connections" aria-label="知识关联">
-    <h2>知识关联</h2>
+<aside class="drawn-connections" aria-label="相关文章">
+    <h2>相关文章</h2>
     {{- range slice (dict "Title" "建议先读" "IDs" $prerequisites) (dict "Title" "延伸阅读" "IDs" $related) -}}
         {{- if .IDs -}}
         <section><h3>{{ .Title }}</h3><ul>

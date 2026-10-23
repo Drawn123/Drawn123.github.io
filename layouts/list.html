@@ -3,6 +3,12 @@
     {{- $pager := partial "helper/paginator.html" . -}}
     {{- $isTagIndex := and (eq .Kind "taxonomy") (eq .Type "tags") -}}
     {{- $isCategoryIndex := and (eq .Kind "taxonomy") (eq .Type "categories") -}}
+    {{- $categoryRoot := false -}}
+    {{- if and (eq .Kind "term") (eq .Type "categories") (in site.Params.mainSections .Data.Term) -}}
+        {{- $categoryRoot = site.GetPage (printf "/%s" .Data.Term) -}}
+    {{- end -}}
+    {{- $description := .Description -}}
+    {{- with $categoryRoot -}}{{- $description = .Description -}}{{- end -}}
 
     <header>
         {{ if not (or $isCategoryIndex $isTagIndex) }}
@@ -17,9 +23,9 @@
 
         <div class="section-card">
             <div class="section-details">
-                <h3 class="section-count">{{ if $isCategoryIndex }}{{ len hugo.Data.modules.modules }} 个内容方向{{ else }}{{ T "list.page" (len $sourcePages) }}{{ end }}</h3>
+                <h3 class="section-count">{{ if $isCategoryIndex }}{{ len (partial "drawn/modules.html" .) }} 个分类{{ else }}{{ T "list.page" (len $sourcePages) }}{{ end }}</h3>
                 <h1 class="section-term">{{ .Title }}</h1>
-                {{ with .Params.description }}
+                {{ with $description }}
                     <h2 class="section-description">{{ . }}</h2>
                 {{ end }}
             </div>
@@ -29,27 +35,26 @@
     {{ with .Content }}<section class="drawn-section-intro article-content">{{ . }}</section>{{ end }}
 
     {{- $treeRoot := false -}}
-    {{ if and (eq .Kind "section") (in (slice "algorithm" "notes" "machine-learning" "projects" "research" "post" "topics") .Section) }}
+    {{ if and (eq .Kind "section") (or (in site.Params.mainSections .Section) .Params.knowledge_tree) }}
         {{ $treeRoot = . }}
-    {{ else if and (eq .Kind "term") (eq .Type "categories") }}
-        {{ with site.GetPage (printf "/%s" .Data.Term) }}{{ $treeRoot = . }}{{ end }}
+    {{ else if $categoryRoot }}
+        {{ $treeRoot = $categoryRoot }}
     {{ end }}
     {{ with $treeRoot }}
         <section class="drawn-home-panel drawn-section-tree">
             <div class="drawn-section-heading">
-                <p>Knowledge Tree</p>
-                <h2>知识树 / Knowledge Tree</h2>
+                <h2>目录</h2>
             </div>
             {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
         </section>
     {{ end }}
 
     {{ if and (eq .Section "blog") (eq .RelPermalink "/blog/") }}
-        {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">按方向浏览内容分类 →</a></p>{{ end }}
+        {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">文章分类 →</a></p>{{ end }}
     {{ end }}
 
     {{- $subsections := .Sections -}}
-    {{ if not (in (slice "algorithm" "notes" "machine-learning" "projects" "research" "post" "topics") .Section) }}
+    {{ if not $treeRoot }}
     {{- with $subsections -}}
         <aside>
             <h2 class="section-title">{{ T "list.subsection" (len $subsections) }}</h2>
@@ -90,7 +95,7 @@
         {{ partial "drawn/pagination.html" $pager }}
     {{- end -}}
 
-    {{ if and (eq .Kind "section") (eq (len .RegularPagesRecursive) 0) (not (eq .Section "blog")) }}<p class="drawn-section-empty">这个方向的目录已准备好，文章会在整理后陆续加入。</p>{{ end }}
+    {{ if and (eq .Kind "section") (eq (len .RegularPagesRecursive) 0) (not $treeRoot) }}<p class="drawn-section-empty">暂无文章。</p>{{ end }}
 
     {{ partialCached "footer/footer" . }}
 {{ end }}

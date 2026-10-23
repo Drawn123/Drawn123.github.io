@@ -5,7 +5,9 @@ cascade:
     categories:
       - "algorithm"
 title: "算法 | Algorithm"
-description: "ACM-ICPC / Codeforces / AtCoder / 洛谷题解与算法模板"
+linkTitle: "算法竞赛"
+label: "Algorithm"
+description: "算法题解、原理笔记与竞赛模板。"
 weight: 10
 ---
 

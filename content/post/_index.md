@@ -5,7 +5,9 @@ cascade:
     categories:
       - "post"
 title: "文章 | Post"
-description: "随笔、项目记录和其他文章"
-weight: 30
+linkTitle: "随笔与问答"
+label: "Posts"
+description: "随笔与问答。"
+weight: 60
 ---
 

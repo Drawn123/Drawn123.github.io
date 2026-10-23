@@ -2,15 +2,13 @@
     <div class="widget-icon">{{ partial "helper/icon" "categories" }}</div>
     {{ with site.GetPage "/categories" }}<h2 class="widget-title section-title"><a href="{{ .RelPermalink }}">内容分类</a></h2>{{ end }}
     <ul>
-        {{ range hugo.Data.modules.modules }}
-            {{ $module := . }}
-            {{ with site.GetPage .path }}
-                {{ $count := len .RegularPagesRecursive }}
-                {{ if gt $count 0 }}
-                    {{ with site.GetPage (printf "/categories/%s" $module.path) }}<li><a href="{{ .RelPermalink }}"><span>{{ $module.title }}</span><strong>{{ $count }}</strong></a></li>{{ end }}
-                {{ end }}
+        {{ range partial "drawn/modules.html" . }}
+            {{ $count := len .RegularPagesRecursive }}
+            {{ if gt $count 0 }}
+                {{ $target := site.GetPage (printf "/categories/%s" .Section) | default . }}
+                <li><a href="{{ $target.RelPermalink }}"><span>{{ .LinkTitle }}</span><strong>{{ $count }}</strong></a></li>
             {{ end }}
         {{ end }}
     </ul>
-    {{ with site.GetPage "/categories" }}<a class="drawn-all-tags" href="{{ .RelPermalink }}">查看全部方向 →</a>{{ end }}
+    {{ with site.GetPage "/categories" }}<a class="drawn-all-tags" href="{{ .RelPermalink }}">全部分类 →</a>{{ end }}
 </section>

@@ -59,7 +59,7 @@ draft: true
 - `url` 是公开地址，发布后保持稳定。已有文章保留本次重构前的路径。
 - `date` 是首次发布日期；有实质修订时手动更新 `lastmod`，不要用文件移动时间替代。
 - 标题、文件位置、网址是不同的概念；更换分类目录不应顺便修改已发布网址。
-- 草稿确认后再设为 `draft: false`。没有真实内容时只建栏目，不编造文章。
+- 发布文章时设为 `draft: false`。正式构建会跳过 `draft: true` 的文章，即使文件已经提交并推送；本地查看草稿使用 `hugo server -D`。
 
 题解的 `platform` 填做题网站名（如 `AtCoder`、`Codeforces`、`洛谷`），`problem_id` 填题号，`tags` 填知识点。搜索页可以按平台与知识点组合筛选；文章顶部的平台也可点击。`knowledge_id` 是自己指定的文章唯一标识，用于文章关联。填写示例和查找命令见[平台与知识点说明](docs/maintenance.md#平台与知识点怎么填写怎么使用)。
 
@@ -67,7 +67,8 @@ draft: true
 
 ## 常改的位置
 
-- 模块入口：`data/modules.toml`；新增顶层文章栏目时同时更新 `config/_default/params.toml` 的 `mainSections`。
+- 栏目列表及顺序：`config/_default/params.toml` 的 `mainSections`；名称、短名称、英文标记和介绍分别读取栏目 `_index.md` 的 `title`、`linkTitle`、`label`、`description`，首页、分类目录、侧栏和搜索共用。
+- 首页标题及介绍：`content/_index.md` 的 `title`、`description` 和正文；未设置标题时使用站点名称。最近更新每次显示的篇数：`config/_default/params.toml` 的 `homepage.recentPageSize`。
 - 首页常用入口：`data/featured.toml`。
 - 系列介绍：各科目 `_index.md`；文章顺序使用 `series_id` 与 `series_order`。
 - 样式：`assets/scss/custom.scss` 只负责按顺序引入 `drawn/` 下的分层文件。
