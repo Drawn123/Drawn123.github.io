@@ -5,7 +5,7 @@ knowledge_id: "algorithm-template"
 url: "/algorithm/template/template/"
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-09-20
+lastmod: 2026-10-24
 tags:
   - "ICPC"
 
@@ -2443,6 +2443,38 @@ void solve(){
 
 
 ## 数学
+
+### 位运算
+
+#### 不进位加法
+
+对非负整数 $a,b$，有：
+
+$$
+a+b=(a\oplus b)+2(a\&b)
+$$
+
+当且仅当 $a\&b=0$ 时，两数没有重叠的 $1$，相加不进位，此时：
+
+$$
+a+b=a\oplus b
+$$
+
+#### 不退位减法
+
+对非负整数 $a\ge b$，有以下恒等式，其中 $\sim a$ 表示按位取反：
+
+$$
+a-b=(a\oplus b)-2\bigl((\sim a)\&b\bigr)
+$$
+
+当且仅当 $a\&b=b$ 时，$b$ 为 $1$ 的位置上 $a$ 也为 $1$，相减不退位，即不需要向高位借位，此时：
+
+$$
+a-b=a\oplus b
+$$
+
+条件 $a\&b=b$ 也表示 $b$ 是 $a$ 的子掩码。
 
 ### 最大公约数
 
