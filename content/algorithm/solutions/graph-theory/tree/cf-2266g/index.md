@@ -11,7 +11,7 @@ tags:
 platform:
   - "Codeforces"
 problem_id: "CF2266G"
-draft: true
+draft: false
 ---
 
 ## G - Modular Tree
