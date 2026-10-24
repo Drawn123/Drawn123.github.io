@@ -10,7 +10,7 @@ tags:
 platform:
   - "Codeforces"
 problem_id: "CF2260C"
-draft: true
+draft: false
 ---
 
 ## C - Maximize XOR, Minimize Operations
