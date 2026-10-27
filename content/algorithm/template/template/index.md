@@ -5,7 +5,7 @@ knowledge_id: "algorithm-template"
 url: "/algorithm/template/template/"
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-10-24
+lastmod: 2026-10-27
 tags:
   - "ICPC"
 
@@ -1849,6 +1849,118 @@ void solve(){
     cout<<endl;
 }
 ```
+
+
+### Tarjan 强连通分量与缩点
+
+#### 基本概念
+
+* **强连通：** 有向图中，两个点 $u,v$ 互相可达，即 $u$ 能走到 $v$，$v$ 也能走到 $u$。
+* **强连通分量（SCC）：** 极大的强连通子图，内部任意两点都互相可达，再加入其他点就不满足这个条件。每个点恰好属于一个 SCC，单个点也可以构成 SCC。
+* **缩点：** 把每个 SCC 合并为一个点，只保留不同 SCC 之间的有向边。缩点后一定是有向无环图（DAG）：如果多个 SCC 之间形成环，它们就能互相到达，应当属于同一个 SCC。因此可以在缩点后的图上做拓扑排序、DAG DP 等。
+
+#### 算法原理
+
+Tarjan 在一次 DFS 中维护时间戳和一个栈：
+
+* `dfn[u]`：第一次访问 $u$ 的时间戳，`dfn[u]==0` 表示还没访问。
+* `low[u]`：从 $u$ 出发，沿 DFS 树边向下，再至多经过一条指向栈内节点的边，能到达的最小 `dfn`，也包括 $u$ 自己。
+* `s`：保存已访问但还没有分配 SCC 编号的节点。DFS 返回时不一定出栈，所以它与函数递归调用栈不同。
+
+遍历边 $u\to v$ 时，如果 $v$ 没访问过，先递归，再用 `low[v]` 更新 `low[u]`；如果 $v$ 已访问且仍在栈内，用 `dfn[v]` 更新 `low[u]`。已经分配 SCC 编号的点不参与更新。
+
+当 `dfn[u]==low[u]` 时，说明 $u$ 是当前 SCC 在 DFS 中最先访问的点，这部分节点无法再连回更早的栈内节点。从栈顶一直弹到 $u$，弹出的节点恰好组成一个 SCC。
+
+`scc[u]` 是 $u$ 所属的 SCC 编号，编号范围为 `1~scnt`；`nodes[i]` 和 `sz[i]` 分别记录第 $i$ 个 SCC 的节点及数量。遍历原图的边，将跨 SCC 的边加入 `dag`，同时统计缩点后的入度 `in`。
+
+**时间复杂度：** Tarjan 和缩点均为 $O(n+m)$。
+
+#### 代码
+
+```c++
+const int N=1e5+10;
+const int MOD=1e9+7;
+
+vector<int> g[N];
+int dfn[N];     // 时间戳 dfn序
+int low[N];     // 按上述规则能到达的最小dfn
+stack<int> s;   // 尚未分配SCC编号的节点栈
+int t=0;        // 时间戳计数器
+
+int scnt=0;     // 强连通分量计数器
+int scc[N];     // scc[u]表示u属于第几个scc
+
+vector<int> nodes[N];// 记录每个scc包含的节点
+int sz[N];      // 每个scc的节点数量
+
+void tarjan(int u){
+    dfn[u]=low[u]=++t;
+    s.push(u);
+
+    for(auto v:g[u]){
+        if(!dfn[v]){// 树边
+            tarjan(v);
+            low[u]=min(low[u],low[v]);
+        }
+        else{// 指向已访问节点的边
+            if(scc[v]==0){// 还在栈里 没有被分配强连通编号
+                low[u]=min(low[u],dfn[v]);
+            }
+        }
+    }
+    if(dfn[u]==low[u]){
+        scnt++;
+        while(true){
+            int v=s.top();
+            s.pop();
+
+            scc[v]=scnt;
+            sz[scnt]++;
+            nodes[scnt].push_back(v);
+
+            if(u==v) break;
+        }
+    }
+}
+
+vector<int> dag[N];
+int in[N];
+
+void build_dag(int n){
+    for(int u=1;u<=n;u++){
+        for(int v:g[u]){
+            if(scc[u]!=scc[v]){
+                dag[scc[u]].push_back(scc[v]);
+                in[scc[v]]++;
+            }
+        }
+    }
+}
+
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    for(int i=0;i<m;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+    }
+    // 从每个未访问的点出发 遍历整张有向图
+    for(int i=1;i<=n;i++){
+        if(!dfn[i]){
+            tarjan(i);
+        }
+    }
+    // 缩点生成有向无环图
+    build_dag(n);
+
+}
+```
+
+* `build_dag` 保留重边，`in` 也按重边条数统计；拓扑排序时遍历 `dag` 的每条边并减少对应入度即可。如果题目要求统计不同后继的数量，需要另行去重。
+* 在缩点后的图上做拓扑排序时，遍历 `1~scnt`，邻接表使用 `dag`。
+* 以上是单组数据写法。多测时清空上一组用到的 `g、dag、nodes`，将 `dfn、low、scc、sz、in` 置零，重置 `t、scnt` 并清空栈。
+* 递归深度最坏为 $O(n)$，长链图需要留意运行环境的栈空间。
 
 
 ### 01BFS
