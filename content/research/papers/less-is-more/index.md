@@ -15,7 +15,7 @@ related_ids:
   - "research-experiment-less-is-more"
   - "research-paper-automated-medical-coding-review"
   - "research-experiment-metrics-laat"
-draft: true
+draft: false
 ---
 
 ## 一、研究问题与方法概览 {#method-overview}

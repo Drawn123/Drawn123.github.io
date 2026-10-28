@@ -13,7 +13,7 @@ math: true
 related_ids:
   - "research-paper-less-is-more"
   - "research-experiment-metrics-laat"
-draft: true
+draft: false
 ---
 
 ## 一、运行目标与复现范围
