@@ -5,7 +5,7 @@ knowledge_id: "algorithm-template"
 url: "/algorithm/template/template/"
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-10-27
+lastmod: 2026-11-01
 tags:
   - "ICPC"
 
@@ -918,296 +918,6 @@ vector<int> slidingWindowMax(const vector<int>& a, int n, int k){
     }
     return mx;
 }
-```
-
-
-
-### 字典树
-
-#### 字符串字典树
-
-字典树（Trie）是一种利用字符串的**公共前缀**来减少无谓比较的数据结构，可以在 $O(L)$ 时间复杂度内（$L$ 为字符串长度）高效完成字符串的存储、检索与删除。
-
-**核心变量**
-
-- `tree[u][c]`：状态转移表，表示节点 $u$ 沿着字符 $c$（映射为 $0 \sim 25$）到达的子节点编号。
-- `cnt[u]`：经过节点 $u$ 的字符串数量（用于**前缀频次**统计）。
-- `endcnt[u]`：恰好以节点 $u$ 结尾的字符串数量（用于**完全匹配频次**统计）。
-- `have[u]`：标记是否有单词在节点 $u$ 结尾。
-- `max_idx`：记录历史使用过的最大节点编号（保证多组数据 $O(\text{max\_idx})$ 极速安全清空）。
-
-**函数功能**
-
-- `init()`：**重置字典树**。清空历史用到的所有节点信息，在多组测试数据（$T > 1$）时写在 `solve()` 开头。
-- `insert(s)`：**插入字符串** $s$。构建路径并维护沿途节点及结尾的计数。
-- `query_cnt(s)`：**精确匹配查询**。返回字典树中完全等于 $s$ 的字符串出现次数。
-- `query_pre(s)`：**前缀匹配查询**。返回字典树中所有以 $s$ 为前缀的字符串总数。
-- `delet(s)`：**删除字符串** $s$。若树中存在 $s$，将其沿途的频次计数均减 1。
-
-**时间复杂度：** 插入、查询、删除均为 $O(L)$（$L$ 为字符串长度）；`init()` 清空复杂度为 $O(\text{max\_idx})$。
-
-```c++
-const int N=1e5+10;
-const int M=26;
-
-struct Trie{
-    int tree[N][M]; // 表示从节点u沿字符c走到的子节点编号 
-    int cnt[N];     // 经过该节点的字符串总数（包含了穿过它的和在这里结尾的）
-    int endcnt[N];  // 恰好以该节点结尾的字符串数量
-    bool have[N];   // 标记是否有单词以该节点结尾
-    int idx;        // 当前测试用例中分配到的最新节点编号（0为根节点）
-    int max_idx;    // 历史分配过的最大节点编号
-
-    void init(){
-        for(int i=0;i<=max_idx;i++){
-            cnt[i]=0;
-            endcnt[i]=0;
-            have[i]=false;
-            memset(tree[i],0,sizeof tree[i]);
-        }
-        idx=0;
-        max_idx=0;
-    }
-
-    Trie(){
-        max_idx=0;
-        idx=0;
-        init();
-    }
-
-    // 1.插入字符串
-    void insert(const string& s){
-        int u=0;
-        for(char ch:s){
-            int c=ch-'a';
-            if(!tree[u][c]){
-                idx++;
-                tree[u][c]=idx;
-                max_idx=max(max_idx,idx); // 实时更新历史最大的节点编号
-            }
-            u=tree[u][c];
-            cnt[u]++;
-        }
-        have[u]=true;
-        endcnt[u]++;
-    }
-
-    // 2.查询s的前缀包含了多少已经插入的字符串 
-    // 即：沿着s的路径走，累加沿途所有的endcnt[u]
-    int query_prefix(const string& s){
-        int u=0;
-        int sum_endcnt=0;
-        for(char ch:s){
-            int c=ch-'a';
-            if(!tree[u][c]) break;
-            u=tree[u][c];
-            sum_endcnt += endcnt[u];
-        }
-        return sum_endcnt;
-    }
-
-    // 3.查询以s为前缀的字符串有多少个
-    int query_pre(const string& s){
-        int u=0;
-        for(char ch:s){
-            int c=ch-'a';
-            if(!tree[u][c]) return 0;
-            u=tree[u][c];
-        }
-        return cnt[u];
-    }
-
-    // 4.查询字典树里面有多少个完全相同的s
-    int query_cnt(const string& s){
-        int u=0;
-        for(char ch:s){
-            int c=ch-'a';
-            if(!tree[u][c]) return 0;
-            u=tree[u][c];
-        }
-        return endcnt[u];
-    }
-
-    // 5.删除一个字符串
-    void delet(const string& s){
-        int u=0;
-        if(query_cnt(s)==0) return ;
-        for(char ch:s){
-            int c=ch-'a';
-            u=tree[u][c];
-            cnt[u]--;
-        }
-        endcnt[u]--;
-        if(endcnt[u]==0){
-            have[u]=false;
-        }
-    }
-
-    // 6.字典树上的dfs回溯搜索（按照字典序输出所有字符串）
-    void dfs(int u,string& path){
-        if(have[u]){
-            cout<<"Found word:"<<path<<"(count:"<<endcnt[u]<<")\n";
-        }
-        for(int i=0;i<M;i++){
-            if(tree[u][i]){
-                path.push_back((char)('a'+i));
-                dfs(tree[u][i],path);
-                path.pop_back();
-            }
-        }
-    }
-
-    void print_all(){
-        string path="";
-        dfs(0,path);
-    }
-}trie;
-
-void solve(){
-    trie.init();
-
-    trie.insert("apple");
-    trie.insert("app");
-    trie.insert("app");
-
-    cout<<trie.query_cnt("app")<<endl;  // 输出 2 (完全匹配 app 的数量)
-    cout<<trie.query_pre("app")<<endl;  // 输出 3 (以 app 为前缀的数量: apple*1 + app*2)
-
-    trie.delet("app");
-    cout<<trie.query_cnt("app")<<endl;  // 输出 1 (删掉一个后剩余的 app 数量)
-    
-}
-```
-
-#### 01字典树
-
-时间复杂度： 
-
-- 单次插入 / 删除 / 查询：O(BITS)  
-- 处理 N 个数：O(N * BITS)
-
-```c++
-const int MOD=998244353;
-const int N=2e5+10; // 元素个数
-const int BITS=30;  // 对应 0 ~ 2^30-1 的范围，即最高到第 29 位
-const int M=N*BITS+10; // 静态数组总结点数上限
-
-struct Trie01{
-    int tree[M][2]; // 01 分支
-    int cnt[M];     // 经过该节点的数值数量
-    int endcnt[M];  // 恰好在该节点结尾的数值数量
-    int idx;        // 当前分配的节点编号
-    int max_idx;    // 历史分配过的最大节点编号（用于多组数据快速清空）
-
-    void init(){
-        for(int i=0;i<=max_idx;i++){
-            cnt[i]=0;
-            endcnt[i]=0;
-            tree[i][0]=tree[i][1]=0;
-        }
-        idx=0;
-        max_idx=0;
-    }
-
-    Trie01(){
-        max_idx=0;
-        idx=0;
-        init();
-    }
-
-    // 1.插入数值 x
-    void insert(int x){
-        int u=0;
-        cnt[u]++;
-        for(int i=BITS-1;i>=0;i--){
-            int bit=(x>>i)&1;
-            if(!tree[u][bit]){
-                idx++;
-                tree[u][bit]=idx;
-                max_idx=max(max_idx,idx); // 实时更新历史最大的节点编号
-            }
-            u=tree[u][bit];
-            cnt[u]++;
-        }
-        endcnt[u]++;
-    }
-
-    // 2.删除数值 x（必须保证 x 已存在于 Trie 中）
-    void delet(int x){
-        int u=0;
-        cnt[u]--;
-        for(int i=BITS-1;i>=0;i--){
-            int bit=(x>>i)&1;
-            u=tree[u][bit];
-            cnt[u]--;
-        }
-        endcnt[u]--;
-    }
-
-    // 3.查询与 x 异或【最大】所对应的数值本身
-    int query_max(int x){
-        int u=0,res=0;
-        for(int i=BITS-1;i>=0;i--){
-            int bit=(x>>i)&1;
-            int wish=bit^1; // 优先走不同方向 (0->1, 1->0)
-            if(tree[u][wish]&&cnt[tree[u][wish]]>0){
-                u=tree[u][wish];
-                res|=(wish<<i);
-            }else{
-                u=tree[u][bit];
-                res|=(bit<<i);
-            }
-        }
-        return res;
-    }
-
-    // 4.查询与 x 异或【最小】所对应的数值本身
-    int query_min(int x){
-        int u=0,res=0;
-        for(int i=BITS-1;i>=0;i--){
-            int bit=(x>>i)&1;
-            int wish=bit; // 优先走相同方向 (0->0, 1->1)
-            if(tree[u][wish]&&cnt[tree[u][wish]]>0){
-                u=tree[u][wish];
-                res|=(wish<<i);
-            }else{
-                u=tree[u][bit^1];
-                res|=((bit^1)<<i);
-            }
-        }
-        return res;
-    }
-
-    // 5.查询数字 x 出现的完整次数
-    int query_cnt(int x){
-        int u=0;
-        for(int i=BITS-1;i>=0;i--){
-            int bit=(x>>i)&1;
-            if(!tree[u][bit]) return 0;
-            u=tree[u][bit];
-        }
-        return endcnt[u];
-    }
-
-    // 6.字典树上的 dfs 遍历（按从小到大的顺序遍历树中存在的所有数值）
-    void dfs(int u,int depth,int val){
-        if(depth<0){
-            if(endcnt[u]>0){
-                cout<<"Found val:"<<val<<" (count:"<<endcnt[u]<<")\n";
-            }
-            return;
-        }
-        for(int bit=0;bit<=1;bit++){
-            if(tree[u][bit]&&cnt[tree[u][bit]]>0){
-                dfs(tree[u][bit],depth-1,val|(bit<<depth));
-            }
-        }
-    }
-
-    void print_all(){
-        dfs(0,BITS-1,0);
-    }
-}trie;
 ```
 
 
@@ -2554,6 +2264,626 @@ void solve(){
 
 
 
+## 字符串
+
+### 字典树
+
+#### 字符串字典树
+
+字典树（Trie）是一种利用字符串的**公共前缀**来减少无谓比较的数据结构，可以在 $O(L)$ 时间复杂度内（$L$ 为字符串长度）高效完成字符串的存储、检索与删除。
+
+**核心变量**
+
+- `tree[u][c]`：状态转移表，表示节点 $u$ 沿着字符 $c$（映射为 $0 \sim 25$）到达的子节点编号。
+- `cnt[u]`：经过节点 $u$ 的字符串数量（用于**前缀频次**统计）。
+- `endcnt[u]`：恰好以节点 $u$ 结尾的字符串数量（用于**完全匹配频次**统计）。
+- `have[u]`：标记是否有单词在节点 $u$ 结尾。
+- `max_idx`：记录历史使用过的最大节点编号（保证多组数据 $O(\text{max\_idx})$ 极速安全清空）。
+
+**函数功能**
+
+- `init()`：**重置字典树**。清空历史用到的所有节点信息，在多组测试数据（$T > 1$）时写在 `solve()` 开头。
+- `insert(s)`：**插入字符串** $s$。构建路径并维护沿途节点及结尾的计数。
+- `query_cnt(s)`：**精确匹配查询**。返回字典树中完全等于 $s$ 的字符串出现次数。
+- `query_pre(s)`：**前缀匹配查询**。返回字典树中所有以 $s$ 为前缀的字符串总数。
+- `delet(s)`：**删除字符串** $s$。若树中存在 $s$，将其沿途的频次计数均减 1。
+
+**时间复杂度：** 插入、查询、删除均为 $O(L)$（$L$ 为字符串长度）；`init()` 清空复杂度为 $O(\text{max\_idx})$。
+
+```c++
+const int N=1e5+10;
+const int M=26;
+
+struct Trie{
+    int tree[N][M]; // 表示从节点u沿字符c走到的子节点编号 
+    int cnt[N];     // 经过该节点的字符串总数（包含了穿过它的和在这里结尾的）
+    int endcnt[N];  // 恰好以该节点结尾的字符串数量
+    bool have[N];   // 标记是否有单词以该节点结尾
+    int idx;        // 当前测试用例中分配到的最新节点编号（0为根节点）
+    int max_idx;    // 历史分配过的最大节点编号
+
+    void init(){
+        for(int i=0;i<=max_idx;i++){
+            cnt[i]=0;
+            endcnt[i]=0;
+            have[i]=false;
+            memset(tree[i],0,sizeof tree[i]);
+        }
+        idx=0;
+        max_idx=0;
+    }
+
+    Trie(){
+        max_idx=0;
+        idx=0;
+        init();
+    }
+
+    // 1.插入字符串
+    void insert(const string& s){
+        int u=0;
+        for(char ch:s){
+            int c=ch-'a';
+            if(!tree[u][c]){
+                idx++;
+                tree[u][c]=idx;
+                max_idx=max(max_idx,idx); // 实时更新历史最大的节点编号
+            }
+            u=tree[u][c];
+            cnt[u]++;
+        }
+        have[u]=true;
+        endcnt[u]++;
+    }
+
+    // 2.查询s的前缀包含了多少已经插入的字符串 
+    // 即：沿着s的路径走，累加沿途所有的endcnt[u]
+    int query_prefix(const string& s){
+        int u=0;
+        int sum_endcnt=0;
+        for(char ch:s){
+            int c=ch-'a';
+            if(!tree[u][c]) break;
+            u=tree[u][c];
+            sum_endcnt += endcnt[u];
+        }
+        return sum_endcnt;
+    }
+
+    // 3.查询以s为前缀的字符串有多少个
+    int query_pre(const string& s){
+        int u=0;
+        for(char ch:s){
+            int c=ch-'a';
+            if(!tree[u][c]) return 0;
+            u=tree[u][c];
+        }
+        return cnt[u];
+    }
+
+    // 4.查询字典树里面有多少个完全相同的s
+    int query_cnt(const string& s){
+        int u=0;
+        for(char ch:s){
+            int c=ch-'a';
+            if(!tree[u][c]) return 0;
+            u=tree[u][c];
+        }
+        return endcnt[u];
+    }
+
+    // 5.删除一个字符串
+    void delet(const string& s){
+        int u=0;
+        if(query_cnt(s)==0) return ;
+        for(char ch:s){
+            int c=ch-'a';
+            u=tree[u][c];
+            cnt[u]--;
+        }
+        endcnt[u]--;
+        if(endcnt[u]==0){
+            have[u]=false;
+        }
+    }
+
+    // 6.字典树上的dfs回溯搜索（按照字典序输出所有字符串）
+    void dfs(int u,string& path){
+        if(have[u]){
+            cout<<"Found word:"<<path<<"(count:"<<endcnt[u]<<")\n";
+        }
+        for(int i=0;i<M;i++){
+            if(tree[u][i]){
+                path.push_back((char)('a'+i));
+                dfs(tree[u][i],path);
+                path.pop_back();
+            }
+        }
+    }
+
+    void print_all(){
+        string path="";
+        dfs(0,path);
+    }
+}trie;
+
+void solve(){
+    trie.init();
+
+    trie.insert("apple");
+    trie.insert("app");
+    trie.insert("app");
+
+    cout<<trie.query_cnt("app")<<endl;  // 输出 2 (完全匹配 app 的数量)
+    cout<<trie.query_pre("app")<<endl;  // 输出 3 (以 app 为前缀的数量: apple*1 + app*2)
+
+    trie.delet("app");
+    cout<<trie.query_cnt("app")<<endl;  // 输出 1 (删掉一个后剩余的 app 数量)
+    
+}
+```
+
+#### 01字典树
+
+时间复杂度： 
+
+- 单次插入 / 删除 / 查询：O(BITS)  
+- 处理 N 个数：O(N * BITS)
+
+```c++
+const int MOD=998244353;
+const int N=2e5+10; // 元素个数
+const int BITS=30;  // 对应 0 ~ 2^30-1 的范围，即最高到第 29 位
+const int M=N*BITS+10; // 静态数组总结点数上限
+
+struct Trie01{
+    int tree[M][2]; // 01 分支
+    int cnt[M];     // 经过该节点的数值数量
+    int endcnt[M];  // 恰好在该节点结尾的数值数量
+    int idx;        // 当前分配的节点编号
+    int max_idx;    // 历史分配过的最大节点编号（用于多组数据快速清空）
+
+    void init(){
+        for(int i=0;i<=max_idx;i++){
+            cnt[i]=0;
+            endcnt[i]=0;
+            tree[i][0]=tree[i][1]=0;
+        }
+        idx=0;
+        max_idx=0;
+    }
+
+    Trie01(){
+        max_idx=0;
+        idx=0;
+        init();
+    }
+
+    // 1.插入数值 x
+    void insert(int x){
+        int u=0;
+        cnt[u]++;
+        for(int i=BITS-1;i>=0;i--){
+            int bit=(x>>i)&1;
+            if(!tree[u][bit]){
+                idx++;
+                tree[u][bit]=idx;
+                max_idx=max(max_idx,idx); // 实时更新历史最大的节点编号
+            }
+            u=tree[u][bit];
+            cnt[u]++;
+        }
+        endcnt[u]++;
+    }
+
+    // 2.删除数值 x（必须保证 x 已存在于 Trie 中）
+    void delet(int x){
+        int u=0;
+        cnt[u]--;
+        for(int i=BITS-1;i>=0;i--){
+            int bit=(x>>i)&1;
+            u=tree[u][bit];
+            cnt[u]--;
+        }
+        endcnt[u]--;
+    }
+
+    // 3.查询与 x 异或【最大】所对应的数值本身
+    int query_max(int x){
+        int u=0,res=0;
+        for(int i=BITS-1;i>=0;i--){
+            int bit=(x>>i)&1;
+            int wish=bit^1; // 优先走不同方向 (0->1, 1->0)
+            if(tree[u][wish]&&cnt[tree[u][wish]]>0){
+                u=tree[u][wish];
+                res|=(wish<<i);
+            }else{
+                u=tree[u][bit];
+                res|=(bit<<i);
+            }
+        }
+        return res;
+    }
+
+    // 4.查询与 x 异或【最小】所对应的数值本身
+    int query_min(int x){
+        int u=0,res=0;
+        for(int i=BITS-1;i>=0;i--){
+            int bit=(x>>i)&1;
+            int wish=bit; // 优先走相同方向 (0->0, 1->1)
+            if(tree[u][wish]&&cnt[tree[u][wish]]>0){
+                u=tree[u][wish];
+                res|=(wish<<i);
+            }else{
+                u=tree[u][bit^1];
+                res|=((bit^1)<<i);
+            }
+        }
+        return res;
+    }
+
+    // 5.查询数字 x 出现的完整次数
+    int query_cnt(int x){
+        int u=0;
+        for(int i=BITS-1;i>=0;i--){
+            int bit=(x>>i)&1;
+            if(!tree[u][bit]) return 0;
+            u=tree[u][bit];
+        }
+        return endcnt[u];
+    }
+
+    // 6.字典树上的 dfs 遍历（按从小到大的顺序遍历树中存在的所有数值）
+    void dfs(int u,int depth,int val){
+        if(depth<0){
+            if(endcnt[u]>0){
+                cout<<"Found val:"<<val<<" (count:"<<endcnt[u]<<")\n";
+            }
+            return;
+        }
+        for(int bit=0;bit<=1;bit++){
+            if(tree[u][bit]&&cnt[tree[u][bit]]>0){
+                dfs(tree[u][bit],depth-1,val|(bit<<depth));
+            }
+        }
+    }
+
+    void print_all(){
+        dfs(0,BITS-1,0);
+    }
+}trie;
+```
+
+
+
+### 字符串哈希
+
+用于快速比较两个子串是否相等。把字符串看成以 `base` 为底的多项式，维护前缀哈希 `h[i]` 与幂 `pw[i]`。对子串 $[l,r]$，减去前面部分的贡献即可：
+
+$$
+H(l,r)=\bigl(h[r]-h[l-1]\cdot pw[r-l+1]\bigr)\bmod mod
+$$
+
+采用两组不同的 `base` 和模数降低碰撞概率，这里取 `base1=13331`、`base2=131313`，也可以换成 `131` 等其他值，取值需小于对应模数。比较时要求**子串长度相同、两组哈希值均相同**；哈希仍存在碰撞，不能保证绝对正确。不同字符串构造的 `StringHash` 使用相同参数，可以直接比较返回值。
+
+**时间复杂度：** 预处理 $O(n)$，单次查询 $O(1)$。
+
+```c++
+const int mod1=1000000007,mod2=1000000009;
+const int base1=13331,base2=131313;
+
+struct StringHash{
+    vector<int> h1,h2,pw1,pw2;
+
+    StringHash(const string& s){
+        int n=s.size();
+        h1.assign(n+1,0);
+        h2.assign(n+1,0);
+        pw1.assign(n+1,1);
+        pw2.assign(n+1,1);
+        for(int i=1;i<=n;i++){
+            int x=(unsigned char)s[i-1]+1;
+            h1[i]=(h1[i-1]*base1+x)%mod1;
+            h2[i]=(h2[i-1]*base2+x)%mod2;
+            pw1[i]=pw1[i-1]*base1%mod1;
+            pw2[i]=pw2[i-1]*base2%mod2;
+        }
+    }
+
+    pair<int,int> get(int l,int r) const{
+        int x=(h1[r]-h1[l-1]*pw1[r-l+1]%mod1+mod1)%mod1;
+        int y=(h2[r]-h2[l-1]*pw2[r-l+1]%mod2+mod2)%mod2;
+        return {x,y};
+    }
+};
+
+// 查询要求1<=l<=r<=字符串长度
+// StringHash hs(s),ht(t);
+// 等长子串比较：hs.get(l1,r1)==ht.get(l2,r2)
+// 乘法依赖全局的#define int long long，避免32位溢出
+```
+
+### KMP
+
+用于在文本串 `s` 中查找模式串 `p` 的所有出现位置，允许重叠匹配。传入原字符串即可，模式串内部转为 **1-based**，返回的匹配起点也是 **1-based**；模式串需非空。
+
+- `ne[i]`：`p[1..i]` 的最长相等真前缀与真后缀的长度，不能包含整个 `p[1..i]`，所以 `ne[1]=0`。
+- `j`：当前已经匹配的模式串前缀长度。失配时令 `j=ne[j]`，保留已匹配部分中仍可能作为前缀的最长后缀，再尝试匹配当前字符。
+- 完整匹配后也要令 `j=ne[j]`，继续寻找可能重叠的匹配。例如 `s="ababa"`、`p="aba"`，起点为 `1,3`。
+
+**时间复杂度：** 构造 $O(m)$，单次匹配 $O(n)$，其中 $n=|s|$、$m=|p|$。
+
+```c++
+struct KMP{
+    int m;
+    string p;
+    vector<int> ne;
+
+    KMP(const string& t):m(t.size()),p(" "+t),ne(m+1,0){
+        for(int i=2,j=0;i<=m;i++){
+            while(j && p[i]!=p[j+1]) j=ne[j];
+            if(p[i]==p[j+1]) j++;
+            ne[i]=j;
+        }
+    }
+
+    vector<int> match(const string& s) const{
+        int n=s.size();
+        vector<int> ans;
+        for(int i=1,j=0;i<=n;i++){
+            // s保持原字符串，s[i-1]对应文本串的第i个字符
+            while(j && s[i-1]!=p[j+1]) j=ne[j];
+            if(s[i-1]==p[j+1]) j++;
+            if(j==m){
+                ans.push_back(i-m+1);
+                j=ne[j];// 保留公共前后缀，允许重叠匹配
+            }
+        }
+        return ans;
+    }
+};
+
+void solve(){
+    string s,p;
+    cin>>s>>p;// 先文本串，后模式串，均不含空白字符
+    KMP kmp(p);
+    auto ans=kmp.match(s);
+    for(int x:ans) cout<<x<<'\n';
+    // 前缀数组可通过kmp.ne[1..kmp.m]访问
+}
+```
+
+#### 公共前后缀与循环节
+
+对长度为 $n$ 的非空串构造 `KMP kmp(s)`。从 `kmp.ne[n]` 开始，不断令 `j=kmp.ne[j]`，直到 `j=0`，就能按长度递减枚举所有非空、且不等于原串的公共前后缀。
+
+令 $p=n-\mathrm{ne}[n]$，则 $p$ 是最短周期：将字符串向右移动 $p$ 位后，重叠部分仍然相等。若还要求原串由某个短串**完整重复**得到，则需满足 $n\bmod p=0$，否则最短循环节长度为 $n$。例如 `ababa` 的最短周期为 $2$，但不能由 `ab` 完整重复得到。
+
+**时间复杂度：** 前缀数组求出后，枚举公共前后缀 $O(n)$，求最短周期与循环节 $O(1)$。
+
+### Z 函数与扩展 KMP
+
+`z[i]` 表示字符串从第 $i$ 位开始的后缀与整个字符串的最长公共前缀长度，约定 `z[1]=n`。它比较的是“前缀和某个后缀”；KMP 的 `ne[i]` 则比较 `s[1..i]` 的真前缀与真后缀，二者含义不同。
+
+例如 `s="ababa"` 时，`z[1..5]={5,0,3,0,1}`：从第 $3$ 位开始的 `aba` 与原串前 $3$ 个字符相同，所以 `z[3]=3`。
+
+维护与前缀相同、且右端点最远的区间 $[l,r]$。若 $i\le r$，`s[i]` 对应前缀的第 `i-l+1` 位，可以复用 `z[i-l+1]`，但已知相等的部分不能超过右边界，因此先取 `min(r-i+1,z[i-l+1])`，再向右比较尚未确定的部分。每个位置至多多做一次失配比较，成功扩展只会推进右边界，因此总比较次数为线性。
+
+扩展 KMP 将比较对象换成两个字符串：`ex[i]` 表示文本串 `s` 从第 $i$ 位开始的后缀与模式串 `p` 的最长公共前缀长度。先求 `p` 的 Z 数组，再用同样的区间复用过程扫描 `s`；`ex[i]==p.size()` 就表示该处完整匹配。模式串需非空。
+
+**时间复杂度：** Z 函数 $O(n)$；扩展 KMP $O(n+m)$，其中 $n=|s|$、$m=|p|$。
+
+```c++
+vector<int> get_z(const string& s){
+    int n=s.size();
+    string t=" "+s;
+    vector<int> z(n+1,0);
+    if(n==0) return z;
+    z[1]=n;
+    for(int i=2,l=0,r=0;i<=n;i++){
+        if(i<=r) z[i]=min(r-i+1,z[i-l+1]);
+        while(i+z[i]<=n && t[z[i]+1]==t[i+z[i]]) z[i]++;
+        if(i+z[i]-1>r){
+            l=i;
+            r=i+z[i]-1;
+        }
+    }
+    return z;
+}
+
+vector<int> exkmp(const string& s,const string& p){
+    int n=s.size(),m=p.size();
+    auto z=get_z(p);
+    vector<int> ex(n+1,0);
+    for(int i=1,l=0,r=0;i<=n;i++){
+        if(i<=r) ex[i]=min(r-i+1,z[i-l+1]);
+        while(ex[i]<m && i+ex[i]<=n && s[i+ex[i]-1]==p[ex[i]]){
+            ex[i]++;
+        }
+        if(i+ex[i]-1>r){
+            l=i;
+            r=i+ex[i]-1;
+        }
+    }
+    return ex;
+}
+```
+
+### Manacher（最长回文子串）
+
+用于求最长回文**子串**，也能在预处理后判断任意子串是否为回文。在相邻字符之间以及首尾插入分隔符，将奇数长度和偶数长度的回文统一处理。代码用整数 `-1` 作为分隔符，原字符转换为非负整数，避免与输入字符冲突。
+
+`d[i]` 是处理后字符串以第 $i$ 位为中心、**包含中心**的最大回文半径，故对应原串的回文长度为 `d[i]-1`。维护右端点最远的回文区间 $[l,r]$；区间内的位置先利用镜像中心 `l+r-i` 的半径，再向外扩展尚未确定的部分。
+
+例如 `aba` 处理后为 `#a#b#a#`，这里用 `#` 表示分隔符。以第 $4$ 位的 `b` 为中心，半径为 $4$，对应原串长度为 $3$ 的回文 `aba`。因为 $[l,r]$ 本身是回文，对称位置的匹配结果可以复用；超过右边界的部分仍需实际比较。
+
+`pos,len` 保存最长回文子串的起点与长度，长度相同时保留最先找到的一个；空串时二者均为 `0`。原串子串 $[l,r]$ 的中心映射到处理后的第 $l+r$ 位，半径至少为 $r-l+2$ 时，该子串就是回文。
+
+**时间复杂度：** 预处理及求最长回文 $O(n)$，单次回文判断 $O(1)$。
+
+```c++
+struct Manacher{
+    vector<int> d;
+    int pos=0,len=0;
+
+    Manacher(const string& s){
+        int n=s.size(),m=2*n+1;
+        vector<int> t(m+1,-1);
+        for(int i=1;i<=n;i++) t[2*i]=(unsigned char)s[i-1];
+        d.assign(m+1,1);
+        for(int i=1,l=0,r=0;i<=m;i++){
+            if(i<=r) d[i]=min(r-i+1,d[l+r-i]);
+            while(i-d[i]>=1 && i+d[i]<=m && t[i-d[i]]==t[i+d[i]]){
+                d[i]++;
+            }
+            if(i+d[i]-1>r){
+                l=i-d[i]+1;
+                r=i+d[i]-1;
+            }
+            if(d[i]-1>len){
+                len=d[i]-1;
+                pos=(i-d[i]+2)/2;
+            }
+        }
+    }
+
+    bool is_palindrome(int l,int r) const{
+        return d[l+r]>=r-l+2;// 要求1<=l<=r<=原串长度
+    }
+};
+
+// Manacher man(s);
+// 最长回文子串：s.substr(man.pos-1,man.len)，原串需非空
+// 判断区间：man.is_palindrome(l,r)
+```
+
+### 最小表示法
+
+用于求字符串所有循环移位中字典序最小的一个。例如 `baca` 的最小表示为 `abac`，起点是原串第 $4$ 位。将字符串复制一遍接在末尾，每种循环移位就对应一个长度为 $n$ 的连续子串。
+
+维护两个候选起点 `i,j`，用 `k` 记录相等的前缀长度。首个不同字符确定哪一个候选更大，同时可以排除这个候选之后的 `k` 个起点：这些起点也能与另一侧相应偏移的起点比较，在同一处失配并判为更大。因此较大的一侧直接前进 `k+1` 位；若两个指针相遇，再跳过相同起点。
+
+函数返回最小表示的 **1-based 起点**，多个起点产生相同结果时返回最小起点；空串返回 `0`。
+
+**时间复杂度：** $O(n)$。
+
+```c++
+int min_rotation(const string& s){
+    int n=s.size();
+    if(n==0) return 0;
+    string t=" "+s+s;
+    int i=1,j=2,k=0;
+    while(i<=n && j<=n && k<n){
+        if(t[i+k]==t[j+k]){
+            k++;
+            continue;
+        }
+        if((unsigned char)t[i+k]>(unsigned char)t[j+k]){
+            i+=k+1;
+            if(i==j) i++;
+        }
+        else{
+            j+=k+1;
+            if(i==j) j++;
+        }
+        k=0;
+    }
+    return min(i,j);
+}
+
+// int pos=min_rotation(s);
+// string ans=(s+s).substr(pos-1,s.size());// 原串需非空
+```
+
+### AC 自动机（多模式匹配）
+
+用于统计多个模式串在一个文本串中的出现次数，允许重叠。先将所有模式串插入 Trie，再按 BFS 顺序建立 `fail`：`fail[u]` 指向当前节点对应字符串的最长真后缀，且这个后缀也是 Trie 中的某个前缀。失配时沿 `fail` 跳转，继续利用已经匹配的后缀。
+
+建图时将缺失转移补成 `tr[fail[u]][c]`，扫描文本时每个字符便只需走一次转移。扫描到节点 `u` 时给 `cnt[u]` 加一；最后按 BFS 的逆序把 `cnt[u]` 累加到 `cnt[fail[u]]`，因为一次较长串的匹配也包含它的这些后缀。模式串终止节点的计数就是答案。
+
+例如模式串有 `she` 和 `he`，扫描文本 `she` 后停在 `she` 的终止节点。它的 `fail` 指向 `he` 的终止节点，倒序累加后两者的出现次数都为 $1$，不必在扫描每个字符时反复枚举所有后缀。
+
+模板仅处理小写英文字母，模式串需非空。**先完成所有 `insert()`，再调用一次 `build()`**，之后可以多次 `count()` 查询不同文本。`insert()` 返回终止节点，重复模式串会返回相同节点，查询时各自得到相同次数。
+
+**时间复杂度：** 插入总长为 $L$ 的模式串 $O(L)$；建图 $O(26V)$；单次统计 $O(n+V)$，其中 $V$ 为节点数，$n$ 为文本串长度。
+
+```c++
+struct AC{
+    vector<array<int,26>> tr;
+    vector<int> fail,ord;
+
+    AC(){
+        tr.push_back({});// 根节点编号为0
+        fail.push_back(0);
+    }
+
+    int insert(const string& s){
+        int u=0;
+        for(char ch:s){
+            int c=ch-'a';
+            if(!tr[u][c]){
+                tr[u][c]=tr.size();
+                tr.push_back({});
+                fail.push_back(0);
+            }
+            u=tr[u][c];
+        }
+        return u;
+    }
+
+    void build(){
+        queue<int> q;
+        for(int c=0;c<26;c++){
+            if(tr[0][c]) q.push(tr[0][c]);
+        }
+        while(!q.empty()){
+            int u=q.front();
+            q.pop();
+            ord.push_back(u);
+            for(int c=0;c<26;c++){
+                int v=tr[u][c];
+                if(v){
+                    fail[v]=tr[fail[u]][c];
+                    q.push(v);
+                }
+                else tr[u][c]=tr[fail[u]][c];
+            }
+        }
+    }
+
+    vector<int> count(const string& s) const{
+        vector<int> cnt(tr.size(),0);
+        int u=0;
+        for(char ch:s){
+            u=tr[u][ch-'a'];
+            cnt[u]++;
+        }
+        for(int i=(int)ord.size()-1;i>=0;i--){
+            int v=ord[i];
+            cnt[fail[v]]+=cnt[v];
+        }
+        return cnt;
+    }
+};
+
+void solve(){
+    int n;
+    cin>>n;// 模式串个数，接着读入n个模式串和一个文本串
+    AC ac;
+    vector<int> ed(n+1);
+    for(int i=1;i<=n;i++){
+        string p;
+        cin>>p;
+        ed[i]=ac.insert(p);
+    }
+    ac.build();
+    string s;
+    cin>>s;
+    auto cnt=ac.count(s);
+    for(int i=1;i<=n;i++) cout<<cnt[ed[i]]<<'\n';
+}
+```
+
 ## 数学
 
 ### 位运算
@@ -2921,6 +3251,655 @@ void init(int mod){
 - **$N \le 5000$ 模任意数** $\rightarrow$ **四**（杨辉三角递推 $O(N^2)$）
 
 
+
+## 计算几何
+
+### 精度与使用约定
+
+平面直角坐标系中，$x$ 轴向右、$y$ 轴向上，逆时针为正方向。点集、多边形使用 **0-based** 的 `vector<Point>`，不在末尾重复存放第一个点；访问下一点时写 `p[(i+1)%n]`。
+
+坐标使用 `long double`。
+
+```c++
+using ld=long double;
+const ld eps=1e-10L;
+const ld PI=acosl(-1.0L);
+
+int sgn(ld x){
+    if(x>eps) return 1;
+    if(x<-eps) return -1;
+    return 0;
+}
+
+// 浮点数相等：sgn(a-b)==0
+// 输出：cout<<fixed<<setprecision(10)<<ans<<'\n';
+```
+
+`eps` 用于浮点数判零，按坐标范围和题目精度调整。整数坐标的共线、方向和相交判断用整数计算，乘法可能溢出时用 `__int128`。
+
+**排序比较器不要用 `eps` 判断大小**，否则可能破坏严格弱序。排序直接按坐标比较，几何判断再使用 `sgn()`。
+
+### 点与向量
+
+点表示位置，向量表示方向和位移。二者共用 `Point` 存储：`b-a` 是从点 $A$ 指向点 $B$ 的向量，`a+v` 是将点 $A$ 沿向量 $v$ 平移。
+
+```c++
+struct Point{
+    ld x=0,y=0;
+    Point()=default;
+    Point(ld x,ld y):x(x),y(y){}
+
+    Point operator+(const Point& b) const{
+        return {x+b.x,y+b.y};
+    }
+    Point operator-(const Point& b) const{
+        return {x-b.x,y-b.y};
+    }
+    Point operator*(ld k) const{
+        return {x*k,y*k};
+    }
+    Point operator/(ld k) const{
+        return {x/k,y/k};// 要求k非零
+    }
+    bool operator<(const Point& b) const{
+        if(x!=b.x) return x<b.x;
+        return y<b.y;
+    }
+    bool operator==(const Point& b) const{
+        return x==b.x && y==b.y;// 精确去重，不用于近似相等判断
+    }
+};
+
+bool same(Point a,Point b){
+    return sgn(a.x-b.x)==0 && sgn(a.y-b.y)==0;
+}
+
+ld dot(Point a,Point b){
+    return a.x*b.x+a.y*b.y;
+}
+
+ld cross(Point a,Point b){
+    return a.x*b.y-a.y*b.x;
+}
+
+ld norm2(Point a){
+    return dot(a,a);// 长度的平方
+}
+
+ld len(Point a){
+    return sqrtl(norm2(a));
+}
+
+ld dist(Point a,Point b){
+    return len(a-b);
+}
+```
+
+比较两点距离大小时可比较 `norm2(a-b)`，避免开根号；中点为 `(a+b)/2`。上述操作均为 $O(1)$。
+
+### 点积与叉积
+
+#### 点积：夹角与投影
+
+设两个向量为 $a=(x_1,y_1)$、$b=(x_2,y_2)$，夹角为 $\theta\in[0,\pi]$：
+
+$$
+a\cdot b=x_1x_2+y_1y_2=|a||b|\cos\theta
+$$
+
+对于两个非零向量，点积大于 $0$ 表示夹锐角，等于 $0$ 表示垂直，小于 $0$ 表示夹钝角。向量 $a$ 在非零向量 $b$ 方向上的投影向量为：
+
+$$
+\operatorname{proj}_b(a)=b\frac{a\cdot b}{|b|^2}
+$$
+
+#### 叉积：方向与面积
+
+二维叉积是一个有符号的数：
+
+$$
+a\times b=x_1y_2-y_1x_2
+$$
+
+对有向直线 $A\to B$，令 $v=B-A$、$w=P-A$：
+
+| `sgn(cross(v,w))` | 点 $P$ 的位置 |
+| --- | --- |
+| $1$ | 直线左侧，即 $A\to B\to P$ 逆时针转向 |
+| $-1$ | 直线右侧，即顺时针转向 |
+| $0$ | 三点共线；仍需另外判断 $P$ 是否在线段上 |
+
+两个非零向量叉积为 $0$ 表示平行，点积为 $0$ 表示垂直。三角形面积为：
+
+$$
+S_{ABC}=\frac{|(B-A)\times(C-A)|}{2}
+$$
+
+```c++
+ld area(Point a,Point b,Point c){
+    return fabsl(cross(b-a,c-a))/2;
+}
+```
+
+#### 整数坐标的方向判断
+
+整数点用 `long long` 存坐标，计算叉积时**先转 `__int128` 再减、乘**。坐标绝对值不超过 $10^{18}$ 时，叉积可放入有符号 `__int128`；更大范围需重新核算。
+
+```c++
+struct IPoint{
+    long long x,y;
+};
+
+__int128 icross(IPoint a,IPoint b,IPoint c){
+    __int128 x1=(__int128)b.x-a.x;
+    __int128 y1=(__int128)b.y-a.y;
+    __int128 x2=(__int128)c.x-a.x;
+    __int128 y2=(__int128)c.y-a.y;
+    return x1*y2-y1*x2;
+}
+
+int iturn(IPoint a,IPoint b,IPoint c){
+    __int128 v=icross(a,b,c);
+    if(v>0) return 1;
+    if(v<0) return -1;
+    return 0;// 1逆时针，-1顺时针，0共线
+}
+
+bool ionseg(IPoint p,IPoint a,IPoint b){
+    return iturn(a,b,p)==0 &&
+           min(a.x,b.x)<=p.x && p.x<=max(a.x,b.x) &&
+           min(a.y,b.y)<=p.y && p.y<=max(a.y,b.y);
+}
+
+bool isegcross(IPoint a,IPoint b,IPoint c,IPoint d){
+    // 包含端点接触、共线重叠，允许线段退化为点
+    if(ionseg(a,c,d) || ionseg(b,c,d) ||
+       ionseg(c,a,b) || ionseg(d,a,b)) return true;
+    return iturn(a,b,c)*iturn(a,b,d)<0 &&
+           iturn(c,d,a)*iturn(c,d,b)<0;
+}
+```
+
+`ionseg()` 用叉积判共线，再检查横纵坐标是否均在两个端点的闭区间内；`isegcross()` 的跨立判断与后面的浮点版本相同。这些判断均为 $O(1)$，不需要 `eps`。
+
+### 整点与 gcd
+
+#### 整数方向约分
+
+两个整点的坐标差为 $(dx,dy)$，且两点不同。令：
+
+$$
+g=\gcd(|dx|,|dy|),\qquad v=\left(\frac{dx}{g},\frac{dy}{g}\right)
+$$
+
+约分后的整数向量可以作为方向的键。例如 $(6,4)$ 和 $(3,2)$ 都变成 $(3,2)$，竖直方向也能直接表示，不需要计算浮点斜率。
+
+统计同一条直线的方向时，还要统一正负：让 $dx>0$，或者 $dx=0$ 且 $dy>0$。统计从某个点出发的同一条射线时，正反方向不同，不能翻转符号。
+
+```c++
+pair<long long,long long> dir(long long dx,long long dy){
+    // 要求(dx,dy)!=(0,0)，返回同一直线的方向
+    long long g=std::gcd(abs(dx),abs(dy));
+    dx/=g;
+    dy/=g;
+    if(dx<0 || (dx==0 && dy<0)){
+        dx=-dx;
+        dy=-dy;
+    }
+    return {dx,dy};
+}
+```
+
+横纵坐标差及其绝对值需能放进 `long long`。枚举点 $A$，用 `map<pair<long long,long long>,int>` 统计其他点与 $A$ 的方向，可以统计经过 $A$ 的共线点；重复点单独计数。若区分射线，去掉翻转符号的 `if`。
+
+**时间复杂度：** 单次约分 $O(\log M)$，其中 $M=\max(|dx|,|dy|)$。
+
+#### 线段上的格点数
+
+端点为整点，令 $g=\gcd(|x_2-x_1|,|y_2-y_1|)$。从起点每次走约分后的方向向量，走 $g$ 步到终点，因此线段上的格点数为：
+
+$$
+\text{含两个端点：}g+1
+$$
+
+两个端点不同时，内部格点数为：
+
+$$
+\text{不含端点：}g-1
+$$
+
+例如 $(0,0)$ 到 $(6,4)$，$g=2$，格点为 $(0,0),(3,2),(6,4)$。两个端点相同时，只有一个格点，内部格点数为 $0$。
+
+```c++
+long long lattice(IPoint a,IPoint b){
+    // 含端点，要求坐标差、绝对值和答案不溢出long long
+    long long dx=abs(b.x-a.x),dy=abs(b.y-a.y);
+    return std::gcd(dx,dy)+1;
+}
+```
+
+#### Pick 定理
+
+对于顶点均为整点、不自交且没有孔洞的多边形，设面积为 $S$，内部格点数为 $I$，边界格点数为 $B$：
+
+$$
+S=I+\frac{B}{2}-1
+$$
+
+每条边含端点的格点数为 $g+1$，所有边相加会将每个顶点算两遍，所以边界格点数为：
+
+$$
+B=\sum_{i=0}^{n-1}\gcd(|x_{i+1}-x_i|,|y_{i+1}-y_i|)
+$$
+
+下标按 $n$ 取模。若已经用叉积求得两倍面积 $S_2$，则内部格点数为：
+
+$$
+I=\frac{S_2-B+2}{2}
+$$
+
+例如顶点为 $(0,0),(4,0),(0,3)$ 的三角形，$S_2=12$，$B=4+1+3=8$，所以 $I=3$。
+
+### 夹角与旋转
+
+#### 弧度与三角函数
+
+$$
+180^\circ=\pi,\qquad \text{弧度}=\text{角度}\times\frac{\pi}{180}
+$$
+
+设非零向量为 $(x,y)$，长度为 $r$，与 $x$ 轴正方向的有向角为 $\theta$：
+
+$$
+\cos\theta=\frac{x}{r},\qquad \sin\theta=\frac{y}{r}
+$$
+
+当 $x\ne0$ 时：
+
+$$
+\tan\theta=\frac{y}{x}
+$$
+
+| 角度 | 弧度 | $\sin$ | $\cos$ |
+| --- | --- | --- | --- |
+| $0^\circ$ | $0$ | $0$ | $1$ |
+| $30^\circ$ | $\pi/6$ | $1/2$ | $\sqrt3/2$ |
+| $45^\circ$ | $\pi/4$ | $\sqrt2/2$ | $\sqrt2/2$ |
+| $60^\circ$ | $\pi/3$ | $\sqrt3/2$ | $1/2$ |
+| $90^\circ$ | $\pi/2$ | $1$ | $0$ |
+
+`atan2l(y,x)` 同时考虑两个坐标的符号，返回 $[-\pi,\pi]$ 内的方向角；`atanl(y/x)` 会丢失象限信息，也不能处理竖直方向。
+
+#### 向量夹角与旋转
+
+两个非零向量的夹角 $\theta\in[0,\pi]$ 满足：
+
+$$
+\theta=\arccos\frac{a\cdot b}{|a||b|}
+$$
+
+浮点误差可能使余弦值略微超出 $[-1,1]$，传入 `acosl()` 前要截断。
+
+```c++
+ld angle(Point a,Point b){
+    // 要求a、b均为非零向量，返回[0,PI]
+    ld c=dot(a,b)/len(a)/len(b);
+    c=max(-1.0L,min(1.0L,c));
+    return acosl(c);
+}
+
+Point rot(Point a,ld rad){
+    // 绕原点逆时针旋转rad弧度，负数表示顺时针
+    ld c=cosl(rad),s=sinl(rad);
+    return {a.x*c-a.y*s,a.x*s+a.y*c};
+}
+
+Point rot90(Point a){
+    return {-a.y,a.x};// 逆时针90度
+}
+
+// 点p绕点o旋转：o+rot(p-o,rad)
+// 从非零向量a转到非零向量b的有向角，范围[-PI,PI]
+// atan2l(cross(a,b),dot(a,b))，逆时针为正
+```
+
+#### 三角形常用公式
+
+设三角形三边为 $a,b,c$，对应的内角为 $A,B,C$。
+
+**内角和：**
+
+$$
+A+B+C=\pi
+$$
+
+**余弦定理：** 已知两边和夹角可求第三边，已知三边可求角。
+
+$$
+c^2=a^2+b^2-2ab\cos C
+$$
+
+**正弦定理：** $R$ 为外接圆半径。
+
+$$
+\frac{a}{\sin A}=\frac{b}{\sin B}=\frac{c}{\sin C}=2R
+$$
+
+**两边和夹角求面积：**
+
+$$
+S=\frac12 ab\sin C
+$$
+
+**海伦公式：** 已知三边，令半周长 $s=(a+b+c)/2$。
+
+$$
+S=\sqrt{s(s-a)(s-b)(s-c)}
+$$
+
+三边需满足三角形不等式。开根号前可用 `max(0.0L,v)` 消除微小负误差；若有三个顶点坐标，直接用叉积求面积即可。
+
+### 斜率与直线方程
+
+#### 斜率
+
+经过两个不同点 $A(x_1,y_1)$、$B(x_2,y_2)$，且 $x_1\ne x_2$ 时，直线斜率为：
+
+$$
+k=\frac{y_2-y_1}{x_2-x_1}
+$$
+
+水平线的斜率为 $0$，竖直线没有斜率。若直线的倾斜角为 $\alpha\in[0,\pi)$，且 $\alpha\ne\pi/2$，则 $k=\tan\alpha$。
+
+两条都有斜率的直线，斜率相同表示平行或重合；斜率乘积为 $-1$ 表示垂直。水平线与竖直线也垂直，需单独处理。
+
+#### 直线方程
+
+**点斜式：** 已知一点 $(x_0,y_0)$ 与斜率 $k$。
+
+$$
+y-y_0=k(x-x_0)
+$$
+
+**斜截式：** $b$ 是纵截距。
+
+$$
+y=kx+b
+$$
+
+**一般式：** $A,B$ 不同时为 $0$，向量 $(A,B)$ 是直线的法向量，$(B,-A)$ 是方向向量。
+
+$$
+Ax+By+C=0
+$$
+
+经过两点 $(x_1,y_1),(x_2,y_2)$ 时可取：
+
+$$
+A=y_1-y_2,\qquad B=x_2-x_1,\qquad C=x_1y_2-x_2y_1
+$$
+
+点 $(x_0,y_0)$ 到该直线的距离为：
+
+$$
+d=\frac{|Ax_0+By_0+C|}{\sqrt{A^2+B^2}}
+$$
+
+一般式和方向向量写法都能表示竖直线。判断平行、垂直和共线时，使用叉积、点积或整数方向约分，可以省去斜率中的除法。
+
+### 直线交点、投影与距离
+
+直线用一个点和一个非零方向向量表示：$P+t\,v$，其中 $t$ 可以取任意实数。相比斜率形式，这种写法能直接处理竖直线。
+
+两条直线分别为 $P+t\,v$、$Q+s\,w$。当 $v\times w\ne0$ 时，联立后对 $w$ 取叉积，得到：
+
+$$
+t=\frac{(Q-P)\times w}{v\times w}
+$$
+
+```c++
+// 两条直线各用两个不同的点表示
+// 返回0：平行且不重合；1：唯一交点；2：重合
+// 只有返回1时，交点ans才有效
+int linecross(Point a,Point b,Point c,Point d,Point& ans){
+    Point v=b-a,w=d-c;
+    ld den=cross(v,w);
+    if(sgn(den)==0){
+        if(sgn(cross(c-a,v))==0) return 2;
+        return 0;
+    }
+    ans=a+v*(cross(c-a,w)/den);
+    return 1;
+}
+
+Point proj(Point p,Point a,Point b){
+    // p在直线AB上的垂足，要求a!=b
+    Point v=b-a;
+    return a+v*(dot(p-a,v)/norm2(v));
+}
+
+ld disline(Point p,Point a,Point b){
+    // 要求a!=b
+    return fabsl(cross(b-a,p-a))/len(b-a);
+}
+
+Point reflect(Point p,Point a,Point b){
+    // p关于直线AB的对称点，要求a!=b
+    return proj(p,a,b)*2-p;
+}
+```
+
+### 线段上的点、线段相交与距离
+
+点 $P$ 在线段 $AB$ 上，需要同时满足共线和位于两端点之间，**包含端点**：
+
+$$
+(B-A)\times(P-A)=0,\qquad (P-A)\cdot(P-B)\le0
+$$
+
+两条线段相交，先处理端点落在另一条线段上的情况，再检查两条线段是否严格跨过彼此所在直线。这样能覆盖共线重叠、端点接触以及退化为点的线段。
+
+```c++
+bool onseg(Point p,Point a,Point b){
+    if(same(a,b)) return same(p,a);
+    return sgn(cross(b-a,p-a))==0 && sgn(dot(p-a,p-b))<=0;
+}
+
+bool segcross(Point a,Point b,Point c,Point d){
+    // 闭线段相交：端点接触、共线重叠也返回true
+    if(onseg(a,c,d) || onseg(b,c,d) ||
+       onseg(c,a,b) || onseg(d,a,b)) return true;
+    int c1=sgn(cross(b-a,c-a));
+    int c2=sgn(cross(b-a,d-a));
+    int c3=sgn(cross(d-c,a-c));
+    int c4=sgn(cross(d-c,b-c));
+    return c1*c2<0 && c3*c4<0;
+}
+
+ld disseg(Point p,Point a,Point b){
+    if(same(a,b)) return dist(p,a);
+    Point v=b-a;
+    ld t=dot(p-a,v)/norm2(v);
+    t=max(0.0L,min(1.0L,t));// 垂足超出线段时，取对应端点
+    return dist(p,a+v*t);
+}
+
+ld segdist(Point a,Point b,Point c,Point d){
+    if(segcross(a,b,c,d)) return 0;
+    return min({disseg(a,c,d),disseg(b,c,d),
+                disseg(c,a,b),disseg(d,a,b)});
+}
+```
+
+上述操作均为 $O(1)$。若只允许两条线段的**内部严格交叉**，直接使用四个叉积的 `c1*c2<0 && c3*c4<0`，去掉前面的端点判断；这种定义也不包含共线重叠。
+
+### 多边形面积与周长
+
+顶点必须已经按边界顺时针或逆时针排列，适用于不自交的简单多边形，凹多边形也可以。不能将任意点集直接代入，也不能用按横坐标排序代替边界顺序。
+
+设顶点依次为 $P_0,P_1,\ldots,P_{n-1}$，并令 $P_n=P_0$，鞋带公式为：
+
+$$
+S=\frac12\left|\sum_{i=0}^{n-1}P_i\times P_{i+1}\right|
+$$
+
+```c++
+ld area2(const vector<Point>& p){
+    // 有向面积的两倍：逆时针为正，顺时针为负
+    int n=p.size();
+    if(n<3) return 0;
+    ld s=0;
+    for(int i=1;i+1<n;i++){
+        s+=cross(p[i]-p[0],p[i+1]-p[0]);
+    }
+    return s;// 与鞋带公式等价，平移到p[0]可减少大坐标相消
+}
+
+ld area(const vector<Point>& p){
+    return fabsl(area2(p))/2;
+}
+
+ld perim(const vector<Point>& p){
+    int n=p.size();
+    ld ans=0;
+    for(int i=0;i<n;i++) ans+=dist(p[i],p[(i+1)%n]);
+    return ans;
+}
+```
+
+**时间复杂度：** 均为 $O(n)$。整数坐标的面积可先用 `__int128` 累加两倍有向面积，再取绝对值；还需检查 $n$ 次累加后的范围。面积可能是半整数，不能直接整数除以 $2$。
+
+### 点在多边形内
+
+适用于简单多边形，允许凹多边形，顶点按边界顺序给出，顺逆时针均可。先判断边界，再统计边相对查询点的绕行次数；用半开区间处理纵坐标，避免射线经过顶点时重复计数。
+
+```c++
+// 返回0：外部；1：边界；2：内部
+int inpoly(Point q,const vector<Point>& p){
+    int n=p.size(),cnt=0;
+    for(int i=0;i<n;i++){
+        Point a=p[i],b=p[(i+1)%n];
+        if(onseg(q,a,b)) return 1;
+        int k=sgn(cross(b-a,q-a));
+        int d1=sgn(a.y-q.y),d2=sgn(b.y-q.y);
+        if(d1<=0 && d2>0 && k>0) cnt++;// 向上跨过查询点高度
+        if(d2<=0 && d1>0 && k<0) cnt--;// 向下跨过查询点高度
+    }
+    if(cnt==0) return 0;
+    return 2;
+}
+```
+
+**时间复杂度：** 单次查询 $O(n)$。
+
+### 圆的基础运算
+
+圆心为 $O$、半径为 $r$ 的圆，面积为 $\pi r^2$，周长为 $2\pi r$。圆心到点的距离与半径比较，可判断点在圆内、圆上还是圆外。
+
+```c++
+struct Circle{
+    Point o;
+    ld r;
+};
+
+int pos(Point p,Circle c){
+    // -1圆内，0圆上，1圆外；要求r>=0
+    return sgn(dist(p,c.o)-c.r);
+}
+
+int pos(Point a,Point b,Circle c){
+    // -1相交，0相切，1相离；要求a!=b、r>0
+    return sgn(disline(c.o,a,b)-c.r);
+}
+
+// 要求两个圆的半径均大于0
+// -1重合，0内含且不相切，1内切，2相交，3外切，4外离
+int pos(Circle a,Circle b){
+    ld d=dist(a.o,b.o);
+    if(same(a.o,b.o) && sgn(a.r-b.r)==0) return -1;
+    int outer=sgn(d-a.r-b.r);
+    int inner=sgn(d-fabsl(a.r-b.r));
+    if(outer>0) return 4;
+    if(outer==0) return 3;
+    if(inner<0) return 0;
+    if(inner==0) return 1;
+    return 2;
+}
+
+vector<Point> linecircle(Point a,Point b,Circle c){
+    // 直线与圆的交点，要求a!=b、r>0
+    Point h=proj(c.o,a,b);// 圆心在直线上的垂足
+    ld d=dist(c.o,h);
+    int k=sgn(d-c.r);
+    if(k>0) return {};
+    if(k==0) return {h};
+    Point v=(b-a)/len(b-a);
+    ld t=sqrtl(max(0.0L,(c.r-d)*(c.r+d)));
+    return {h+v*t,h-v*t};
+}
+```
+
+直线与圆相交时，垂足是两个交点的中点，由直角三角形得到交点到垂足的距离 $\sqrt{r^2-d^2}$。如果求**线段**与圆的交点，将结果用 `onseg()` 过滤；退化为点的线段单独判断该点是否在圆上。上述操作均为 $O(1)$。
+
+### 轴对齐矩形相交面积
+
+矩形的边平行于坐标轴。两个矩形分别用左下角和右上角表示，允许退化；交集的宽、高分别由两个坐标区间的交集得到。
+
+```c++
+ld rectarea(Point a1,Point a2,Point b1,Point b2){
+    // 要求a1.x<=a2.x、a1.y<=a2.y，b同理
+    ld w=max(0.0L,min(a2.x,b2.x)-max(a1.x,b1.x));
+    ld h=max(0.0L,min(a2.y,b2.y)-max(a1.y,b1.y));
+    return w*h;
+}
+```
+
+**时间复杂度：** $O(1)$。边或角接触时面积为 $0$；若题目把接触也视为相交，需要另外检查横、纵两个闭区间是否均有交集。整数坐标可直接用整数计算，并检查面积乘法是否溢出。
+
+### 凸包（Andrew）
+
+凸包可以理解为用橡皮筋围住所有点后形成的边界。先按 $x$、再按 $y$ 排序，分别从左到右、从右到左维护下凸壳与上凸壳。每加入一个点，若末尾两点与新点没有形成左转，就弹出末尾点，直到恢复凸性。
+
+返回的顶点按**逆时针**排列，起点为字典序最小的点，末尾不重复起点，**不保留同一直边上的中间点**。重复输入点会精确去重；全部共线时只返回两个端点，全相同时只返回一个点，空集返回空集。
+
+```c++
+vector<Point> hull(vector<Point> p){
+    sort(p.begin(),p.end());
+    p.erase(unique(p.begin(),p.end()),p.end());
+    int n=p.size();
+    if(n<=1) return p;
+    vector<Point> lower,upper;
+    for(int i=0;i<n;i++){
+        while(lower.size()>=2){
+            int m=lower.size();
+            if(sgn(cross(lower[m-1]-lower[m-2],p[i]-lower[m-1]))>0) break;
+            lower.pop_back();
+        }
+        lower.push_back(p[i]);
+    }
+    for(int i=n-1;i>=0;i--){
+        while(upper.size()>=2){
+            int m=upper.size();
+            if(sgn(cross(upper[m-1]-upper[m-2],p[i]-upper[m-1]))>0) break;
+            upper.pop_back();
+        }
+        upper.push_back(p[i]);
+    }
+    lower.pop_back();
+    upper.pop_back();
+    lower.insert(lower.end(),upper.begin(),upper.end());
+    return lower;
+}
+
+// auto h=hull(p);
+// ld area=area(h);
+// ld perimeter=perim(h);
+// 凸包退化成线段时，上述周长按来回计算，等于两端点距离的2倍
+```
+
+**时间复杂度：** 排序 $O(n\log n)$，扫描 $O(n)$；**空间复杂度：** $O(n)$。求出凸包后可以直接计算面积、周长，或判断点是否在凸包内。
+
+整数坐标需要精确凸包时，将存储类型换为 `IPoint`，补上同样的字典序比较、精确相等比较，并将转向条件换成 `iturn(倒数第二点,最后一点,新点)>0`，不要先转浮点再判断。浮点输入接近共线时，是否弹点取决于误差阈值。
 
 ## 动态规划
 
