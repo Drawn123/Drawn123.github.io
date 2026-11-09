@@ -5,7 +5,7 @@ knowledge_id: "algorithm-template"
 url: "/algorithm/template/template/"
 title: "ICPC 算法模板"
 date: 2025-12-23
-lastmod: 2026-11-01
+lastmod: 2026-11-09
 tags:
   - "ICPC"
 
@@ -1276,6 +1276,128 @@ void solve(){
 
 
 
+#### 分层图最短路
+
+当最短路还受“最多使用 $k$ 次免费机会”等限制时，把点拆成 $(u,p)$：当前在 $u$，已使用 $p$ 次机会。
+
+以 [P4568 飞行路线](https://www.luogu.com.cn/problem/P4568) 为例，城市编号为 $0\sim n-1$，航线双向。普通经过 $(u,v,w)$ 时，同层转移并加 $w$；使用免费机会时，转移到下一层，费用不变。无需显式建出所有层，扩展状态时枚举原图边即可。
+
+终点取所有层的最小值；Dijkstra 第一次弹出任意终点状态时也可以直接返回。要求转移费用非负，时间复杂度 $O((k+1)(n+m)\log((k+1)n))$。
+
+```c++
+int n,m,k;
+int s,t;
+struct p{
+    int v,w;
+};
+vector<vector<p>> g;
+struct S{
+    int d,u,p;// 距离 节点编号 使用的免费次数
+    bool operator>(const S& other)const{
+        return d>other.d;
+    };
+};
+
+void solve(){
+    cin>>n>>m>>k;
+    cin>>s>>t;
+    g.assign(n+1,vector<p>());
+    for(int i=0;i<m;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+    }
+    vector dis(n+1,vector<int>(k+1,1e18));
+    priority_queue<S,vector<S>,greater<S>> q;
+
+    dis[s][0]=0;
+    q.push({0,s,0});
+
+    while(!q.empty()){
+        auto [d,u,p]=q.top();
+        q.pop();
+
+        if(d>dis[u][p]) continue;// vis
+
+        if(u==t){
+            cout<<d<<endl;
+            return ;
+        }
+
+        for(auto [v,w]:g[u]){
+            // 不使用免费机会 同层
+            if(dis[v][p]>dis[u][p]+w){
+                dis[v][p]=dis[u][p]+w;
+                q.push({dis[v][p],v,p});
+            }
+            // 使用免费机会 下一层
+            if(p+1<=k && dis[v][p+1]>dis[u][p]){
+                dis[v][p+1]=dis[u][p];
+                q.push({dis[v][p+1],v,p+1});
+            }
+        }
+    }
+
+    int ans=1e18;
+    for(int i=0;i<=k;i++){
+        ans=min(ans,dis[t][i]);
+    }
+    cout<<ans<<endl;
+}
+```
+
+#### 非空最短环
+
+[ABC 191E Come Back Quickly](https://atcoder.jp/contests/abc191/tasks/abc191_e)：对有向正权图中的每个点，求从它出发、至少经过一条边再返回的最短距离，不存在输出 $-1$。
+
+以 $i$ 为起点时，不设置 `dis[i]=0`，改为先用所有出边初始化距离，再跑 Dijkstra。这样 `dis[i]` 必须实际走过边才会被更新，自环和重边也都能处理。
+
+时间复杂度 $O(n(n+m)\log(n+m))$。
+
+```c++
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<pii>> g(n+1,vector<pii>());
+    for(int i=0;i<m;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        g[u].push_back({v,w});
+    }
+    for(int i=1;i<=n;i++){
+        vector<int> dis(n+1,1e18),vis(n+1,0);
+
+        priority_queue<pii,vector<pii>,greater<pii>> q;
+
+        // 先走一条出边，排除长度为0的空路径
+        for(auto [v,w]:g[i]){
+            if(dis[v]>w){
+                dis[v]=w;
+                q.push({dis[v],v});
+            }
+        }
+
+        while(!q.empty()){
+            auto [d,u]=q.top();
+            q.pop();
+            if(vis[u]) continue;
+            vis[u]=1;
+            for(auto [v,w]:g[u]){
+                if(dis[v]>dis[u]+w){
+                    dis[v]=dis[u]+w;
+                    q.push({dis[v],v});
+                }
+            }
+        }
+        if(dis[i]==1e18){
+            cout<<-1<<endl;
+        }
+        else cout<<dis[i]<<endl;
+    }
+}
+```
+
 #### Floyd
 
 **多源最短路**
@@ -1510,6 +1632,71 @@ void spfa(int n,int s){
 
 
 
+#### 差分约束
+
+将每个约束 $x_v-x_u\le w$ 改写为 $x_v\le x_u+w$，连有向边 $u\to v$，边权为 $w$。
+
+新增虚拟源点 $0$，向所有变量连权为 $0$ 的边，跑 SPFA。若无负环，最短距离满足每条边对应的不等式，就是一组可行解；若有负环，沿环累加会得到 $0<0$，无解。
+
+例题：[P5960 差分约束](https://www.luogu.com.cn/problem/P5960)。图中共有 $n+1$ 个点，`cnt[v]` 记录松弛路径的边数，达到 $n+1$ 即判负环。最坏时间复杂度 $O(n(n+m))$。
+
+```c++
+int n,m;
+struct p{
+    int v,w;
+};
+vector<vector<p>> g;
+
+void solve(){
+    cin>>n>>m;
+    g.assign(n+1,vector<p>());
+
+    for(int i=0;i<m;i++){
+        int u,v,w;
+        cin>>v>>u>>w;
+        g[u].push_back({v,w});
+    }
+
+    for(int i=1;i<=n;i++){
+        g[0].push_back({i,0});
+    }
+
+    vector<int> d(n+1,1e18),vis(n+1,0),cnt(n+1,0);
+    queue<int> q;
+    d[0]=0;
+    vis[0]=1;
+    q.push(0);
+
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        vis[u]=0;
+
+        for(auto [v,w]:g[u]){
+            if(d[v]>d[u]+w){
+                d[v]=d[u]+w;
+
+                cnt[v]=cnt[u]+1;
+                if(cnt[v]>=n+1){
+                    cout<<"NO"<<endl;
+                    return ;
+                }
+                if(!vis[v]){
+                    q.push(v);
+                    vis[v]=1;
+                }
+            }
+        }
+    }
+
+    for(int i=1;i<=n;i++){
+        cout<<d[i]<<' ';
+    }
+    cout<<endl;
+
+}
+```
+
 ### 拓扑排序
 
 ```c++
@@ -1560,6 +1747,62 @@ void solve(){
 }
 ```
 
+
+#### DAG 路径计数
+
+例题：[P4017 最大食物链计数](https://www.luogu.com.cn/problem/P4017)。边由被捕食者指向捕食者，统计从入度为 $0$ 的生产者到出度为 $0$ 的消费者的路径条数，模 $80112002$。这里的“最大”指链无法继续延伸，并非只统计长度最长的链。
+
+`dp[u]` 表示从任意源点到 $u$ 的路径数。所有源点初始化为 $1$，按拓扑序将 `dp[u]` 累加给后继，最后汇总所有汇点。图必须无环，时间复杂度 $O(n+m)$。
+
+```c++
+const int MOD=80112002;
+const int N=5e5+10;
+int dp[N],in[N],out[N];
+int n,m;
+vector<int> g[N];
+
+// 拓扑排序 动态规划
+// dp[i]表示从任意生产者到i的食物链数量
+
+void solve(){
+    cin>>n>>m;
+    for(int i=1;i<=m;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        in[v]++;
+        out[u]++;
+    }
+
+    queue<int> q;
+    for(int i=1;i<=n;i++){
+        if(in[i]==0){
+            q.push(i);
+            dp[i]=1;
+        }
+    }
+
+    while(!q.empty()){
+        int u=q.front();
+        q.pop();
+        for(auto v:g[u]){
+            dp[v]=(dp[v]+dp[u])%MOD;
+            in[v]--;
+            if(in[v]==0){
+                q.push(v);
+            }
+        }
+    }
+
+    int ans=0;
+    for(int i=1;i<=n;i++){
+        if(out[i]==0){
+            ans=(ans+dp[i])%MOD;
+        }
+    }
+    cout<<ans<<endl;
+}
+```
 
 ### Tarjan 强连通分量与缩点
 
@@ -1741,6 +1984,65 @@ void solve(){
 ```
 
 
+
+#### 二分答案与 01BFS
+
+例题：[P1948 Telephone Lines S](https://www.luogu.com.cn/problem/P1948)。从 $1$ 到 $n$ 选一条路径，最多 $k$ 条边免费，其余边只按最大边权计费，求最小费用，不连通输出 $-1$。
+
+二分费用上限 `lim`。原边权大于 `lim` 时记为 $1$，否则记为 $0$；此时最短路表示需要免费处理的边数，不超过 $k$ 就可行。上限越大越容易满足，可以用 01BFS 检查，零权边放队首，一权边放队尾。
+
+先检查最大原边权，排除不连通；答案从 $0$ 开始二分，路径不超过 $k$ 条边时费用可以为 $0$。时间复杂度 $O((n+m)\log(W+1))$。
+
+```c++
+int n,p,k;
+vector<vector<pii>> g;
+
+bool check(int lim){
+    vector<int> dis(n+1,1e18);
+    deque<pii> q;
+    dis[1]=0;
+    q.push_front({0,1});
+    while(!q.empty()){
+        auto [d,u]=q.front();
+        q.pop_front();
+        if(d>dis[u]) continue;
+        for(auto [v,w]:g[u]){
+            int cost=0;
+            if(w>lim) cost=1;
+            if(dis[v]>d+cost){
+                dis[v]=d+cost;
+                if(cost==0) q.push_front({dis[v],v});
+                else q.push_back({dis[v],v});
+            }
+        }
+    }
+    return dis[n]<=k;
+}
+
+void solve(){
+    cin>>n>>p>>k;
+    g.assign(n+1,vector<pii>());
+    int mx=0;
+    for(int i=0;i<p;i++){
+        int u,v,w;
+        cin>>u>>v>>w;
+        g[u].push_back({v,w});
+        g[v].push_back({u,w});
+        mx=max(mx,w);
+    }
+    if(!check(mx)){
+        cout<<-1<<endl;
+        return ;
+    }
+    int l=0,r=mx;
+    while(l<r){
+        int mid=(l+r)/2;
+        if(check(mid)) r=mid;
+        else l=mid+1;
+    }
+    cout<<l<<endl;
+}
+```
 
 ### 最小生成树
 
@@ -2182,6 +2484,78 @@ void solve(){
 ```
 
 
+
+#### 寻找奇环
+
+无向图是二分图，当且仅当不存在奇环。DFS 交替染色，遇到同色的返祖边 $u\to v$ 时，树上 $u$ 到祖先 $v$ 的路径长为偶数，加上这条边就得到奇环。
+
+记录 DFS 父节点 `fa`，从 $u$ 沿父链回到 $v$ 即可还原。发现后立即返回，不继续搜索。适用于简单无向图，时间复杂度 $O(n+m)$。
+
+例题：[ABC 472E Odd Cycle](https://atcoder.jp/contests/abc472/tasks/abc472_e)，找不到输出 $-1$，否则依次输出奇环顶点，不重复输出起点。
+
+```c++
+int n,m;
+vector<vector<int>> g;
+
+vector<int> color;// 0表示未染色 1和-1表示两种不同颜色
+vector<int> fa;
+int st,en;
+
+bool dfs(int u,int c,int p){
+    color[u]=c;
+    for(int v:g[u]){
+        if(v==p) continue;
+        if(color[v]==0){
+            fa[v]=u;
+            if(dfs(v,-c,u)) return true;// 发现奇环
+        }
+        else if(color[v]==c){
+            st=v;
+            en=u;
+            return true;
+        }
+    }
+    return false;
+}
+
+void solve(){
+    cin>>n>>m;
+    g.assign(n+1,vector<int>());
+    color.assign(n+1,0);
+    fa.resize(n+1);
+    for(int i=0;i<m;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+    }
+    // 二分图不存在奇环 如果不是二分图就是存在奇环吧
+
+    bool flag=false;
+    for(int i=1;i<=n;i++){
+        if(color[i]==0){// 处理非连通图
+            if(dfs(i,1,0)){
+                flag=true;
+                break;
+            }
+        }
+    }
+    if(!flag){
+        cout<<-1<<endl;
+        return ;
+    }
+    vector<int> path;
+    path.push_back(st);
+    for(int v=en;v!=st;v=fa[v]){
+        path.push_back(v);
+    }
+    cout<<path.size()<<endl;
+    for(int x:path){
+        cout<<x<<" ";
+    }
+    cout<<endl;
+}
+```
 
 #### 匈牙利算法
 
@@ -3000,6 +3374,49 @@ void sieve(int n){
 这个合法上界不要开太大
 
 
+
+### 质因数分解
+
+试除时不断除尽当前因子，最后若剩余数大于 $1$，它就是一个质因子。单次分解最坏 $O(\sqrt{x})$。
+
+例题：[P2043 质因子分解](https://www.luogu.com.cn/problem/P2043)，输出 $n!$ 的质因子及指数，$n\le10^4$。逐个分解 $2\sim n$ 并累计即可，时间复杂度上界 $O(n\sqrt n)$。
+
+若已筛出质数，也可以直接用勒让德公式计算 $n!$ 中质数 $p$ 的指数：
+
+$$
+\sum_{j\ge1}\left\lfloor\frac{n}{p^j}\right\rfloor.
+$$
+
+实现时反复执行 `x/=p` 并累加商，避免计算 $p^j$ 溢出。
+
+```c++
+const int N=2e5+10;
+int n;
+int cnt[N];
+
+void divide(int x){
+    // 试除法分解
+    for(int i=2;i*i<=x;i++){
+        while(x%i==0){
+            cnt[i]++;
+            x /= i;
+        }
+    }
+    // 最后剩的大质数
+    if(x>1) cnt[x]++;
+}
+
+void solve(){
+    cin>>n;
+    for(int i=2;i<=n;i++){
+        divide(i);
+    }
+
+    for(int i=2;i<=n;i++){
+        if(cnt[i]!=0) cout<<i<<" "<<cnt[i]<<endl;
+    }
+}
+```
 
 ### 取模运算
 
