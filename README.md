@@ -1,32 +1,35 @@
 # Drawn123 的博客
 
-使用 Hugo Extended **0.165.0** 与 Hugo Stack **v4.0.3**，通过 GitHub Actions 部署到 GitHub Pages。
+我在这里放平时写的算法题解、竞赛模板和课程笔记，也记一些读论文和做项目时碰到的问题。[博客首页](https://drawn123.github.io/)
 
-## 内容放在哪里
+博客用 Hugo 搭建，主题是 Hugo Stack v4.0.3，部署在 GitHub Pages。
+
+## 本地预览
+
+安装 Hugo Extended 和 Go，再到仓库根目录运行 `hugo server`，打开终端给出的地址。要看草稿就加上 `-D`。
+
+部署用的是 Hugo Extended 0.165.0 和 Go 1.25.5。下面的检查脚本需要 Python 3。
+
+## 文章放哪
+
+文章都在 [`content/`](content/) 里。
 
 | 目录 | 内容 |
 | --- | --- |
-| `content/algorithm/solutions/` | 算法题解，按主要知识点归档 |
-| `content/algorithm/learning-notes/` | 算法原理笔记 |
-| `content/algorithm/template/` | 竞赛模板与速查 |
-| `content/notes/<科目或主题>/` | Linux、数据结构等课程与工具笔记 |
-| `content/machine-learning/` | 机器学习基础、深度学习、NLP |
-| `content/projects/<项目>/` | 项目介绍、设计与复盘 |
-| `content/research/` | 论文阅读、复现与实验 |
-| `content/post/` | 随笔与通用问答 |
-| `content/topics/` | 跨模块学习路线，只引用已有文章 |
+| `algorithm/solutions/` | 按知识点归档的题解 |
+| `algorithm/learning-notes/`、`algorithm/template/` | 算法笔记和竞赛模板 |
+| `notes/` | 数据结构、Linux 等课程和工具笔记 |
+| `machine-learning/` | 机器学习、深度学习和 NLP 笔记 |
+| `projects/`、`research/` | 项目记录、论文阅读和实验 |
+| `post/`、`topics/` | 随笔、问答和串联已有文章的专题 |
 
-每个可浏览的目录放 `_index.md`；每篇文章使用 `<文章名>/index.md`，图片就近保存在同一个目录。新方向已有目录时直接添加文章；首页自动显示有文章的模块。
+每篇文章单独建个目录，正文写在 `index.md`，配图也放在一起。目录的标题和简介写在 `_index.md`。
 
-## 本地预览与检查
+分类会从栏目继承，知识点写在 `tags` 里。题解还可以用 `platform` 和 `problem_id` 记录平台和题号。文章发布后，改标题或挪目录时记得保留原来的 `knowledge_id` 和 `url`。字段示例和系列文章的写法见 [维护说明](docs/maintenance.md)。
 
-安装上述版本的 Hugo Extended 和 Go，然后运行：
+## 发布
 
-```powershell
-hugo server
-```
-
-在浏览器中打开终端显示的本机地址。构建与检查：
+准备发的文章把 `draft` 改成 `false`。改过文章链接或站点模板，可以先在本地构建并检查一遍。
 
 ```powershell
 hugo --gc --minify --destination work/check --cleanDestinationDir --panicOnWarning
@@ -34,50 +37,4 @@ python -m unittest discover -s scripts -p "test_*.py"
 python scripts/check_site.py --site work/check
 ```
 
-`work/`、`public/`、`resources/` 都是忽略的生成目录。检查会验证站内链接、锚点、文章标识，以及 `docs/url-baseline.json` 记录的旧路径。
-
-本地验证采用与发布相同的压缩模式。分类校验解析文章标题区的实际分类链接，兼容压缩后不带引号的 HTML 属性；侧栏导航与相关文章中的分类链接不参与这项判断。
-
-## 新文章
-
-一个最小示例：
-
-```yaml
----
-title: "梯度下降"
-date: 2026-10-16T20:00:00+08:00
-knowledge_id: "ml-gradient-descent"
-url: "/p/ml-gradient-descent/"
-tags:
-  - "梯度下降"
-draft: true
----
-```
-
-- 分类由所属模块自动继承，不需要填写 `categories`。标签表达具体知识点，系列负责章节顺序。
-- `knowledge_id` 全站唯一，只用小写字母、数字和连字符，确定后不随文章改名。
-- `url` 是公开地址，发布后保持稳定。已有文章保留本次重构前的路径。
-- `date` 是首次发布日期；有实质修订时手动更新 `lastmod`，不要用文件移动时间替代。
-- 标题、文件位置、网址是不同的概念；更换分类目录不应顺便修改已发布网址。
-- 发布文章时设为 `draft: false`。正式构建会跳过 `draft: true` 的文章，即使文件已经提交并推送；本地查看草稿使用 `hugo server -D`。
-
-题解的 `platform` 填做题网站名（如 `AtCoder`、`Codeforces`、`洛谷`），`problem_id` 填题号，`tags` 填知识点。搜索页可以按平台与知识点组合筛选；文章顶部的平台也可点击。`knowledge_id` 是自己指定的文章唯一标识，用于文章关联。填写示例和查找命令见[平台与知识点说明](docs/maintenance.md#平台与知识点怎么填写怎么使用)。
-
-完整规范见 [维护说明](docs/maintenance.md)。
-
-## 常改的位置
-
-- 栏目列表及顺序：`config/_default/params.toml` 的 `mainSections`；名称、短名称、英文标记和介绍分别读取栏目 `_index.md` 的 `title`、`linkTitle`、`label`、`description`，首页、分类目录、侧栏和搜索共用。
-- 首页标题及介绍：`content/_index.md` 的 `title`、`description` 和正文；未设置标题时使用站点名称。最近更新每次显示的篇数：`config/_default/params.toml` 的 `homepage.recentPageSize`。
-- 首页常用入口：`data/featured.toml`。
-- 系列介绍：各科目 `_index.md`；文章顺序使用 `series_id` 与 `series_order`。
-- 样式：`assets/scss/custom.scss` 只负责按顺序引入 `drawn/` 下的分层文件。
-- 内容筛选与标签交互：`assets/js/drawn-discovery.js`；阅读辅助：`assets/js/drawn-site.js`；星空、鲸鱼与光标动效：`assets/js/drawn-atmosphere.js`。
-
-## 发布与主题升级
-
-提交并推送到 `master` 或 `main` 会触发部署。构建版本已固定，站内检查失败会阻止上传部署产物。
-
-构建依赖 Hugo Extended 与 Go，样式和脚本由 Hugo 内置工具处理，无需安装 Node 或额外的 Dart Sass。`work/` 中的旧测试构建与截图可以删除；本机仍在使用的主题依赖缓存不属于博客源码，不提交到 Git。
-
-主题检查工作流改为手动运行，只报告可用版本，不再每日自动修改依赖。升级时单独更新 `go.mod` / `go.sum`，构建并检查桌面、手机、公式与代码展示后再发布。
+推送到 `main` 或 `master` 后，GitHub Actions 会构建站点，检查站内链接和旧网址，检查通过后部署。[部署配置](.github/workflows/deploy.yml)
