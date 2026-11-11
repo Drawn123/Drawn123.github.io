@@ -30,6 +30,31 @@
                 {{ end }}
             </div>
         </div>
+
+        {{ if and (eq .Kind "section") (eq .Path "/blog") }}
+            {{ with site.GetPage "/categories" }}
+                <nav class="drawn-category-entry" aria-labelledby="article-category-heading">
+                    <div class="drawn-category-entry-header">
+                        <h2 id="article-category-heading">
+                            <span aria-hidden="true">{{ partial "helper/icon" "categories" }}</span>
+                            文章分类
+                        </h2>
+                        <a class="drawn-category-entry-all" href="{{ .RelPermalink }}">
+                            查看全部 <span aria-hidden="true">{{ partial "helper/icon" "chevron-right" }}</span>
+                        </a>
+                    </div>
+                    <ul class="drawn-category-entry-links">
+                        {{ range partial "drawn/modules.html" . }}
+                            {{ $count := len .RegularPagesRecursive }}
+                            {{ if gt $count 0 }}
+                                {{ $target := site.GetPage (printf "/categories/%s" .Section) | default . }}
+                                <li><a href="{{ $target.RelPermalink }}">{{ .LinkTitle }} <small>{{ $count }}<span class="drawn-visually-hidden"> 篇文章</span></small></a></li>
+                            {{ end }}
+                        {{ end }}
+                    </ul>
+                </nav>
+            {{ end }}
+        {{ end }}
     </header>
 
     {{ with .Content }}<section class="drawn-section-intro article-content">{{ . }}</section>{{ end }}
@@ -47,10 +72,6 @@
             </div>
             {{ partial "drawn/knowledge-tree.html" (dict "Root" . "Current" . "Depth" 0) }}
         </section>
-    {{ end }}
-
-    {{ if and (eq .Section "blog") (eq .RelPermalink "/blog/") }}
-        {{ with site.GetPage "/categories" }}<p class="drawn-panel-link"><a href="{{ .RelPermalink }}">文章分类 →</a></p>{{ end }}
     {{ end }}
 
     {{- $subsections := .Sections -}}
