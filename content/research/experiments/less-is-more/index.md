@@ -1,44 +1,48 @@
 ---
-title: "Less is More：ICD 编码推理、代码调用链与训练复现"
-description: "整理 Less is More 的环境、模型下载、NER 与 AC 调用、ICD 推理、训练输入构建和评估口径。"
+title: "【代码研读】Less is More（PLM-CA）：样例核对、推理调用与训练准备"
+description: "从作者的合成病历样例核对输入输出，沿源码追踪推理，并记录服务器环境与训练数据的准备步骤。"
 date: 2026-10-28
-lastmod: 2026-10-28
+lastmod: 2026-11-14
 knowledge_id: "research-experiment-less-is-more"
 url: "/p/research-experiment-less-is-more/"
 tags:
   - "ICD 编码"
   - "多标签分类"
   - "命名实体识别"
+  - "断言分类"
+  - "证据归因"
+  - "梯度归因"
+  - "MIMIC-IV"
 math: true
 related_ids:
   - "research-paper-less-is-more"
-  - "research-experiment-metrics-laat"
+  - "research-experiment-multilabel-metrics"
 draft: false
 ---
 
-## 一、运行目标与复现范围
+已有记录核对了作者仓库中的三份合成病历、对应的实体和编码输出，以及入口和子脚本的调用关系。本地当时缺少模型权重，样例重新推理、表 7 指标重算和完整重训都属于后续步骤。下文用作者样例解释每个阶段读写的文件，方便日后先验证数据流，再使用授权数据准备训练。
 
-Less is More 要把一份出院小结转换成诊断和操作编码，并返回各编码的预测分数及支持证据。完整推理先识别医学实体、判断实体状态，再把保留的信息整理成短文本，交给编码模型预测。
+**对应论文**
 
-从文件看，输入是带病历编号和正文的表格，中间得到实体表，最后得到编码与证据表。后续命令分别负责准备模型、执行这条处理链，以及检查或重新训练模型。方法的设计理由见[论文精读篇的方法概览](knowledge:research-paper-less-is-more#method-overview)。
+| 项目 | 内容 |
+| --- | --- |
+| 论文 | *Less is More: Explainable and Efficient ICD Code Prediction with Clinical Entities* |
+| 作者 | James C. Douglas、Yidong Gan、Ben Hachey、Jonathan K. Kummerfeld |
+| 发表 | ACL 2025 主会长文卷，2025 年 7 月，30835–30847 页 |
+| 所读版本 | 正式发表版 |
+| 原文 | [正式论文](https://aclanthology.org/2025.acl-long.1489/) · [DOI 10.18653/v1/2025.acl-long.1489](https://doi.org/10.18653/v1/2025.acl-long.1489) · [正式全文](https://aclanthology.org/2025.acl-long.1489.pdf) |
 
-Less is More 的仓库可以跑样例推理、重算发布模型的指标，也可以从 MIMIC-IV 重建输入并训练模型。这三件事需要的数据、时间和验证范围不同。
+## 一、核对范围与代码版本
 
-### 1.1 运行目标与所需材料
-
-| 目标 | 所需材料 | 能检查什么 |
+| 要做的检查 | 所需输入 | 当前依据 |
 | --- | --- | --- |
-| 阅读仓库参考输出 | 自带的三份合成病历和 `sample_results` | 输入、实体、编码与证据的数据格式 |
-| 重新执行样例推理 | NER、AC、实体编码模型及配套 tokenizer、基础编码器 | 当前环境下整条推理流程能否完成 |
-| 重算论文表 7 | 发布的预测 feather 文件 | 同一份预测在既定口径下得到的指标 |
-| 重新训练编码模型 | 授权的 MIMIC-IV、MIMIC-IV-Note、预训练模型和 NER/AC 权重 | 从数据处理到模型训练能否复现 |
-| 重新训练 NER/AC | 对应实体标注及 AC 多源语料 | 前置模型的训练与评估 |
+| 核对输入、实体、编码和证据格式 | 三份合成病历及 `sample_results` | 作者样例与源码 |
+| 重新执行推理 | NER、AC、实体编码权重和配套 tokenizer | 待运行 |
+| 重算论文表 7 | 发布的预测 feather 文件 | 待运行 |
+| 重新训练编码模型 | 授权的 MIMIC-IV、MIMIC-IV-Note，预训练模型与实体抽取模型 | 待运行 |
+| 重新训练 NER、AC | 对应实体标注及 AC 多源语料 | 待运行 |
 
-以下样例取自仓库已提交的参考输出。本地核对时，`data/models/` 和 `external/plm_ca/models/` 尚未下载，因此没有新增推理或训练结果。论文的设计与结果分析见[Less is More 精读](knowledge:research-paper-less-is-more)。
-
-### 1.2 固定版本与结果来源
-
-命令和源码对应版本 `fdf610ca1bee62be7b75d499c1d34eecfc4dada2`。仓库建议严格对照论文时使用 `v1.0.0`。切换版本后需要核对参数、输出格式和默认设置；版本信息应与实验记录一起保存。
+下文命令按仓库版本 `fdf610ca1bee62be7b75d499c1d34eecfc4dada2` 记录，作者另提供与论文对应的 `v1.0.0`。切换版本时先核对参数和默认路径。 [Less is More 论文精读](knowledge:research-paper-less-is-more#method-overview)
 
 ## 二、目录和数据接口
 
@@ -168,11 +172,56 @@ Move-Item -LiteralPath "external/plm_ca/models/RoBERTa-base-PM-M3-Voc/RoBERTa-ba
 
 `--models roberta` 下载的是 **distill-align** 变体，不能替代上面的 **base** 变体。实体编码模型的 tokenizer 也必须与权重配套，其中新增了五个实体类型 token。
 
-## 四、合成病历推理与结果检查
+### 3.4 Linux 服务器上的依赖与权重 {#server-downloads}
+
+在 SSH 会话里分别确认 Python、GPU 和下载源。本机能访问下载站，只能说明本机的网络路径可用。服务器上的 Conda channel、pip index 和模型权重下载是不同连接，分别看哪个失败。进入 Conda 环境后可以先执行：
+
+```bash
+command -v python
+python -m pip --version
+conda config --show channels default_channels channel_alias
+nvidia-smi
+python -c 'import torch; print(torch.__version__, torch.version.cuda, torch.cuda.is_available())'
+```
+
+Conda 在求解阶段超时时，先检查 `environment.yml` 里列出的 channel 是否都能从服务器访问。若服务器有学校或机构镜像，确认它同步了项目所需的 channel、平台与固定版本，再修改当前用户或环境的配置。pip 可以先用 `python -m pip index versions transformers --index-url "$PIP_MIRROR_URL"` 检查把 `PIP_MIRROR_URL` 设为机构提供的索引后能读到哪些版本。镜像里缺少固定版本时，检查镜像同步和 Python 版本，再决定依赖从哪里取。
+
+基础 RoBERTa 权重的下载可以用下列命令从服务器单独测试，避免把权重下载错误当成依赖求解失败：
+
+```bash
+curl -IL --connect-timeout 10 --max-time 30 \
+  https://dl.fbaipublicfiles.com/biolm/RoBERTa-base-PM-M3-Voc-hf.tar.gz
+```
+
+如果服务器连不上权重源，可以从能访问该源的机器下载公开模型包，记录来源，在传输两端比较 SHA-256，再按第 3.3 节的目录结构解包。官方有校验值时以官方值为准。Linux 上用 `sha256sum 文件名`，Windows 上用 `Get-FileHash -Algorithm SHA256 文件名`。
+
+pip 依赖需要离线准备时，在与服务器平台、架构和 Python 版本匹配的环境里，把项目所需版本下载到 `wheelhouse`。只包含这些依赖的要求文件可用下面这组命令。Torch 的 CUDA 构建仍要按项目依赖来源单独核对。
+
+```bash
+# 在有网络且平台兼容的环境准备依赖
+python -m pip download --only-binary=:all: -r requirements.txt -d wheelhouse
+
+# 将 wheelhouse 和依赖清单传到服务器后安装
+python -m pip install --no-index --find-links=wheelhouse -r requirements.txt
+```
+
+这组命令用于有 `requirements.txt` 的项目或已整理出的 pip 依赖清单。Less is More 的主环境以 `environment.yml` 为准，其中的 Conda 依赖先按对应 channel 解决。权重下载结束后再检查 base 编码器、实体 tokenizer 和 checkpoint 的路径，确认文件就绪后启动样例。 [Conda 配置](https://docs.conda.io/projects/conda/en/stable/user-guide/configuration/use-condarc.html) · [pip 离线下载](https://pip.pypa.io/en/stable/cli/pip_download/)
+
+## 四、下一步验证：跑通合成病历推理
 
 ### 4.1 执行总入口
 
-先用一个工作进程，减少同一块 GPU 上的模型副本：
+在 Linux 服务器上，先从仓库根目录运行合成样例。用独立的结果前缀，并把运行输出写到同一个日志文件：
+
+```bash
+mkdir -p results
+set -o pipefail
+python -u run_pipeline.py data/sample_data/sample_notes.csv results/first-check \
+  --max_workers 1 --visualize-entities --visualize-evidence --force \
+  2>&1 | tee results/first-check.log
+```
+
+`set -o pipefail` 让 Bash 保留 Python 失败时的非零状态。结束后先看 `results/first-check_entities.csv`，再看 `results/first-check_icd_results.csv` 里的编码和证据列。`--max_workers 1` 让一块 GPU 先只加载一套实体模型。Windows PowerShell 可用下面的参数数组执行同一入口，默认输出位置见后文：
 
 ```powershell
 $sampleArgs = @(
@@ -317,9 +366,11 @@ probs = torch.sigmoid(logits)
 predicted_labels = (probs > decision_boundary).nonzero(as_tuple=False)
 ```
 
-之后调用 `get_grad_attention_callable(model)` 返回的解释器，单独计算梯度归因。编码预测阶段关闭梯度，不妨碍后续解释阶段重新进行需要梯度的计算。
+之后调用 `get_grad_attention_callable(model)` 返回的解释器，单独计算梯度归因。编码预测阶段关闭梯度以节省内存，解释器再单独执行需要梯度的计算。
 
 脚本按 tokenizer 的 offset mapping 将 token 归到实体行，将通过筛选的 token 贡献求和，再用实体 CSV 中的位置关联清洗后的正文。当前推理的最大输入长度为 6,000 token；NER 的 512 token 限制和编码器内部的分块是另外两层设置，不应混为一个参数。
+
+在编码器内部，一份文件先按 `note_id` 找到病历行，再转成子词编号。编号是查词表的下标，嵌入层才把每个编号映射为稠密向量。以一份病历为例，两个张量通常形如 `input_ids: [1, T]` 和 `attention_mask: [1, T]`。掩码标出有效位置。RoBERTa 将输入分块后逐块计算，拼回形如 `[1, T, d]` 的上下文表示，\(d\) 是每个位置的隐藏维度。标签交叉注意力让每种编码沿 \(T\) 个位置聚合，最终 logits 的形状是 `[1, L]`，\(L\) 为模型的候选编码数。预测分数过阈值后，归因器再依据字符偏移把证据连回病历。
 
 源代码入口可按以下顺序继续读：
 
@@ -333,7 +384,7 @@ predicted_labels = (probs > decision_boundary).nonzero(as_tuple=False)
 
 交叉注意力的维度与计算方向见[PLM-CA 的标签交叉注意力](knowledge:research-paper-less-is-more#label-cross-attention)，归因量的计算见[AttnInGrad 与实体级证据](knowledge:research-paper-less-is-more#entity-attribution)。
 
-## 六、重算发布模型的指标
+## 六、下一步验证：用发布预测重算指标
 
 ### 6.1 评估输入与指标计算
 
@@ -351,7 +402,7 @@ Pop-Location
 
 脚本读取 `models/<model>/predictions_test.feather`，输出 micro/macro-F1、P@8、P@15、EMR、MAP、micro/macro-AUC。打印的是 0—1 值，论文表格常写成百分制，比较前要统一尺度。
 
-这一步重算的是发布模型的固定预测，验证范围止于指标计算。指标的定义、分母和 micro/macro 区别见[多标签指标笔记](knowledge:research-experiment-metrics-laat)。
+发布的 feather 已有模型预测。重算时要核对概率阈值、标签集合、统计公式和显示尺度。 [多标签分类的评价指标](knowledge:research-experiment-multilabel-metrics)
 
 ### 6.2 编码决策阈值与证据评分阈值 {#coding-and-evidence-thresholds}
 
@@ -384,7 +435,7 @@ python permutation_testing.py --num-permutations 1000
 
 上游稀有编码过滤作用于划分前的合并数据，`min_count=10` 不等于每个编码在训练集里至少出现 10 次。解释逐编码表中的 `train_frequency` 时，需要分清统计范围。
 
-## 七、从 MIMIC-IV 重建训练输入
+## 七、完整重训所需的数据准备
 
 前面的样例推理和指标重算可以使用发布权重。重新训练则要先重建病历与编码标签的对应关系，再为同一组划分生成实体文本。全文和实体输入应分别留存，后续对照才能追溯到实际训练数据。
 
@@ -485,7 +536,7 @@ if (Test-Path -LiteralPath $mimicCache) {
 
 若配置了 `HF_DATASETS_CACHE` 或 `HF_HOME`，应先确认实际缓存路径，再处理对应的 `mimiciv_icd10` 目录。
 
-## 八、启动训练并设置对照
+## 八、完整重训的启动参数与对照
 
 ### 8.1 备份发布 tokenizer
 
@@ -569,7 +620,7 @@ Pop-Location
 
 不做 AC 过滤需要修改抽取脚本，仓库没有对应的 `--no-ac` 参数。以上消融改变了训练输入，需要重新训练并按同一口径评估；只改变测试文本，检验的是输入分布扰动。消融结果的解释见[精读篇的组件对照](knowledge:research-paper-less-is-more#ablation-evidence)。
 
-## 九、证据评估与常见问题
+## 九、证据评估准备与常见报错
 
 ### 9.1 MDACE 的候选生成与评分
 
@@ -596,7 +647,7 @@ MDACE 复现需要额外准备授权的 MIMIC-III 文本和 MDACE 标注，按 `
 
 Windows 下还要区分 PowerShell 的 `wget` 别名与 GNU wget，以及 Bash 和 PowerShell 的续行语法。不要在子目录执行面向整个上游项目的 `make setup` 或 `make prepare_everything`，作者为本仓库提供的是统一 Conda 环境。
 
-## 十、复现结果的解释边界
+## 十、后续实验的记录口径
 
 ### 10.1 固定预测重算与重新训练的区别
 
@@ -615,4 +666,4 @@ Windows 下还要区分 PowerShell 的 `wget` 别名与 GNU wget，以及 Bash �
 - [论文正式版本](https://aclanthology.org/2025.acl-long.1489/)。
 - [作者仓库 README](https://github.com/jd4501/entity-coding/blob/fdf610ca1bee62be7b75d499c1d34eecfc4dada2/README.md)。
 - 同版本的 [inference.md](https://github.com/jd4501/entity-coding/blob/fdf610ca1bee62be7b75d499c1d34eecfc4dada2/docs/inference.md)、[training.md](https://github.com/jd4501/entity-coding/blob/fdf610ca1bee62be7b75d499c1d34eecfc4dada2/docs/training.md)、[reproduce.md](https://github.com/jd4501/entity-coding/blob/fdf610ca1bee62be7b75d499c1d34eecfc4dada2/docs/reproduce.md) 和 [evidence.md](https://github.com/jd4501/entity-coding/blob/fdf610ca1bee62be7b75d499c1d34eecfc4dada2/docs/evidence.md)。
-- [Less is More 精读](knowledge:research-paper-less-is-more)与[分类模型评价指标](knowledge:research-experiment-metrics-laat)。
+- [Less is More 精读](knowledge:research-paper-less-is-more)。

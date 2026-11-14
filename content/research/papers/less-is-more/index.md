@@ -1,68 +1,37 @@
 ---
-title: "【论文精读】Less is More：用临床实体压缩病历，预测 ICD 编码"
-description: "先说明病历到 ICD 编码的任务与流程，再分析实体压缩、编码模型、实验取舍和证据解释。"
+title: "【论文精读】Less is More（PLM-CA）：临床实体压缩与编码证据提取"
+description: "同一个编码模型读全文和临床实体时，输入长度、训练成本、编码分数和证据范围各有什么变化。"
 date: 2026-10-28
-lastmod: 2026-10-28
+lastmod: 2026-11-14
 knowledge_id: "research-paper-less-is-more"
 url: "/p/research-paper-less-is-more/"
 tags:
   - "ICD 编码"
   - "多标签分类"
   - "命名实体识别"
+  - "断言分类"
+  - "长文档建模"
   - "可解释性"
+  - "证据归因"
+  - "交叉注意力"
+  - "MIMIC-IV"
 math: true
 related_ids:
   - "research-experiment-less-is-more"
   - "research-paper-automated-medical-coding-review"
-  - "research-experiment-metrics-laat"
+  - "research-experiment-multilabel-metrics"
+  - "research-paper-plm-icd"
+  - "research-paper-att-ingrad"
 draft: false
 ---
 
-## 一、研究问题与方法概览 {#method-overview}
+从出院小结预测 ICD 编码时，模型需要找出有依据的诊断和操作。长病历包含不少正常查体、否定描述和重复记录。论文《Less is More: Explainable and Efficient ICD Code Prediction with Clinical Entities》先抽取并筛选医学短语，用压缩后的病历训练同一种编码模型，观察缩短输入能省多少时间、丢掉多少预测能力。
 
-### 1.1 ICD 编码任务与长病历问题
+## 一、从出院小结到编码与证据 {#method-overview}
 
-医院需要把病历中记录的诊断和医疗操作转换成标准编码，用于统计、管理和结算。国际疾病分类（ICD）提供了相应的编码体系；自动 ICD 编码研究怎样根据病历文字预测这些编码。
+输入是一份出院小结，输出是这次住院的一组编码、每个预测编码的分数和相应的证据片段。流程先清洗病历、识别章节，再用命名实体识别（NER）找出疾病、症状、药物和操作等短语。断言分类（AC）用上下文区分“没有肺炎”“可能是肺炎”“母亲有肺炎病史”这类提及，随后按类别和状态决定保留哪些内容。筛过的短语带着原顺序、章节名和类型标记进入编码模型，最后将 token 贡献映射回完整短语。
 
-输入是一份出院小结，输出是一组诊断和操作编码。同一份病历可能记录多种疾病、接受过多项操作，所以模型需要同时预测多个编码。它还可以为每个编码给出预测分数，并标出病历中的支持证据，供人核查。
-
-困难在于，出院小结往往很长。除了疾病、症状和操作，它还包含正常查体、否定描述和重复记录。全文输入模型，会增加计算量，也要求模型从大量内容中寻找真正与编码有关的部分。
-
-Less is More 研究的是：先把病历压缩成与编码有关的短文本，能否减少计算，同时保留大部分预测能力？
-
-### 1.2 从病历到编码的处理流程
-
-作者先找出疾病、症状、药物和操作等医学短语，这些短语在文中称为临床实体。实体识别（NER）负责找到它们，断言分类（AC）负责判断它们在上下文中的状态，例如确实存在、被否定或仅是可能。
-
-```text
-病历正文
-  → 清洗文字并识别章节
-  → 找出疾病、症状、药物和操作等信息
-  → 判断存在、否定、可能和他人相关等状态
-  → 按规则筛选，整理成简短文本
-  → 预测 ICD 编码及其概率
-  → 标出支持预测的文本证据
-```
-
-处理后得到三类结果：**预测的 ICD 编码、对应的概率估计，以及支持预测的文本证据。** “实体版病历”是中间输入，最终目标仍是编码预测。
-
-### 1.3 实体筛选与上下文保留
-
-找到疾病名称还不够。“没有肺炎”“可能是肺炎”“母亲患过肺炎”都提到了肺炎，编码含义却不同。AC 根据上下文区分这些状态，再按实体类别决定保留什么；部分可能诊断和家族史仍然有编码用途，具体规则见[断言分类](#assertion-filtering)。
-
-压缩时还保留三类信息：
-
-- **实体顺序**：保留相邻信息之间的联系，便于模型结合多个实体判断。
-- **章节标题**：说明信息属于既往史、现病史或其他病历部分。
-- **类型标签**：区分疾病、药物和操作等不同角色。
-
-因此，缩短后的输入仍有一定的上下文和结构，模型能够在整份实体文本中学习编码关系。
-
-### 1.4 主要结果与成本取舍
-
-在论文的 MIMIC-IV 实验中，病历中位长度由 **1,627 词降到 353 词**，编码模型训练时间由 **28.8 小时降到 10.9 小时**。衡量总体编码预测效果的 micro-F1（越高越好，按百分制报告）由 **59.6 降到 58.8**，下降 0.8 个百分点。（原文表 5—7）
-
-输入和编码训练成本减少了，预测性能也略有下降。此外，NER 和 AC 增加了前处理：关键实体如果漏掉或被误删，后面的模型就可能失去这条信息。证据映射能保留完整短语，但证据是否准确、是否忠实于模型决策，还需要分别评估。
+MIMIC-IV 的病历中位长度从 1,627 词缩到 353 词，单张 L4 上编码模型的训练时间从 28.8 小时降到 10.9 小时，Micro-F1 下降 0.8 个百分点。实体识别和断言分类增加了前处理成本，漏掉的证据也会限制后续分类能看到什么。 [原文表 5—7](https://aclanthology.org/2025.acl-long.1489.pdf)
 
 ## 二、论文信息与任务定义
 
@@ -70,13 +39,14 @@ Less is More 研究的是：先把病历压缩成与编码有关的短文本，�
 | --- | --- |
 | 论文 | *Less is More: Explainable and Efficient ICD Code Prediction with Clinical Entities* |
 | 作者 | James C. Douglas、Yidong Gan、Ben Hachey、Jonathan K. Kummerfeld |
-| 发表 | ACL 2025 Main，30835—30847 页 |
-| 原文 | [ACL Anthology](https://aclanthology.org/2025.acl-long.1489/)；[正式 PDF](https://aclanthology.org/2025.acl-long.1489.pdf) |
+| 发表 | ACL 2025 主会长文卷，2025 年 7 月，30835–30847 页 |
+| 所读版本 | 正式发表版 |
+| 原文 | [正式论文](https://aclanthology.org/2025.acl-long.1489/) · [DOI 10.18653/v1/2025.acl-long.1489](https://doi.org/10.18653/v1/2025.acl-long.1489) · [正式全文](https://aclanthology.org/2025.acl-long.1489.pdf) |
 | 代码 | [jd4501/entity-coding](https://github.com/jd4501/entity-coding) |
 
 下文的章节和表号以 ACL 2025 正式发表版为准。模型公式按作者实现解释，未将实现补充写成论文原式。
 
-环境安装、样例推理、代码调用链和训练命令见 [Less is More 实验与代码笔记](knowledge:research-experiment-less-is-more)。其他自动编码模型的设计可对照[自动医学编码深度学习综述](knowledge:research-paper-automated-medical-coding-review)。
+环境安装、样例推理、代码调用链和训练命令见 [临床实体压缩代码研读](knowledge:research-experiment-less-is-more)。其他自动编码模型的设计可对照[自动医学编码深度学习综述](knowledge:research-paper-automated-medical-coding-review)。
 
 ### 2.1 多标签编码任务的形式化定义
 
@@ -102,22 +72,9 @@ p_\ell=\sigma(z_\ell).
 
 图：论文图 1，使用作者仓库 `img/workflow_diagram.png`。示例为合成病历；[原论文](https://aclanthology.org/2025.acl-long.1489.pdf)第 3 节给出处理过程。
 
-对应实现中，前处理由 NER 和 AC 完成，编码模型为 PLM-CA，证据提取使用 AttnInGrad。各模块的位置如下，后文再分别解释计算过程：
+NER、AC 和编码模型分别训练。推理时，前两者产生实体文本，PLM-CA 预测编码，AttnInGrad 将 token 的贡献关联回实体。
 
-```text
-病历全文
-  → 清洗、分句、章节识别
-  → NER 提取医学实体
-  → AC 判断实体状态
-  → 过滤并保留章节、类型、顺序
-  → 实体版病历
-  → PLM-CA 预测编码
-  → AttnInGrad 计算贡献，映射回完整实体
-```
-
-NER、AC 和编码模型分别训练，推理时依次执行。图中的“端到端流程”表示从病历到结果的完整处理链，不表示三个模型由一个损失联合训练。
-
-全文基线和实体方法采用相同的编码模型结构，改动主要发生在输入端：用贴近编码需要的实体范围保留修饰信息，通过断言判断筛选提及，再按章节和顺序组织短文本。作者另外提供了相应标注数据，并把 token 归因映射到完整实体，供人检查编码依据。这些改动对应输入表示、训练数据和解释方式，编码模型仍使用已有的 PLM-CA。
+全文对照和实体方法共用已有的 PLM-CA。[PLM-ICD](knowledge:research-paper-plm-icd) 通过分块让编码器覆盖更多病历位置，PLM-CA 在它的基础上改用 Transformer 式标签交叉注意力。Less is More 用新标注训练实体提取与断言模型，构造贴近编码任务的短文本，再将已有归因方法给出的 token 分数映射回实体。交叉注意力和归因的来源见 [AttInGrad 精读](knowledge:research-paper-att-ingrad)。
 
 ## 三、临床实体提取与筛选
 
@@ -281,14 +238,15 @@ NER 和 AC 单独做五折交叉验证。NER 的疾病、异常发现 F1 分别�
 | macro-F1 | 26.1 | 24.8 |
 | MAP | 63.4 | 62.3 |
 | P@8 | 70.9 | 70.3 |
+| 整份病历的编码集合完全匹配率 | 0.44 | 0.45 |
 
 来源：原文表 5—7；训练时间在单张 NVIDIA L4 上统计，性能为百分制。
 
-micro-F1 下降 0.8 个百分点，macro-F1 下降 1.3 个百分点。后者给每个标签相同的平均权重，说明只看整体表现还不够，需要进一步检查低频编码。指标定义与聚合方式见[分类模型评价指标](knowledge:research-experiment-metrics-laat)。
+Micro-F1 下降 0.8 个百分点，Macro-F1 下降 1.3 个百分点。Macro-F1 让每个纳入统计的编码等权，可以再按出现频次分组，检查分数下降主要集中在哪些编码。 [多标签分类指标](knowledge:research-experiment-multilabel-metrics#macro-f1)
 
 表 7 中两组的 macro-F1、micro-F1 和 MAP 等差异经过置换检验，达到论文采用的显著性标准。因而“性能接近”应理解为差距相对有限，不能写成“性能没有差异”。
 
-训练时间统计针对编码模型。完整使用成本还包括 NER、AC 的训练或下载、逐病历抽取以及证据计算，不能把表中的 10.9 小时直接当成整条流程的耗时。实体可以预先计算并复用，多次训练时更容易摊薄这部分成本。
+训练计时从编码模型训练开始。全流程预算还要计入 NER、AC 的准备、逐病历抽取和证据计算。实体可以预先计算并复用。表 7 也列出 Edin 等人的旧 PLM-ICD，Micro-F1 为 58.5、Macro-F1 为 21.1，是十次运行的均值，可作背景参照。实体压缩的直接证据来自表中两组 PLM-CA。 [MIMIC 基准复核](knowledge:research-paper-mimic-replicability)
 
 ### 5.3 组件消融与实体类别对照 {#ablation-evidence}
 
@@ -356,22 +314,8 @@ micro-F1 下降 0.8 个百分点，macro-F1 下降 1.3 个百分点。后者给�
 
 这些对照都需要额外实验，原文没有报告相应结果。
 
-## 七、综合讨论
-
-### 7.1 实体压缩后的上下文依赖
-
-编码往往取决于修饰语、断言状态以及多个实体的组合。实体范围保存局部细节，AC 区分否定、可能和家族史，章节与顺序则保留文本组织。打乱实体与章节顺序后性能下降，支持了保留组织信息的必要性；其中章节本身的独立收益还需要单独对照。
-
-### 7.2 输入侧改动与已有模型的分工
-
-改动集中在输入表示和解释映射：先抽取并筛选实体，再让原有 PLM-CA 学习实体文本到编码的关系，最后把 token 贡献扩展到完整实体。理解这项贡献时，需要把实体标注、过滤与格式化方案同已有的编码器、交叉注意力和归因方法分开。
-
-### 7.3 效率与解释结论的适用范围
-
-要看使用目标。主实验支持以小幅编码性能损失换取更短输入和更少的编码训练时间；证据实验支持减少参考证据的子集、保留更多完整短语。成本比较还需要计入前处理，解释比较还需要忠实性验证，部署到新机构也需要重新评估。因此，这项工作提供了一种有实验依据的取舍，还没有同时解决准确性、解释和泛化 的全部问题。
-
 ## 参考资料
 
 - Douglas et al. [Less is More: Explainable and Efficient ICD Code Prediction with Clinical Entities](https://aclanthology.org/2025.acl-long.1489/)，ACL 2025，正式发表版。
 - 作者实现：[jd4501/entity-coding](https://github.com/jd4501/entity-coding)，方法公式与源码位置可通过[配套代码笔记](knowledge:research-experiment-less-is-more)核对；涉及 `LabelCrossAttention`、`get_grad_attention_callable()` 和 token 贡献归并函数。
-- [Less is More：ICD 编码推理、代码调用链与训练复现](knowledge:research-experiment-less-is-more)，对应运行步骤、参数和评估口径。
+- [临床实体压缩样例与代码笔记](knowledge:research-experiment-less-is-more)，对应运行步骤、参数和评估口径。
