@@ -1,0 +1,18 @@
+{{- $section := .Section -}}
+{{- $previewSize := 6 -}}
+{{- with partialCached "drawn/section-tags.html" . $section -}}
+    <section class="drawn-category-tags" aria-labelledby="category-tags-title">
+        <header class="drawn-tag-heading">
+            <span class="drawn-tag-icon" aria-hidden="true">{{ partial "helper/icon" "tag" }}</span>
+            <h2 id="category-tags-title">按标签筛选</h2>
+            <span class="drawn-tag-total">{{ len . }} 个标签</span>
+        </header>
+        {{ partial "drawn/tag-links.html" (dict "Section" $section "Tags" (first $previewSize .)) }}
+        {{ with after $previewSize . }}
+            <details class="drawn-category-tags-more">
+                <summary><span>其余 {{ len . }} 个标签</span>{{ partial "helper/icon" "chevron-right" }}</summary>
+                {{ partial "drawn/tag-links.html" (dict "Section" $section "Tags" .) }}
+            </details>
+        {{ end }}
+    </section>
+{{- end -}}

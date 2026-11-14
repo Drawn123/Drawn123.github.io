@@ -34,25 +34,53 @@
         if (directory) {
             const input = directory.querySelector("[data-tag-filter]");
             const sort = directory.querySelector("[data-tag-sort]");
-            const list = directory.querySelector("[data-tag-list]");
-            const items = Array.from(list.children);
+            const status = directory.querySelector("[data-tag-status]");
+            const groups = Array.from(directory.querySelectorAll("[data-tag-group]"), group => {
+                const list = group.querySelector("[data-tag-list]");
+                return { group, list, items: Array.from(list.children), total: group.querySelector("[data-tag-total]"), wasOpen: false };
+            });
             directory.querySelector("[data-tag-tools]").hidden = false;
-            const render = () => {
+            let searching = false;
+            const filterGroups = () => {
                 const keyword = input.value.trim().toLocaleLowerCase();
-                items.sort((a, b) => sort.value === "name"
-                    ? a.dataset.tagName.localeCompare(b.dataset.tagName, "zh-CN")
-                    : Number(b.dataset.tagCount) - Number(a.dataset.tagCount) || a.dataset.tagName.localeCompare(b.dataset.tagName, "zh-CN"));
-                let count = 0;
-                items.forEach(item => {
-                    item.hidden = !item.dataset.tagName.toLocaleLowerCase().includes(keyword);
-                    if (!item.hidden) count += 1;
-                    list.appendChild(item);
-                });
-                directory.querySelector("[data-tag-status]").textContent = count ? `显示 ${count} / ${items.length} 个标签` : "没有找到匹配的标签，试试其他关键词。";
+                const matches = new Set();
+                for (const entry of groups) {
+                    const { group, items, total } = entry;
+                    let count = 0;
+                    for (const item of items) {
+                        const name = item.dataset.tagName;
+                        item.hidden = !name.toLocaleLowerCase().includes(keyword);
+                        if (!item.hidden) {
+                            matches.add(name);
+                            count++;
+                        }
+                    }
+                    total.textContent = `${count} 个标签`;
+                    group.hidden = count === 0;
+                    if (keyword) {
+                        if (!searching) entry.wasOpen = group.open;
+                        group.open = count > 0;
+                    } else if (searching) {
+                        group.open = entry.wasOpen;
+                    }
+                }
+                searching = Boolean(keyword);
+                status.hidden = !searching;
+                status.textContent = matches.size ? `找到 ${matches.size} 个标签` : "没有找到匹配的标签，试试其他关键词。";
             };
-            input.addEventListener("input", render);
-            sort.addEventListener("change", render);
-            render();
+            const sortGroups = () => {
+                for (const { list, items } of groups) {
+                    items.sort((a, b) => {
+                        const byName = a.dataset.tagName.localeCompare(b.dataset.tagName, "zh-CN");
+                        return sort.value === "name" ? byName : Number(b.dataset.tagCount) - Number(a.dataset.tagCount) || byName;
+                    });
+                    list.append(...items);
+                }
+            };
+            input.addEventListener("input", filterGroups);
+            sort.addEventListener("change", sortGroups);
+            sortGroups();
+            filterGroups();
         }
     });
 })();

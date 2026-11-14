@@ -1,0 +1,22 @@
+<section class="drawn-tag-directory" aria-label="按分类浏览标签" data-tag-directory>
+    <div class="drawn-tag-tools" hidden data-tag-tools>
+        <label for="tag-filter">查找标签<input id="tag-filter" type="search" placeholder="输入标签名称…" data-tag-filter></label>
+        <label for="tag-sort">排序<select id="tag-sort" data-tag-sort><option value="count">文章数量</option><option value="name">标签名称</option></select></label>
+    </div>
+    <p class="drawn-tag-status" role="status" hidden data-tag-status></p>
+    {{ range partial "drawn/modules.html" . }}
+        {{ $section := .Section }}
+        {{ $title := .LinkTitle }}
+        {{ with partialCached "drawn/section-tags.html" . $section }}
+            <details class="drawn-tag-group" data-tag-group>
+                <summary class="drawn-tag-heading">
+                    <span class="drawn-tag-icon" aria-hidden="true">{{ partial "helper/icon" "tag" }}</span>
+                    <span class="drawn-tag-group-title">{{ $title }}</span>
+                    <span class="drawn-tag-total" data-tag-total>{{ len . }} 个标签</span>
+                    {{ partial "helper/icon" "chevron-right" }}
+                </summary>
+                {{ partial "drawn/tag-links.html" (dict "Section" $section "Tags" .) }}
+            </details>
+        {{ end }}
+    {{ end }}
+</section>

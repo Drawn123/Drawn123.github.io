@@ -23,7 +23,7 @@
 
         <div class="section-card">
             <div class="section-details">
-                <h3 class="section-count">{{ if $isCategoryIndex }}{{ len (partial "drawn/modules.html" .) }} 个分类{{ else }}{{ T "list.page" (len $sourcePages) }}{{ end }}</h3>
+                <h3 class="section-count">{{ if $isCategoryIndex }}{{ len (partial "drawn/modules.html" .) }} 个分类{{ else if $isTagIndex }}{{ len $sourcePages }} 个标签{{ else }}{{ T "list.page" (len $sourcePages) }}{{ end }}</h3>
                 <h1 class="section-term">{{ .Title }}</h1>
                 {{ with $description }}
                     <h2 class="section-description">{{ . }}</h2>
@@ -59,6 +59,14 @@
 
     {{ with .Content }}<section class="drawn-section-intro article-content">{{ . }}</section>{{ end }}
 
+    {{- $tagSection := $categoryRoot -}}
+    {{- if and (eq .Kind "section") (eq . .FirstSection) (in site.Params.mainSections .Section) -}}
+        {{- $tagSection = . -}}
+    {{- end -}}
+    {{- with $tagSection -}}
+        {{ partial "drawn/category-tags.html" . }}
+    {{- end -}}
+
     {{- $treeRoot := false -}}
     {{ if and (eq .Kind "section") (or (in site.Params.mainSections .Section) .Params.knowledge_tree) }}
         {{ $treeRoot = . }}
@@ -93,20 +101,7 @@
     {{- if $isCategoryIndex -}}
         {{ partial "drawn/category-directory.html" . }}
     {{- else if $isTagIndex -}}
-        {{- if gt (len $sourcePages) 0 -}}
-        <section class="drawn-tag-directory" data-tag-directory>
-            <div class="drawn-tag-tools" hidden data-tag-tools>
-                <label for="tag-filter">查找标签<input id="tag-filter" type="search" placeholder="输入标签名称…" data-tag-filter></label>
-                <label for="tag-sort">排序<select id="tag-sort" data-tag-sort><option value="count">文章数量</option><option value="name">标签名称</option></select></label>
-            </div>
-            <p data-tag-status role="status">共 {{ len $sourcePages }} 个标签</p>
-            <div class="drawn-tag-grid" data-tag-list>
-                {{ range .Site.Taxonomies.tags.ByCount }}
-                <a href="{{ .Page.RelPermalink }}" data-tag-name="{{ .Page.Title }}" data-tag-count="{{ .Count }}"><strong>{{ .Page.Title }}</strong><span>{{ .Count }} 篇文章 →</span></a>
-                {{ end }}
-            </div>
-        </section>
-        {{- end -}}
+        {{ partial "drawn/tag-directory.html" . }}
     {{- else if gt $pager.TotalNumberOfElements 0 -}}
         <section class="article-list--compact">
             {{ range $pager.Pages }}

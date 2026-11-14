@@ -1,0 +1,12 @@
+{{- $section := .Section -}}
+{{- $search := site.GetPage "/page/search" -}}
+<ul class="drawn-tag-links" data-tag-list>
+    {{ range .Tags }}
+        <li data-tag-name="{{ .Page.LinkTitle }}" data-tag-count="{{ .Count }}">
+            <a href="{{ printf "%s?%s" $search.RelPermalink (querify "section" $section "tag" .Page.LinkTitle) }}">
+                <span>{{ .Page.LinkTitle }}</span>
+                <small>{{ .Count }}<span class="drawn-visually-hidden"> 篇文章</span></small>
+            </a>
+        </li>
+    {{ end }}
+</ul>

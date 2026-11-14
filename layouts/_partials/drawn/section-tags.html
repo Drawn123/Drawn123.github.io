@@ -1,0 +1,9 @@
+{{- $section := .Section -}}
+{{- $tags := slice -}}
+{{- range site.Taxonomies.tags.Alphabetical -}}
+    {{- $count := len (where .Pages "Section" $section) -}}
+    {{- if $count -}}
+        {{- $tags = $tags | append (dict "Page" .Page "Count" $count) -}}
+    {{- end -}}
+{{- end -}}
+{{- return (sort $tags "Count" "desc") -}}
