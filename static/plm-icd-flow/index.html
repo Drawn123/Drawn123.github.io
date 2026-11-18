@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PLM-ICD 训练流程图</title>
+<style>
+  :root {
+    color-scheme: light;
+    --paper: #f6f5ef;
+    --surface: #fffefa;
+    --ink: #1e302c;
+    --subtle: #51635c;
+    --line: #d7ded4;
+    --green: #245740;
+    --green-light: #e9f2e9;
+    --amber: #70460d;
+    --amber-light: #fbf0d8;
+    --amber-line: #e8d6ae;
+    --mono: "IBM Plex Mono", Consolas, "Microsoft YaHei UI", monospace;
+    font-family: "Instrument Sans", "Microsoft YaHei UI", "PingFang SC", sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; }
+  .wrap { width: min(1100px, 100% - 56px); margin-inline: auto; }
+  .header { padding-block: 48px 34px; border-top: 6px solid var(--green); }
+  .entry { color: var(--green); font: 600 .83rem/1.5 var(--mono); letter-spacing: .06em; }
+  h1 { margin: 10px 0 16px; font-size: clamp(2rem, 4.6vw, 3.7rem); line-height: 1.16; letter-spacing: -.04em; }
+  h2 { margin: 0; font-size: 1.25rem; line-height: 1.35; }
+  p { margin: 0; }
+  .intro { color: var(--subtle); max-width: 79ch; font-size: .96rem; }
+  .intro p + p { margin-top: 7px; }
+  code { font: .92em/1.5 var(--mono); overflow-wrap: anywhere; }
+  .intro code, .handoff code, .node-body code { padding: .09em .28em; border-radius: 4px; background: #eef0e9; }
+  .note code { background: #f3e8cf; }
+  a { color: var(--green); text-underline-offset: .18em; overflow-wrap: anywhere; }
+  .overview { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 25px; }
+  .overview-head { display: flex; gap: 12px; justify-content: space-between; align-items: baseline; }
+  .overview-head span { font-size: .8rem; color: var(--subtle); }
+  .map { margin: 19px 0 13px; }
+  .map-row { display: grid; grid-template-columns: 1fr 26px 1fr 26px 1fr 26px 1fr; align-items: stretch; }
+  .map-row.reverse { direction: rtl; }
+  .map-row.reverse > * { direction: ltr; }
+  .map-arrow { align-self: center; justify-self: center; font-size: 1.15rem; color: var(--green); }
+  .map-turn { display: grid; grid-template-columns: 1fr 26px 1fr 26px 1fr 26px 1fr; height: 26px; }
+  .map-turn span { grid-column: 7; }
+  .map-turn.left span { grid-column: 1; }
+  button, summary { cursor: pointer; }
+  button { font: inherit; }
+  .map-node { display: flex; flex-direction: column; align-items: start; justify-content: center; gap: 3px; min-height: 87px; text-align: left; padding: 12px 15px; border: 1px solid #cbdcce; border-radius: 10px; color: var(--ink); background: var(--green-light); }
+  .map-node:hover, .map-node[aria-expanded="true"] { background: #d9eadd; border-color: #80a68b; }
+  .map-node.optional { border-style: dashed; background: #f2f4e9; }
+  .map-node .map-id { font: 600 .77rem/1.4 var(--mono); color: var(--green); }
+  .map-node .map-title { font-weight: 650; font-size: .96rem; line-height: 1.45; }
+  .map-note { color: var(--subtle); font-size: .83rem; }
+  .map-note code { color: var(--green); }
+  .trace { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--line); margin: 16px 0 22px; }
+  .trace > div { min-width: 0; background: var(--surface); padding: 11px 15px; }
+  .trace b { display: block; color: var(--green); font-size: .84rem; margin-bottom: 2px; }
+  .trace span { font-size: .86rem; color: var(--ink); }
+  .trace .merge { grid-column: 1 / -1; padding-block: 8px; color: var(--subtle); font-size: .8rem; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 10px 0 17px; }
+  .toolbar button { color: var(--green); background: var(--surface); border: 1px solid var(--line); padding: 6px 11px; border-radius: 7px; font-size: .84rem; }
+  .toolbar button:hover { border-color: #88a291; background: var(--green-light); }
+  .toolbar .primary { background: var(--green); border-color: var(--green); color: #fff; }
+  .toolbar .primary:hover { background: #316a4e; }
+  .toolbar .file-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
+  #status { color: var(--subtle); font-size: .82rem; }
+  #status:not(:empty) { margin: -7px 0 12px; }
+  #stages { padding-bottom: 45px; }
+  .stage { margin-bottom: 10px; background: var(--surface); border: 1px solid var(--line); border-radius: 11px; scroll-margin-top: 20px; }
+  .stage[open] { border-color: #a7c1ad; }
+  .stage summary, .step summary, .note summary { list-style: none; }
+  summary::-webkit-details-marker { display: none; }
+  .stage summary::after, .step summary::after, .note summary::after { content: "+"; font: 500 1.25rem/1 var(--mono); color: var(--green); margin-left: auto; }
+  .stage[open] > summary::after, .step[open] > summary::after, .note[open] > summary::after { content: "−"; }
+  .stage > summary { display: flex; align-items: center; gap: 13px; padding: 14px 16px; min-height: 58px; }
+  .stage > summary:hover, .step > summary:hover { background: #f2f6ee; border-radius: 10px; }
+  .stage-id { font: 600 .83rem/1 var(--mono); min-width: 2.45em; text-align: center; background: var(--green-light); color: var(--green); padding: 8px 5px; border-radius: 6px; }
+  .stage-title { font-weight: 700; line-height: 1.35; }
+  .stage-count { font-size: .78rem; color: var(--subtle); white-space: nowrap; margin-left: auto; }
+  .stage > summary::after { margin-left: 5px; }
+  .stage-body { padding: 0 18px 17px; }
+  .walkthrough { margin: 0 0 12px; padding: 13px 15px; background: #edf4e9; border: 1px solid #d5e2d3; border-radius: 8px; }
+  .walkthrough h3 { color: var(--green); font-size: .96rem; margin: 0 0 8px; }
+  .walk-list { list-style: none; counter-reset: walk; padding: 0; margin: 0; }
+  .walk-list li { counter-increment: walk; position: relative; padding: 3px 0 9px 33px; font-size: .9rem; overflow-wrap: anywhere; }
+  .walk-list li:last-child { padding-bottom: 0; }
+  .walk-list li::before { content: counter(walk); position: absolute; top: 3px; left: 0; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: var(--surface); color: var(--green); font: 600 .75rem/1 var(--mono); }
+  .walk-list li:not(:last-child)::after { content: ""; position: absolute; left: 10px; top: 26px; bottom: 0; border-left: 1px solid #a1bdab; }
+  .walkthrough code { padding: .09em .28em; border-radius: 4px; background: #e0ebdf; }
+  .walk-table { margin: 10px 0 0 33px; overflow-x: auto; }
+  .walk-table table { width: 100%; min-width: 340px; border-collapse: collapse; background: var(--surface); font-size: .85rem; }
+  .walk-table th, .walk-table td { padding: 6px 8px; border: 1px solid #cdddcf; text-align: center; }
+  .walk-table th:first-child, .walk-table td:first-child { text-align: left; }
+  .walk-table td strong { display: inline-block; background: #d4e9d7; color: var(--green); border-radius: 4px; padding: 0 .45em; }
+  .handoff { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: #f3f5ee; border-radius: 7px; padding: 10px 12px; margin-bottom: 12px; font-size: .85rem; }
+  .handoff > div, .row dd { min-width: 0; }
+  .handoff b { display: block; color: var(--green); font-size: .8rem; margin-bottom: 2px; }
+  .steps { border-left: 2px solid #d9e7da; margin-left: 20px; padding-left: 13px; }
+  .step { position: relative; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; margin: 7px 0; }
+  .step::before { content: ""; position: absolute; inset: 19px auto auto -15px; width: 14px; height: 2px; background: #b9d0be; }
+  .step > summary { display: flex; gap: 9px; align-items: center; min-height: 40px; padding: 8px 11px; font-size: .93rem; font-weight: 600; }
+  .step-id { font: 600 .76rem/1.5 var(--mono); color: var(--green); min-width: 2.5em; }
+  .node-body { padding: 2px 13px 12px; }
+  .flow { display: grid; grid-template-columns: 1fr; margin: 0 0 7px; }
+  .row { display: grid; grid-template-columns: 45px minmax(0, 1fr); padding: 5px 0; border-top: 1px solid #e8ebe2; font-size: .88rem; }
+  .row dt { color: var(--green); font-size: .81rem; font-weight: 700; }
+  .row dd { margin: 0; overflow-wrap: anywhere; }
+  .sources { color: var(--subtle); font-size: .75rem; margin-bottom: 8px; overflow-wrap: anywhere; }
+  .sources b { font-weight: 500; margin-right: 8px; }
+  .note { border: 1px solid var(--amber-line); border-radius: 6px; background: var(--amber-light); color: #503b21; font-size: .86rem; }
+  .note summary { padding: 6px 9px; display: flex; font-weight: 650; color: var(--amber); align-items: center; }
+  .note summary::after { color: var(--amber); font-size: 1.05rem; }
+  .note-content { padding: 1px 9px 9px; }
+  .note-content > div + div { margin-top: 5px; }
+  .edit-only { display: none; }
+  .editing .edit-only { display: block; }
+  .editing .editable > .text-view { display: none; }
+  textarea.edit-only { width: 100%; font: inherit; min-height: 2.25em; field-sizing: content; resize: vertical; color: var(--ink); background: #fff; border: 1px solid #92ab99; border-radius: 4px; padding: 4px 6px; }
+  .edit-title { margin: 5px 0 8px; font-size: .83rem; }
+  .edit-title label { display: block; color: var(--green); margin-bottom: 3px; }
+  :focus-visible { outline: 2px solid #3c7558; outline-offset: 3px; }
+  @media (max-width: 780px) {
+    .wrap { width: calc(100% - 32px); }
+    .header { padding-block: 30px 24px; }
+    .overview { padding: 16px; }
+    .map-row, .map-turn { display: flex; flex-direction: column; height: auto; }
+    .map-row.reverse { direction: ltr; }
+    .map-node { flex-direction: row; align-items: baseline; justify-content: start; gap: 9px; min-height: 0; padding: 8px 11px; }
+    .map-arrow { height: 19px; line-height: 19px; }
+    .map-row .map-arrow { font-size: 0; }
+    .map-row .map-arrow::after { content: "↓"; font-size: 1rem; }
+    .trace, .handoff { grid-template-columns: 1fr; }
+    .toolbar .file-actions { margin-left: 0; }
+    .stage-body { padding-inline: 10px; }
+    .steps { margin-left: 8px; }
+    .walk-table { margin-left: 0; }
+  }
+  @media (max-width: 420px) {
+    .wrap { width: calc(100% - 20px); }
+    .overview-head { align-items: start; flex-direction: column; gap: 3px; }
+    .stage > summary { gap: 8px; padding-inline: 10px; }
+    .stage-count { display: none; }
+    .stage > summary::after { margin-left: auto; }
+  }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="wrap">
+    <div class="entry">train_plm.py</div>
+    <h1 id="document-title"></h1>
+    <div id="intro" class="intro"></div>
+  </div>
+</header>
+<main class="wrap">
+  <section class="overview" aria-labelledby="overview-title">
+    <div class="overview-head"><h2 id="overview-title">训练主线</h2><span id="map-count"></span></div>
+    <nav class="map" id="map" aria-label="训练主线各节点"></nav>
+    <p class="map-note">基础实验在第 04 步之后直接进入第 06 步，开启 <code>distillation</code> 才执行第 05 步。</p>
+  </section>
+  <div class="trace" aria-label="病历和标签的两条数据流">
+    <div><b>模型输入</b><span>病历正文 → <code>input_ids</code> → token 向量 → <code>logits</code></span></div>
+    <div><b>训练答案</b><span>已有 ICD → <code>target_ids</code> → <code>[1, 0, 1]</code> → <code>targets</code></span></div>
+    <div class="merge">两条路径在第 8.5 步的损失函数汇合。</div>
+  </div>
+  <div class="toolbar" aria-label="流程图操作">
+    <button id="expand" type="button">展开全部流程</button>
+    <button id="collapse" type="button">收起全部</button>
+    <div class="file-actions">
+      <button id="edit" type="button" class="primary" aria-pressed="false">编辑内容</button>
+      <button id="open-md" type="button">打开 Markdown</button>
+      <input id="md-file" type="file" accept=".md,.markdown,text/markdown,text/plain" hidden>
+      <button id="save-html" type="button">保存 HTML</button>
+      <button id="save-md" type="button">导出 Markdown</button>
+    </div>
+  </div>
+  <p id="status" role="status"></p>
+  <div id="stages" aria-label="阶段和细流程"></div>
+  <noscript>启用 JavaScript 后可展开并编辑流程图。也可以阅读同目录的 PLM_ICD_FLOW.md。</noscript>
+</main>
+<script id="flow-source" type="application/json">"# PLM-ICD 流程图\n\n## 主线\n\n```text\n01 初始化配置与设备 → 02 读取病历并分词 → 03 整理 ICD 标签与类别索引\n→ 04 创建或加载模型 → 05 可选：生成教师分数 → 06 准备数据批次、损失和指标\n→ 07 准备优化器与更新规则 → 08 训练、验证、保存与测试\n```\n\n第 05 步由 `cfg.distillation` 控制，基础实验从 04 直接进入 06。\n\n## 01 初始化配置与设备\n\n**起点** 项目环境、命令行参数、主配置与实验配置。\n\n**交接** 合并后的 `cfg`，以及后面放模型和张量的 `device`。\n\n**流程**\n\n1. 想先看配置，可以输入 `poetry run python train_plm.py experiment=mdace_icd9_code/plm_icd gpu=0 --cfg job`。\n2. Hydra 从主 `config.yaml` 和实验 YAML 选配置。这次选 `explainable_medical_coding/config/model/plm_icd.yaml`，里头写着 `name: PLMICD`。\n3. 合并出 `cfg`。这条预览命令就在这里打印并退出。正常运行时继续把 `cfg` 传给 `main()`。\n4. `main()` 设随机种子并选择设备，得到后面要用的 `device`。\n\n### 1.1 用项目环境启动入口\n\n- **输入** `pyproject.toml`、`poetry.lock` 和 `poetry run python train_plm.py …`。\n- **动作** Poetry 在项目使用的 Python 环境里启动 `train_plm.py`，把后面的实验参数交给脚本。\n- **产物** Python 开始执行脚本顶部，随后进入 Hydra 的配置处理。\n- **源码** `train_plm.py`（训练入口） · `pyproject.toml`（项目依赖）\n\n- **代码位置** 终端命令，在项目根目录执行；启动文件为 `train_plm.py`。\n\n```bash\n# 查看配置：这条命令不会进入 main() 中的训练流程\npoetry run python train_plm.py experiment=mdace_icd9_code/plm_icd gpu=0 --cfg job\n```\n\n- **读法** 从左到右读：Poetry 选项目环境，Python 执行训练入口，experiment 选择实验配置，gpu 选择设备，--cfg job 让 Hydra 打印组合好的配置后退出。先用这条命令确认配置，再决定是否去掉最后的预览参数。\n> **补充解释** Poetry 管依赖和运行环境。`experiment=…`、`gpu=0` 是 Hydra 处理的配置参数。\n\n### 1.2 读环境变量\n\n- **输入** 工作区的 `.env` 和当前进程已有的环境变量。\n- **动作** `load_dotenv(find_dotenv())` 查找并加载 `.env`。\n- **产物** 后续组件可从进程环境读取路径等设置。\n- **源码** `train_plm.py`（加载环境变量）\n\n- **代码位置** `train_plm.py`，模块顶部，`load_dotenv(find_dotenv())`。\n\n```python\nload_dotenv(find_dotenv())\n```\n\n- **读法** find_dotenv() 找到 .env，load_dotenv() 读入其中的环境变量。把它理解成给当前程序补充运行所需的设置；它还没有读取病历或更新模型。\n> **补充解释** `.env` 提供运行环境中的值。Hydra 的 YAML 提供 `cfg` 里的实验参数。\n\n### 1.3 选配置并合并成 `cfg`\n\n- **输入** 主 `config.yaml`、`defaults` 指定的配置组、实验选项和命令行覆盖值。\n- **动作** Hydra 从主配置出发。基础实验的 `override /model: plm_icd` 选择 `explainable_medical_coding/config/model/plm_icd.yaml`，选中的内容合并到 `cfg.model`。\n- **产物** `main(cfg)` 收到一份有 `cfg.data`、`cfg.model`、`cfg.loss`、`cfg.trainer` 等字段的配置对象。\n- **源码** `explainable_medical_coding/config/config.yaml`（主 YAML） · `explainable_medical_coding/config/experiment/mdace_icd9_code/plm_icd.yaml`（实验 YAML） · `train_plm.py`（Hydra 入口）\n\n- **代码位置** `train_plm.py`，`main()` 上方的 `@hydra.main(...)` 及函数定义。\n\n```python\n@hydra.main(\n    version_base=None,\n    config_path=\"explainable_medical_coding/config\",\n    config_name=\"config\",\n)\ndef main(cfg: OmegaConf) -> None:\n    # 下面开始使用合并好的 cfg\n    ...\n```\n\n- **读法** 装饰器规定从哪个目录、哪个主配置开始读。cfg 是传入 main() 的配置对象。先看 `explainable_medical_coding/config/config.yaml` 的 defaults，再看 `explainable_medical_coding/config/experiment/mdace_icd9_code/plm_icd.yaml` 的 override /model: plm_icd，才能确定本次选了 `explainable_medical_coding/config/model/plm_icd.yaml`。\n> **补充解释** `cfg` 是 configuration 的缩写，这里是 Python 变量名。模型目录中的多个 YAML 是同组的候选项。`model: plm_icd` 选文件，文件里的 `name: PLMICD` 选 Python 类，`configs.model_path` 选预训练编码器。\n\n### 1.4 按启动模式决定是否进入训练入口\n\n- **输入** 是否带 `--cfg job`，以及可选的 `--package model`。\n- **动作** 配置预览模式打印合并后的配置并退出。正常运行模式把合并结果传给 `main(cfg)`。\n- **产物** 预览时得到 YAML 文本。正常运行时进入后续初始化。\n- **源码** `train_plm.py`（脚本入口） · Hydra 参数说明：`https://hydra.cc/docs/1.3/advanced/hydra-command-line-flags/`\n\n- **代码位置** 终端命令，在项目根目录执行；启动文件为 `train_plm.py`，配置由 Hydra 处理。\n\n```bash\n# 只查看最终模型配置，不训练\npoetry run python train_plm.py experiment=mdace_icd9_code/plm_icd --cfg job --package model\n```\n\n- **读法** --package model 让输出只留下模型这一部分。看到 name: PLMICD 和 configs.model_path，就知道将来会创建哪个类、从哪里加载基础编码器。这个预览不会验证数据是否齐全或模型是否能正常运行。\n> **补充解释** 想看当前用的是哪个模型，可以执行 `poetry run python train_plm.py experiment=mdace_icd9_code/plm_icd --cfg job --package model`。这条命令只打印模型配置。\n\n### 1.5 设置随机性与运行设备\n\n- **输入** `cfg.seed`、`cfg.deterministic`、GPU 配置和当前 CUDA 环境。\n- **动作** 按需启用确定性设置，用 `set_seed()` 设置随机种子，再用 `set_gpu()` 得到设备。\n- **产物** 统一的随机种子设置和 `device`，例如 CUDA 或 CPU。\n- **源码** `train_plm.py`（初始化） · `explainable_medical_coding/utils/tensor.py`（设备选择） · `explainable_medical_coding/utils/seed.py`（随机种子）\n\n- **代码位置** `train_plm.py`，`main()`，初始化设备与随机种子的部分。\n\n```python\nif cfg.deterministic:\n    deterministic()\nset_seed(cfg.seed)\ndevice = set_gpu(cfg)\n```\n\n- **读法** device 是后面统一使用的设备。固定 seed 能让随机过程更容易复现，但不等于所有硬件和设置下的结果都完全相同。模型和一批数据之后需要放到同一设备上才能一起计算。\n> **补充解释** 固定种子方便重复比较。做两种方法的对照时，也需要固定数据划分与训练预算。\n\n## 02 读取病历并分词\n\n**起点** `cfg.data`、原始病历数据和预训练模型配套的分词器。\n\n**交接** `train`、`validation`、`test` 中每条病历新增 `input_ids`、`attention_mask`、`length`。\n\n**流程**\n\n1. `load_dataset(...)` 读病历。病历甲的正文用 `fever cough` 示意，这条记录里还带着已有的 ICD 标签。\n2. 从预训练模型目录加载一次分词器，让后面所有病历都用同一份规则和词表。\n3. 把病历甲交给分词器。假设两个文字片段的编号是 `41` 和 `98`，就得到 `input_ids = [41, 98]`，这里省略首尾特殊 token。\n4. 写回 `attention_mask = [1, 1]` 和 `length = 2`。这时正文已经变成一串整数。到第 8.3 步，模型再拿整数查向量。\n\n### 2.1 取出列名和两个路径\n\n- **输入** `cfg.data.target_columns`、`cfg.data.dataset_path`、`cfg.load_model`。\n- **动作** 把标签列名转为 Python 列表，把数据集加载脚本的地址转为 `Path`。旧实验目录有值时也转为 `Path`。\n- **产物** `target_columns`、`dataset_path` 和供第 03～05 步使用的 `model_path` 或 `None`。\n- **源码** `train_plm.py`（取配置值） · `explainable_medical_coding/config/data/mdace_inpatient_icd9_code.yaml`（数据组 YAML）\n\n- **代码位置** `train_plm.py`，`main()`，第 2 部分开头。\n\n```python\ntarget_columns = list(cfg.data.target_columns)\ndataset_path = Path(cfg.data.dataset_path)\nmodel_path = Path(cfg.load_model) if cfg.load_model is not None else None\n```\n\n- **读法** list(...) 把配置里的标签列名取成列表；Path(...) 把路径文字包装成路径对象。最后一行是条件表达式：填了旧实验目录就保存路径，没填就得到 None。这里的 model_path 指旧实验存档；cfg.model.configs.model_path 指基础预训练模型，两者用途不同。\n> **补充解释** 局部变量 `model_path` 指旧实验目录。后面 `cfg.model.configs.model_path` 指预训练分词器与编码器目录。\n\n### 2.2 加载三份病历数据\n\n- **输入** `dataset_path` 指向的 Python dataset builder，以及它要读取的 Parquet 文件。\n- **动作** `load_dataset(str(dataset_path))` 按 builder 的定义读取病历并给出各个 split。\n- **产物** 一个 `DatasetDict`，可以取 `dataset['train']`、`dataset['validation']` 和 `dataset['test']`。\n- **源码** `train_plm.py`（加载数据） · `explainable_medical_coding/datasets/mdace_inpatient_icd9_code.py`（基础数据集的三个划分）\n\n- **代码位置** `train_plm.py`，`main()`，`dataset = load_dataset(...)`。\n\n```python\ndataset = load_dataset(str(dataset_path))\n```\n\n- **读法** str(...) 把路径对象转成字符串交给加载函数。它调用 dataset_path 指定的 Python builder，builder 再读取 Parquet。得到的 dataset 里分别有 train、validation、test，各条记录已经含有 text 和人工整理好的 ICD 标签。\n> **补充解释** 每条记录已经带有病历正文、诊断代码、操作代码等字段。训练集用于更新参数，验证集用于选择模型和阈值，测试集用于最终评估。\n\n### 2.3 加载固定的文本分词器\n\n- **输入** `cfg.model.configs.model_path`，基础实验指向 `models/roberta-base-pm-m3-voc-hf`。\n- **动作** `AutoTokenizer.from_pretrained(...)` 读取预训练模型配套的分词规则和词表。\n- **产物** 可重复调用的 `text_tokenizer` 对象。\n- **源码** `train_plm.py`（加载分词器） · `README.md`（下载说明） · `Makefile`（下载命令实现）\n\n- **代码位置** `train_plm.py`，`main()`，`AutoTokenizer.from_pretrained(...)`。\n\n```python\ntext_tokenizer = AutoTokenizer.from_pretrained(\n    cfg.model.configs.model_path,\n)\n```\n\n- **读法** 这行准备一个可反复使用的分词器。它读取已有的切分规则和词表，尚未对每条病历分词。词表与编码器配套，包含完整词和子词，并非收集这批病历后临时做出的全部英文单词表。\n> **补充解释** 这个医学 RoBERTa 的文本词表提前从 PubMed 文献学好，包含常见完整词和子词。一份词表供所有病历共用。基础实验运行前按 README 准备本地模型目录，可以用 `make download_roberta`。词表来源：`https://aclanthology.org/2020.clinicalnlp-1.17.pdf`\n\n### 2.4 设置最大 token 长度\n\n- **输入** `cfg.data.max_length`，基础实验里是 `6000`。\n- **动作** 转成整数并传给分词器的 `max_length`，同时开启 `truncation=True`。\n- **产物** 每条病历分词后的序列有统一的最长上限。\n- **源码** `train_plm.py`（长度与截断） · `explainable_medical_coding/config/experiment/mdace_icd9_code/plm_icd.yaml`（基础实验长度配置）\n\n- **代码位置** `train_plm.py`，`main()`，`max_input_length = ...`。\n\n```python\nmax_input_length = int(cfg.data.max_length)\n```\n\n- **读法** int(...) 转成整数。基础实验上限为 6000 token，超过上限的内容在分词时截断；不是把一份病历缩成一个 6000 维向量。128 是后面编码器切块的长度，与这个总上限分别控制不同步骤。\n> **补充解释** `6000` 是一份病历保留下来的 token 上限。`chunk_size=128` 是 RoBERTa 一块编码多少 token，发生在第 08 步的前向传播中。\n\n### 2.5 对每个 split 逐批分词\n\n- **输入** `dataset.map()` 交进来的 `x['text']`，即一批病历字符串。\n- **动作** `text_tokenizer(...)` 切出 token、查词表编号，按配置截断，再返回掩码和序列长度。\n- **产物** 每条记录写入 `input_ids`、`attention_mask` 和 `length`，原始病历与 ICD 字段也供后续使用。\n- **源码** `train_plm.py`（批量分词）\n\n- **代码位置** `train_plm.py`，`main()`，带有 `desc=\"Tokenizing text\"` 的 `dataset.map(...)`。\n\n```python\ndataset = dataset.map(\n    lambda x: text_tokenizer(\n        x[TEXT_COLUMN], return_length=True,\n        truncation=True, max_length=max_input_length,\n    ),\n    batched=True, num_proc=8, batch_size=1_000,\n    desc=\"Tokenizing text\",\n)\n```\n\n- **读法** map 表示把这个处理应用到数据记录上。lambda x: ... 是一个临时函数；batched=True 时 x['text'] 是一批文本。return_length 要长度，truncation 开启截断。这里一次预处理 1000 条，不代表训练时一次喂 1000 条。得到的 input_ids 仍是一串整数，向量要等模型里的 embedding 层生成。\n> **补充解释** 加载分词器是准备规则，逐批分词是反复使用规则。`batched=True` 让 `x['text']` 成为文本列表，`batch_size=1000` 和 `num_proc=8` 控制预处理。第 06 步另有训练批大小和补齐规则。\n\n## 03 整理 ICD 标签与类别索引\n\n**起点** 每条病历已有的诊断代码列表、操作代码列表和分词结果。\n\n**交接** `target_ids`、固定的 ICD 类别顺序，以及模型和评估要用的 `lookups`。\n\n**流程**\n\n1. **取两栏。** 病历甲的诊断栏是 `[\"250.00\"]`，操作栏是 `[\"39.61\"]`。这两栏的值已经写在数据里。\n2. **把列表接起来。** `[\"250.00\"]` 接上 `[\"39.61\"]`，得到这条病历的 `target = [\"250.00\", \"39.61\"]`。每栏可以有好几个代码，也可以为空。\n3. **给整个实验做一张编号表。** 假设所有病历总共只出现过三个代码。排好之后，`\"250.00\" → 0`，`\"272.4\" → 1`，`\"39.61\" → 2`。每个编号对应一个单独的代码。\n4. **病历甲查表。** `\"250.00\"` 查到 `0`，`\"39.61\"` 查到 `2`，所以 `target_ids = [0, 2]`，意思是「这条病历有第 0 和第 2 个代码」。\n5. **第 6.4 步填 0/1。** 先摆出三个位置 `[0, 0, 0]`，把位置 `0` 和 `2` 改成 `1`，得到 `[1, 0, 1]`。如果有 5000 个候选 ICD，做法一样，只是每行有 5000 格。\n6. **一批病历就是好几行。** 例如病历乙只有 `\"272.4\"`，查表得到 `[1]`，于是填成 `[0, 1, 0]`。把甲、乙两行叠起来，就是下面这张 0/1 表。\n\n| 一行是一条病历 | 第 0 列 `250.00` | 第 1 列 `272.4` | 第 2 列 `39.61` |\n| --- | --- | --- | --- |\n| 病历甲，`target_ids = [0, 2]` | **1** | 0 | **1** |\n| 病历乙，`target_ids = [1]` | 0 | **1** | 0 |\n\n### 3.1 合并每条病历的诊断和操作代码\n\n- **输入** 单条记录里 `diagnosis_codes` 和 `procedure_codes` 两个列表。\n- **动作** `create_targets_column()` 按列名取值，跳过 `None`，将保留的列表接起来。\n- **产物** 一条病历的 ICD 字符串列表 `target`，例如诊断 `[A]` 和操作 `[C]` 得到 `[A, C]`。\n- **源码** `train_plm.py`（调用位置） · `explainable_medical_coding/utils/data_helper_functions.py`（合并标签）\n\n- **代码位置** `explainable_medical_coding/utils/data_helper_functions.py`，`create_targets_column()`。\n\n```python\n# create_targets_column() 中的核心代码\nexample[TARGET_COLUMN] = []\nfor target_column in target_columns:\n    if example[target_column] is not None:\n        example[TARGET_COLUMN] += example[target_column]\n```\n\n- **读法** 先准备空列表，再逐栏把列表内容接进去。比如诊断 ['250.00'] 和操作 ['39.61'] 得到 target=['250.00', '39.61']。这里的 += 是列表拼接。两栏各自都可以有多个代码，因此不是给一个固定二元组分类。\n> **补充解释** 诊断代码记录诊断的问题，操作代码记录做过的手术或医疗操作。每列可以有零个、一个或多个代码。这些是数据集提供的标准答案，模型的预测发生在后面。\n\n### 3.2 收集已知代码并筛每条病历的标签\n\n- **输入** 各 split 中每条病历的 `target` 列表。\n- **动作** `get_unique_targets()` 展开所有 `target` 并取并集。`filter_unknown_targets()` 根据这份集合逐个检查每条病历的代码。\n- **产物** `known_targets` 集合和逐条检查后的 `target`。\n- **源码** `train_plm.py`（收集并筛选） · `explainable_medical_coding/utils/data_helper_functions.py`（收集各 split 的代码）\n\n- **代码位置** `train_plm.py`，`main()`，收集 `known_targets` 及过滤标签的部分。\n\n```python\nknown_targets = set(get_unique_targets(dataset))\ndataset = dataset.map(\n    lambda x: filter_unknown_targets(x, known_targets=known_targets),\n    desc=\"Filter unknown targets\",\n)\n```\n\n- **读法** set(...) 得到不重复的代码集合。注意这个仓库从当前所有 split 收集已出现的代码，再用它过滤同一份数据，所以通常不会删掉现有代码。它不是只拿训练集制作标签表；换数据复用旧模型时，还要检查旧编号表是否收录了新数据的代码。\n> **补充解释** 这份集合来自当前数据的 train、validation、test，所以通常会保留当前数据里已有的代码。验证集或测试集独有的代码也会进入这张集合。\n\n### 3.3 去掉空标签病历\n\n- **输入** 已整理好 `target` 的三份数据。\n- **动作** `dataset.filter(...)` 检查每条病历是否满足 `len(target) > 0`。\n- **产物** 后续只处理至少有一个 ICD 标签的病历。\n- **源码** `train_plm.py`（过滤空标签）\n\n- **代码位置** `train_plm.py`，`main()`，带有 `desc=\"Filtering empty targets\"` 的 `dataset.filter(...)`。\n\n```python\ndataset = dataset.filter(\n    lambda x: len(x[TARGET_COLUMN]) > 0,\n    desc=\"Filtering empty targets\",\n)\n```\n\n- **读法** filter 保留判断为 True 的整条记录。len(target)>0 就是这条病历至少还有一个标签。map 常用于改记录或加字段，filter 用于决定整条记录是否留下。\n> **补充解释** 3.2 的检查单位是一个代码，3.3 的检查单位是一整条病历。\n\n### 3.4 新建或恢复类别编号表\n\n- **输入** `cfg.model.autoregressive`、数据里出现过的唯一代码，以及可选的旧实验词表。\n- **动作** 创建 `TargetTokenizer`。新实验将单个 ICD 代码去重、排序、从 0 编号；旧实验从 `target_tokenizer.json` 恢复同样的列顺序。\n- **产物** `target2id` 和 `id2target`，示例为 `A→0、B→1、C→2`。\n- **源码** `train_plm.py`（新建与加载分支） · `explainable_medical_coding/utils/tokenizer.py`（类别编号）\n\n- **代码位置** `explainable_medical_coding/utils/tokenizer.py`，`TargetTokenizer.fit()`，普通多标签分支的节选。\n\n```python\n# TargetTokenizer.fit() 中的核心代码\nself.id2target = sorted(list(set(targets)))\nself.target2id = {\n    target: idx for idx, target in enumerate(self.id2target)\n}\n```\n\n- **读法** set 去重，sorted 排序，enumerate 从 0 配上编号。这个 fit() 只是建查找表，没有 loss、backward 或参数更新。假设顺序为 A、B、C，就建立 A→0、B→1、C→2。加载旧模型时必须沿用旧表，否则同一输出列可能被误读成另一种 ICD。\n> **补充解释** 编号的单位是每个 ICD 代码。`[0, 2]` 读作这条病历有第 0 类和第 2 类。若换数据加载旧模型，先确认新数据里的代码都在旧词表中，旧表缺少某个代码时，`encode()` 查表会报 `KeyError`。\n\n### 3.5 把每条病历的标签转成编号列表\n\n- **输入** 某条病历的 `target = [A, C]` 以及类别编号表。\n- **动作** `target_tokenizer(target)` 逐个查表并写入新字段。\n- **产物** `target_ids = [0, 2]`。各病历可以有不同数量的标签。\n- **源码** `train_plm.py`（生成 target_ids） · `explainable_medical_coding/utils/tokenizer.py`（逐项查表）\n\n- **代码位置** `train_plm.py`，`main()`，生成 `target_ids` 的部分；注释中的查表语句来自 `explainable_medical_coding/utils/tokenizer.py` 的 `TargetTokenizer.encode()`。\n\n```python\ndataset = dataset.map(\n    lambda x: {\"target_ids\": target_tokenizer(x[TARGET_COLUMN])},\n    desc=\"Converting targets to target ids\",\n)\n# 编号器内部逐个查表：\n# encoded_targets = [self.target2id[target] for target in targets]\n```\n\n- **读法** 外层给记录添加 target_ids，内层逐个代码查字典。A 和 C 分别查到 0 和 2，所以得到 [0, 2]。这个列表表示本病历命中了哪几列，此时还没展开成 [1, 0, 1]。\n> **补充解释** 长度等于类别数的答案向量在第 06 步组批时展开。文本词表的 ID 指向 embedding 表的行，ICD 类别的 ID 指向模型输出的列。\n\n### 3.6 设置读出格式\n\n- **输入** `input_ids`、`length`、`attention_mask`、`target_ids` 四列。\n- **动作** `dataset.set_format(type='torch', columns=...)` 指定取出这些列时的格式。\n- **产物** 训练组件读取这几列时得到张量，组批时仍按各病历实际长度处理。\n- **源码** `train_plm.py`（设置 PyTorch 格式）\n\n- **代码位置** `train_plm.py`，`main()`，`dataset.set_format(...)`。\n\n```python\ndataset.set_format(\n    type=\"torch\",\n    columns=[\"input_ids\", \"length\", \"attention_mask\", \"target_ids\"],\n)\n```\n\n- **读法** 指定这些字段取出来时采用 PyTorch 张量格式。张量可以是一串数、一张表或更多层的数字排列。这个设置不会把不同长度的病历补齐；补齐发生在真正取一批时。\n> **补充解释** 数据仍保存原始 `text`、`target` 等列，后面的统计流程可以切换读取格式取这些字段。\n\n### 3.7 计算模型与评估要用的数据统计\n\n- **输入** 已处理的 dataset、文本分词器和 ICD 编号器。\n- **动作** `get_lookups()` 记录样本数、类别数、文本词表大小与补齐 ID，并统计各个 split 出现过的类别列。\n- **产物** `lookups.data_info`、`lookups.split2code_indices` 和 `lookups.target_tokenizer`。\n- **源码** `explainable_medical_coding/utils/lookups.py`（打包 Lookups） · `train_plm.py`（打印数据统计）\n\n- **代码位置** `train_plm.py`，`main()`，`factories.get_lookups(...)` 及其后的日志语句。\n\n```python\nlookups = factories.get_lookups(\n    dataset=dataset,\n    text_tokenizer=text_tokenizer,\n    target_tokenizer=target_tokenizer,\n)\nLOGGER.info(lookups.data_info)\n```\n\n- **读法** 这一步把各处会用到的信息放到一起：有多少样本、有多少 ICD 类别、文本词表多大、补齐用哪个 ID。比如 num_classes=3，下一步就知道模型每条病历要输出 3 个分数。LOGGER.info 是打印统计信息。\n> **补充解释** 如果 `num_classes=3`，第 04 步就创建能输出 3 列的模型。`utils` 是项目存放可复用工具代码的目录，主流程在 `train_plm.py` 中调用它们。\n\n## 04 创建或加载模型\n\n**起点** `cfg.model`、`lookups.data_info`，以及新建或加载旧实验的选择。\n\n**交接** 一个放在运行设备上的 `model`，调用时接收文本张量并返回 ICD 原始分数。\n\n**流程**\n\n1. 看 `cfg.load_model`。留空就新建，填了旧实验目录就加载旧权重。\n2. 新建时，`name: PLMICD` 选中模型类，`configs.model_path` 选中医学 RoBERTa。假设我们有 3 个 ICD 类别，就创建能打出 3 个分数的分类头。\n3. 加载旧模型时，先对上旧类别表，用旧 `config.yaml` 搭模型，再把 `best_model.pt` 的权重装进去。\n4. 两条路都拿到了 `model`，然后执行 `model.to(device)`。它之后会收到病历编号，返回类似 `[2.0, -3.0, 1.0]` 的三个分数。\n\n### 4.1 根据旧实验目录选择分支\n\n- **输入** 第 2.1 步得到的 `model_path`，来自 `cfg.load_model`。\n- **动作** `model_path is None` 时走 4.2～4.3 新建分支。有目录时走 4.4 加载分支。\n- **产物** 两条分支都建立 `model`，然后汇合到 4.5。\n- **源码** `train_plm.py`（选择建模分支）\n\n- **代码位置** `train_plm.py`，`main()`，第 4 部分，新建或加载模型的分支节选。\n\n```python\nif model_path is None:\n    model = factories.get_model(config=cfg.model, data_info=lookups.data_info)\nelse:\n    saved_config = OmegaConf.load(model_path / \"config.yaml\")\n    # 接下来调用 load_trained_model() 恢复旧模型\n```\n\n- **读法** 等号左边的 model 就是后面真正调用的模型对象。新建分支从基础预训练编码器开始，另建 ICD 分类头；加载分支恢复某次 ICD 训练的权重。Path 对象用 / 拼接路径，所以 model_path / 'config.yaml' 是旧实验目录下的配置文件。\n> **补充解释** 第 01 步已经决定新建时选哪份 YAML。旧模型分支从旧实验保存的配置恢复其模型结构。\n\n### 4.2 新建分支：找到 `PLMICD` 类并加载编码器\n\n- **输入** `cfg.model.name='PLMICD'`、`cfg.model.configs`、类别数及文本补齐 ID。\n- **动作** `get_model()` 按 `name` 找到 Python 类，调用构造函数。`AutoModel.from_pretrained()` 根据配置加载医学 RoBERTa。\n- **产物** 能把 token ID 变成带上下文向量的预训练编码器。\n- **源码** `explainable_medical_coding/config/factories.py`（工厂） · `explainable_medical_coding/models/models.py`（模型构造）\n\n- **代码位置** `explainable_medical_coding/config/factories.py`，`get_model()`。\n\n```python\n# explainable_medical_coding/config/factories.py：按名字找到类，再调用构造函数\nmodel_class = getattr(models, config.name)\nreturn model_class(**data_info, **config.configs)\n\n```\n\n- **代码位置** `explainable_medical_coding/models/models.py`，`PLMICD.__init__()`，加载基础编码器的部分。\n\n```python\n# explainable_medical_coding/models/models.py：PLMICD.__init__() 中读取基础编码器\nself.roberta_encoder = AutoModel.from_pretrained(\n    model_path, config=self.config, add_pooling_layer=False\n)\n```\n\n- **读法** getattr(models, 'PLMICD') 可以理解成按名字取出 models.PLMICD。** 把字典里的键值展开成构造参数，例如 num_classes=3、chunk_size=128。RoBERTa 已经有预训练权重，但新建的 ICD 分类头还需要通过后面的标签训练。\n> **补充解释** Windows 工作区按 README 准备分词器和基础编码器目录即可开始配置新训练，论文作者已训练的 ICD checkpoint 可以用于复用旧实验。\n\n### 4.3 新建分支：装上 ICD 分类头\n\n- **输入** `num_classes`、编码器的向量维数、`cross_attention` 和 `scale`。\n- **动作** 基础配置选 `LabelCrossAttention`，为每个 ICD 类别建立可训练的类别表示；`cross_attention=false` 对应 `LabelAttention`。\n- **产物** 完整的 `PLMICD` 对象。每条病历最后有 `num_classes` 个输出分数。\n- **源码** `explainable_medical_coding/models/models.py`（分类头选择） · `explainable_medical_coding/models/modules/attention.py`（分类头实现）\n\n- **代码位置** `explainable_medical_coding/models/models.py`，`PLMICD.__init__()`，选择标签注意力分类头的部分。\n\n```python\nif cross_attention:\n    self.label_wise_attention = LabelCrossAttention(\n        input_size=self.config.hidden_size,\n        num_classes=num_classes, scale=scale,\n    )\nelse:\n    self.label_wise_attention = LabelAttention(\n        input_size=self.config.hidden_size,\n        projection_size=self.config.hidden_size,\n        num_classes=num_classes,\n    )\n```\n\n- **读法** 完整模型有两大部分：RoBERTa 把文字变成带上下文的向量，标签分类头用这些向量给每个 ICD 打分。cross_attention 选择分类头实现。它是深度多标签分类模型；最后的 sigmoid 与逻辑回归输出形式相似，整个模型还有前面的 Transformer 和标签注意力。\n> **补充解释** RoBERTa 负责读文字，分类头负责给 ICD 打分。完整模型是深度多标签分类器，最后的线性打分加 sigmoid 与逻辑回归的输出形式相同。`mask_input=false` 走常规前向；打开时选模型的输入遮挡分支。\n> **补充解释** 这份模型 YAML 中的 `loss` 和 `lambda_1` 被 PLMICD 构造函数的 `**kwargs` 接收，但该构造函数没有使用它们。实际训练损失由 `cfg.loss` 交给损失工厂选择；基础实验对应 `explainable_medical_coding/config/loss/bce.yaml`。不能只改一个名字相似的配置项，就认为损失已经改变。\n\n### 4.4 加载分支：用三份文件恢复模型\n\n- **输入** 旧实验的 `target_tokenizer.json`、`config.yaml`、`best_model.pt`。\n- **动作** 第 03 步先恢复 ICD 列顺序。这里按旧 `config.yaml` 搭出模型，再将 `best_model.pt` 里的权重装进去，并读取旧阈值。\n- **产物** 带旧权重的模型和旧 `decision_boundary`，模型暂时处于 `eval` 模式。\n- **源码** `train_plm.py`（训练入口加载分支） · `explainable_medical_coding/utils/loaders.py`（恢复模型权重）\n\n- **代码位置** `explainable_medical_coding/utils/loaders.py`，`load_trained_model()`，常规权重加载分支的节选。\n\n```python\n# explainable_medical_coding/utils/loaders.py：省略兼容 torch.compile 的部分\ncheckpoint = torch.load(experiment_path / \"best_model.pt\", map_location=device)\nnum_classes = checkpoint[\"num_classes\"]\nmodel = factories.get_model(\n    config.model, {\"num_classes\": num_classes, \"pad_token_id\": pad_token_id}\n)\nmodel.load_state_dict(checkpoint[\"model\"])\nmodel.eval()\n```\n\n- **读法** 先按旧配置搭出结构，再把保存的参数填进去。target_tokenizer.json 决定输出各列的含义，config.yaml 决定结构和设置，best_model.pt 放训练存档。这里读取模型权重后，主入口仍会新建优化器，所以不能直接等同于完整恢复中断前的训练状态。\n> **补充解释** checkpoint 像训练存档。`load_model` 用旧权重作为新训练的起点，本次优化器与训练轮数由后面重新创建。严格续跑还涉及原来的优化器、轮数、学习率调度等状态。\n\n### 4.5 把模型移到指定设备\n\n- **输入** 新建或恢复的 `model`，以及第 01 步得到的 `device`。\n- **动作** 调用 `model.to(device)`，迁移模型参数和缓冲区。\n- **产物** 设备上的模型。后续每个训练批次也会移到同一设备。\n- **源码** `train_plm.py`（移动模型）\n\n- **代码位置** `train_plm.py`，`main()`，第 4 部分末尾的 `model.to(device)`。\n\n```python\nmodel.to(device)\n```\n\n- **读法** 把模型参数放到指定设备，不会在这里训练。以后 batch 也需要移到相同设备。model(...) 会调用 PyTorch 模块的 forward()，它才是一次前向计算；forward 之后仍要算损失和更新参数，才能构成一次训练更新。\n> **补充解释** 将来调用 `logits = model(input_ids, attention_masks)` 才会生产分数。模型输入走病历正文这条路，真实 0/1 标签稍后交给损失函数。\n\n## 05 可选：生成教师分数\n\n**起点** `cfg.distillation`、模型和分好词的病历数据。\n\n**交接** 基础实验直接进入 06。蒸馏实验会额外给每条病历添加 `teacher_logits`。\n\n**流程**\n\n1. 基础实验的 `distillation=false`，直接到第 06 步。开启蒸馏时，先找到第 04 步加载的旧模型。\n2. 把病历发给旧模型做一遍预测。比如旧模型为病历甲打出 `[2.0, -3.0, 1.0]`。\n3. 把这组分数存成 `teacher_logits`。之后同一个模型在训练中继续更新，之前保存的那组三个分数留作参考。\n\n### 5.1 检查蒸馏是否开启\n\n- **输入** `cfg.distillation` 和旧实验目录。\n- **动作** 为 `false` 时跳到 06。为 `true` 时要求已有模型目录，为空则报错。\n- **产物** 普通训练继续使用原数据；蒸馏分支继续使用第 04 步加载的旧模型。\n- **源码** `train_plm.py`（蒸馏条件） · `explainable_medical_coding/config/config.yaml`（基础默认值）\n\n- **代码位置** `train_plm.py`，`main()`，第 5 部分的 `if cfg.distillation:`。\n\n```python\nif cfg.distillation:\n    if model_path is None:\n        raise ValueError(\"Distillation requires a pre-trained model\")\n```\n\n- **读法** 蒸馏使用已有模型的预测作为额外参考。基础实验 distillation=false，整段跳过。开启开关只会进入生成教师输出的分支，具体训练损失是否利用这些输出，还取决于选择的损失函数。\n> **补充解释** 教师就是这次更新之前的模型。先把它的输出存下来，就可以用同一个模型对象继续训练学生。\n\n### 5.2 排序并切到推理模式\n\n- **输入** 各份数据的 `length` 和旧模型。\n- **动作** 按长度排序并执行 `model.eval()`，关闭 dropout 等训练态行为。\n- **产物** 长度相近的病历相邻，模型准备做固定教师预测。\n- **源码** `train_plm.py`（排序和模式切换）\n\n- **代码位置** `train_plm.py`，`main()`，蒸馏分支中的排序与 `model.eval()`。\n\n```python\ndataset = dataset.sort(\"length\")\nmodel.eval()\n```\n\n- **读法** 排序让长短接近的病历更可能排在一起，减少补齐。eval() 把模型切到评估行为，例如停用 dropout；它本身不等于禁止梯度。这里的批量预测函数另外用 no_grad 禁止计算梯度。\n> **补充解释** 同批病历长度接近，补齐的 token 一般更少。`eval()` 管模型行为，预测函数的 `no_grad()` 管梯度计算。\n\n### 5.3 逐批前向得到原始 ICD 分数\n\n- **输入** `map()` 中每次最多 64 条病历的 `input_ids`、补齐 ID 和旧模型。\n- **动作** `predict()` 补齐输入，在 `no_grad()` 下运行前向。`return_logits=True` 选择 sigmoid 前的分数。\n- **产物** 每条病历一组固定的教师分数，例如 `[2.0, -3.0, 1.0]`。\n- **源码** `train_plm.py`（生成教师分数） · `explainable_medical_coding/utils/analysis.py`（预测函数）\n\n- **代码位置** `train_plm.py`，`main()`，蒸馏分支中传给 `dataset.map()` 的预测调用；被调用函数定义在 `explainable_medical_coding/utils/analysis.py` 的 `predict()`。\n\n```python\n# train_plm.py 中传给 map 的预测部分\npredict(\n    model, x[\"input_ids\"], device=device,\n    return_logits=True, pad_id=text_tokenizer.pad_token_id,\n)\n```\n\n- **读法** return_logits=True 要的是未经过 sigmoid 的原始分数，例如 [2.0, -3.0, 1.0]。predict() 内部做批量前向，没有在这一步执行 optimizer.step()。这里保存的分数是训练继续之前的模型输出。\n> **补充解释** 当前 `predict()` 自己构造全 1 的注意力掩码。第 06 步训练 DataLoader 则会把它补齐的位置标为 0。这里的 64 也独立于训练 batch 大小。\n\n### 5.4 写回预测，再切回训练模式\n\n- **输入** 教师分数和还未更新的模型。\n- **动作** 把预测存入数据集的 `teacher_logits` 列，执行 `model.train()`。组批时会把该列放进 `Batch`。\n- **产物** 训练时可以读取教师分数和原始标签。使用遮挡蒸馏损失时，先对教师 logits 做 sigmoid，再与学生概率比较。\n- **源码** `train_plm.py`（保存后切回训练） · `explainable_medical_coding/utils/loss_functions.py`（读取教师分数）\n\n- **代码位置** `train_plm.py`，`main()`，蒸馏分支中写入 `teacher_logits` 的回调和末尾的 `model.train()`。\n\n```python\n# map 回调返回这个新字段，预测结果写入数据集\n# {\"teacher_logits\": predict(...)}\nmodel.train()\n```\n\n- **读法** map 返回的字典给每条记录加 teacher_logits。存好后，同一个模型对象切回训练模式并继续更新；保存在数据里的旧分数保持不变。train() 只是切模式，真正更新还在第 8 步。\n> **补充解释** 真实标签 `[1, 0, 1]` 只标记有无。教师概率例如 `[0.88, 0.05, 0.73]`，还表达了旧模型对各类打分的高低。\n\n## 06 准备数据批次、损失和指标\n\n**起点** 已整理的 dataset、两个词表、模型和 `cfg.loss`、`cfg.dataloader`、`cfg.metrics`。\n\n**交接** 可以取 `Batch` 的 `dataloaders`、可调用的 `loss_function`，以及各 split 的指标统计对象。\n\n**流程**\n\n1. 按 `cfg.loss` 选好二元交叉熵。以后每次取到一批病历，就用它对照模型打分和答案。\n2. DataLoader 取出病历甲和乙。假设甲的编号是 `[41, 98]`、乙是 `[52, 73, 89]`，就把甲补成 `[41, 98, 1]`，掩码是 `[1, 1, 0]`。末尾的 `1` 是这里假设的补齐 ID。\n3. 甲的标签编号 `[0, 2]` 填成 `[1, 0, 1]`，乙的 `[1]` 填成 `[0, 1, 0]`。叠起来就是 `targets = [[1, 0, 1], [0, 1, 0]]`，形状是 `2 条病历 × 3 个 ICD`。\n4. 把正文编号、掩码和答案一起装进 `Batch`。F1 等指标也在这里准备好，等后面用预测和答案来统计。\n\n### 6.1 按配置选损失函数\n\n- **输入** `cfg.loss.name` 和该损失函数的参数。基础版从 `explainable_medical_coding/config/loss/bce.yaml` 得到 `binary_cross_entropy_loss`。\n- **动作** 工厂按名字找到函数，用 `partial()` 绑定配置参数。\n- **产物** 可调用的 `loss_function`，第 08 步才用具体的 batch 算损失。\n- **源码** `train_plm.py`（选择损失） · `explainable_medical_coding/config/loss/bce.yaml`（BCE 配置） · `explainable_medical_coding/config/factories.py`（损失工厂）\n\n- **代码位置** `train_plm.py`，`main()`，第 6 部分的损失工厂调用；注释中的损失名称来自 `explainable_medical_coding/config/loss/bce.yaml`。\n\n```python\nloss_function = factories.get_loss_function(config=cfg.loss)\n# explainable_medical_coding/config/loss/bce.yaml 中：\n# name: binary_cross_entropy_loss\n```\n\n- **读法** 这一步取出一个以后可调用的损失函数，还没有计算某批数据的 loss。阅读这个仓库要注意：binary_cross_entropy_loss() 内部会先调用 model(...) 做预测，再算损失，所以训练器里不一定直接出现 logits=model(...) 这一行。\n> **补充解释** 基础训练的损失由顶层 `cfg.loss` 选择。模型 YAML 里同名的 `loss`、`lambda_1` 落进 `PLMICD` 的 `**kwargs`。遮挡等实验实际使用的附加损失权重在 `cfg.loss.configs.lambda_1`。\n\n### 6.2 按数据划分创建 DataLoader\n\n- **输入** `train`、`validation`、`test`、每批病历上限和分桶配置。\n- **动作** 用 `BaseDataset` 包装各 split，并从 `train` 抽约 10% 供 `train_val` 评估。训练批大小取 `batch_size` 和 `max_batch_size` 中较小的值。\n- **产物** `dataloaders['train']`、`['train_val']`、`['validation']`、`['test']`。\n- **源码** `explainable_medical_coding/config/factories.py`（构造各 DataLoader） · `explainable_medical_coding/data/batch_sampler.py`（按长度分桶）\n\n- **代码位置** `explainable_medical_coding/config/factories.py`，`get_dataloaders()`，未启用长度分桶时的分支节选。\n\n```python\n# explainable_medical_coding/config/factories.py：没有长度分桶时的 DataLoader 分支\ntrain_batch_size = min(config.batch_size, config.max_batch_size)\ndataloaders[\"train\"] = torch.utils.data.DataLoader(\n    datasets_dict[\"train\"], shuffle=True,\n    batch_size=train_batch_size, drop_last=config.drop_last,\n    collate_fn=datasets_dict[\"train\"].collate_fn,\n    num_workers=config.num_workers, pin_memory=config.pin_memory,\n)\n```\n\n- **读法** Dataset 保存记录；DataLoader 决定一次拿多少条、如何排列；collate_fn 把选中的记录拼成能计算的一批。基础实验还开启了按长度分桶，对应同文件的另一个分支。train_val 是抽出的训练样本观察集，不能替代独立 validation。\n> **补充解释** `train_val` 的样本仍在原训练集，它用来观察训练数据上的表现。独立验证走 `validation`。训练分桶倾向把长度接近的病历放在一批。\n\n### 6.3 取一批时补齐正文和掩码\n\n- **输入** 某个 DataLoader 选中的记录，病历 token 长度可以不同。\n- **动作** `collate_fn()` 把 `input_ids` 补到这批中最长的长度，文本位置用对应的 pad ID；`attention_masks` 在补齐位置用 0。\n- **产物** 两个形状为 `[B, T]` 的张量。`B` 是这批病历数，`T` 是这批补齐后的 token 长度。\n- **源码** `explainable_medical_coding/data/dataloader.py`（组批与补齐）\n\n- **代码位置** `explainable_medical_coding/data/dataloader.py`，`BaseDataset.collate_fn()`，两处补齐语句。\n\n```python\n# BaseDataset.collate_fn() 中的关键两行\ninput_ids = self.pad(sequence=batch[\"input_ids\"], pad_id=self.pad_token_id)\nattention_masks = self.pad(sequence=batch[\"attention_mask\"], pad_id=0)\n```\n\n- **读法** 例如两条正文分别长 2 和 3，就把短的补到 3。补齐 ID 假设为 1：正文 [41,98] 变成 [41,98,1]，对应掩码是 [1,1,0]。正文里的数字 1 是词表编号；掩码里的 1 表示有效位置，两种 1 的含义不同。\n> **补充解释** 假设补齐 ID 是 1，较短的一条可以从 `[0, 124, 2]` 变成 `[0, 124, 2, 1]`，掩码变为 `[1, 1, 1, 0]`。\n\n### 6.4 按 ICD 类别表展开每条标签\n\n- **输入** 例如两条病历的 `target_ids` 是 `[0, 2]` 和 `[1]`，全局共有 3 类。\n- **动作** 为每条病历建长度 `C` 的向量，将编号出现的位置设为 1，再把这些向量叠起来。\n- **产物** `Batch.targets = [[1, 0, 1], [0, 1, 0]]`，形状 `[B, C]`。正文张量和可选教师分数也随 `Batch` 返回。\n- **源码** `explainable_medical_coding/data/dataloader.py`（展开并组装 Batch） · `explainable_medical_coding/utils/tokenizer.py`（生成 0/1 标签）\n\n- **代码位置** `explainable_medical_coding/data/dataloader.py`，`BaseDataset.collate_fn()`，非自回归标签分支。\n\n```python\n# BaseDataset.collate_fn() 的非自回归分支\ntargets = self.target_tokenizer.torch_one_hot_encoder(target_ids_list)\n\n```\n\n- **代码位置** `explainable_medical_coding/utils/tokenizer.py`，`TargetTokenizer.torch_one_hot_encoder()`。\n\n```python\n# TargetTokenizer.torch_one_hot_encoder() 内部\ntarget_ids = [\n    torch.nn.functional.one_hot(target_id, num_classes=len(self)).sum(0).bool()\n    for target_id in target_ids\n]\nreturn torch.vstack(target_ids).float()\n```\n\n- **读法** 以 [0,2]、总共 3 类为例：one_hot 先给出 [[1,0,0],[0,0,1]]，sum(0) 合并成 [1,0,1]，bool 把重复命中归为有或无。vstack 把多份病历叠成多行，float 转成损失函数使用的小数类型。函数名写 one_hot，最终每条病历可有多个 1，通常称 multi-hot。\n> **补充解释** 每份病历有自己的 0/1 向量，同一次实验里所有病历共用列顺序。同一列在 `logits` 和 `targets` 里代表同一个 ICD。\n\n### 6.5 创建评估指标对象\n\n- **输入** `cfg.metrics`、全局类别数，以及各 split 的 `split2code_indices`。\n- **动作** 给每个 split 独立创建 F1、精确率、召回率、mAP 等统计对象。部分指标按相应类别列统计。\n- **产物** `metric_collections`，训练或验证时逐批喂入概率与真实值。\n- **源码** `explainable_medical_coding/config/factories.py`（指标工厂） · `explainable_medical_coding/config/metrics/defaults.yaml`（默认指标）\n\n- **代码位置** `train_plm.py`，`main()`，第 6 部分的 `factories.get_metric_collections(...)`。\n\n```python\nmetric_collections = factories.get_metric_collections(\n    config=cfg.metrics,\n    number_of_classes=lookups.data_info[\"num_classes\"],\n    split2code_indices=lookups.split2code_indices,\n    autoregressive=cfg.model.autoregressive,\n)\n```\n\n- **读法** 每份数据分别准备统计对象，避免训练集和验证集的结果混在一起。精确率看选中的代码有多少选对，召回率看应该选中的有多少找到了，F1 综合两者；mAP 还考察模型是否把正确类别排在更前面。它们用于评估，参数更新用的是 loss。\n> **补充解释** 损失用来计算参数梯度。F1、mAP 等用来观察预测质量，其中基础实验以验证集 mAP 选择最佳模型。\n\n## 07 准备优化器与更新规则\n\n**起点** 模型参数、DataLoader 报告的批次数、训练轮数和相关 YAML。\n\n**交接** `optimizer`、梯度累积次数、`lr_scheduler` 和 `callbacks`。\n\n**流程**\n\n1. 把模型参数交给 AdamW，告诉它初始配置里的学习率是 `5e-5`。\n2. 如果显存一次只能放 8 条，而你想用 16 条算一次更新，就先跑第一批 8 条算梯度，再跑第二批 8 条把梯度累加起来。\n3. 每两小批更新一次。假设一轮有 5 小批，就在第 2、4、5 批之后分别尝试更新，预计一轮 3 次，3 轮就是 9 次。\n4. 按预计更新次数安排学习率。再把记录日志、保存最佳模型、早停这些动作交给回调。\n\n### 7.1 创建优化器\n\n- **输入** `cfg.optimizer` 与 `model.parameters()`。基础实验使用 AdamW，配置学习率为 `5e-5`。\n- **动作** 按名字创建优化器，把要更新的参数和学习率交给它。启用权重衰减时，工厂会给某些 bias、LayerNorm 参数单独分组。\n- **产物** 可在训练时根据 `.grad` 更新参数的 `optimizer`。\n- **源码** `explainable_medical_coding/config/factories.py`（优化器工厂） · `explainable_medical_coding/config/experiment/mdace_icd9_code/plm_icd.yaml`（基础实验学习率）\n\n- **代码位置** `train_plm.py`，`main()`，第 7 部分的优化器调用；注释说明对应 `explainable_medical_coding/config/factories.py` 的 `get_optimizer()` 和基础实验 YAML。\n\n```python\noptimizer = factories.get_optimizer(config=cfg.optimizer, model=model)\n# weight_decay 为 0 时，工厂把 model.parameters() 直接交给优化器\n# 基础实验最终选择 AdamW，lr=5e-5\n```\n\n- **读法** model.parameters() 给出需要学习的参数集合，包含编码器和分类头中的参数。创建 AdamW 相当于准备好更新规则。backward() 把梯度写进参数的 .grad，优化器之后读取它来修改参数。学习率 5e-5 就是 0.00005。\n> **补充解释** `backward()` 算的是参数梯度，优化器负责实际修改参数。SGD 的简化更新是 `新参数 = 旧参数 - 学习率 × 梯度`，这个项目用 AdamW 实现更新。\n\n### 7.2 计算攒几批梯度才更新一次\n\n- **输入** 目标 `batch_size` 和单批上限 `max_batch_size`。\n- **动作** 用 `int(max(batch_size / max_batch_size, 1))` 得到 `accumulate_grad_batches`。\n- **产物** 更新间隔。目标 16、单批最多 8 时是 2 个小 batch；基础实验 16 和 16 得到 1。\n- **源码** `train_plm.py`（计算累积次数）\n\n- **代码位置** `train_plm.py`，`main()`，第 7 部分的 `accumulate_grad_batches` 计算。\n\n```python\naccumulate_grad_batches = int(\n    max(cfg.dataloader.batch_size / cfg.dataloader.max_batch_size, 1)\n)\n```\n\n- **读法** 目标 16、一次最多 8，结果为 2：先用两批各算一次梯度，攒到一起再更新。基础实验是 16/16=1，每批通常更新一次。此公式向下取整，所以 20/8 也得到 2，不能直接说任何目标批大小都能被精确实现。\n> **补充解释** 两个小批都做 `backward()` 后，梯度才交给优化器更新一次。当前实现使用 `int` 向下取整，例如 20 除以 8 得到的间隔也是 2。\n\n### 7.3 估算整个实验有多少次更新\n\n- **输入** `len(dataloaders['train'])`、累积次数和 `cfg.trainer.epochs`。\n- **动作** 每轮预计更新 `ceil(批次数 / 累积次数)`，再乘计划轮数。\n- **产物** `num_training_steps`。每轮 5 批、每 2 批更新、共 3 轮时，估计为 `3 × 3 = 9` 步。\n- **源码** `train_plm.py`（计算更新步数） · `explainable_medical_coding/data/batch_sampler.py`（分桶采样器报告长度）\n\n- **代码位置** `train_plm.py`，`main()`，第 7 部分的 `num_training_steps` 计算。\n\n```python\nnum_training_steps = (\n    math.ceil(len(dataloaders[\"train\"]) / accumulate_grad_batches)\n    * cfg.trainer.epochs\n)\n```\n\n- **读法** len(DataLoader) 是它报告的一轮批次数，ceil 向上取整。比如一轮 5 批、每 2 批更新，计划 3 次更新；跑 3 轮就是 9 次。这里主要供学习率计划使用，长度分桶时报告批数与实际产出可能有差别。\n> **补充解释** `batch` 是一次处理的数据量，`step` 在这里指一次计划中的参数更新，`epoch` 是过一遍训练集。分桶时批次数是 DataLoader 报告的估计。\n\n### 7.4 建立学习率变化计划\n\n- **输入** 优化器、计划更新数和 `cfg.lr_scheduler`。\n- **动作** 工厂把配置里的热身比例换成计划步数，创建调度器。基础实验前约 10% 更新步热身，之后线性降低学习率。\n- **产物** `lr_scheduler`，在训练循环的更新时机推进学习率。\n- **源码** `explainable_medical_coding/config/factories.py`（学习率调度工厂） · `explainable_medical_coding/config/lr_scheduler/warmup_linear_decay.yaml`（线性热身配置）\n\n- **代码位置** `train_plm.py`，`main()`，第 7 部分的 `factories.get_lr_scheduler(...)`。\n\n```python\nlr_scheduler = factories.get_lr_scheduler(\n    config=cfg.lr_scheduler, optimizer=optimizer,\n    num_training_steps=num_training_steps,\n)\n```\n\n- **读法** 基础实验用线性热身和衰减：前一小段逐渐提高学习率，后面再降低。调度器决定每次更新用多大的学习率；优化器使用当时的学习率修改参数。创建调度器也没有在这里更新模型。\n> **补充解释** 优化器根据梯度改参数，调度器控制之后的更新用多大的学习率。\n\n### 7.5 准备日志、保存与早停回调\n\n- **输入** `cfg.callbacks` 中的回调名称及其配置。\n- **动作** 按名称创建日志、保存最佳模型和早停对象，交给 Trainer 在相应事件触发时调用。\n- **产物** 回调列表。基础实验的保存和早停配置都监控验证集 mAP。\n- **源码** `explainable_medical_coding/config/factories.py`（创建回调） · `explainable_medical_coding/config/callbacks/mean_average_precision.yaml`（基础实验回调）\n\n- **代码位置** `train_plm.py`，`main()`，第 7 部分的 `factories.get_callbacks(...)`。\n\n```python\ncallbacks = factories.get_callbacks(config=cfg.callbacks)\n```\n\n- **读法** 回调是预先登记的动作，例如每轮结束检查验证指标、进步时保存模型、长期没进步时停止。去 explainable_medical_coding/trainer/callbacks.py 看具体实现。debug 控制日志相关行为，不能当成少跑数据的开关。\n> **补充解释** `debug=true` 在这个项目里控制 W&B 相关行为。训练跑多少数据、多少轮，要另看 DataLoader 和 Trainer 的配置。\n\n## 08 训练、验证、保存与测试\n\n**起点** 可运行模型、批次、损失、梯度更新规则、指标与回调。\n\n**交接** 训练产物、最终验证和测试结果。需要解释时可以复用保存的模型。\n\n**流程**\n\n1. `trainer.fit()` 开始。先取一批病历，拿到正文的 `input_ids` 和 ICD 答案 `targets`。病历甲的正文用 `[41, 98]` 示意，答案是 `[1, 0, 1]`。\n2. **编号查向量。** 假设向量表第 41 行是 `[0.12, -0.30]`，第 98 行是 `[-0.24, 0.41]`。输入 `[41, 98]` 就按顺序拿出这两行，得到 `[[0.12, -0.30], [-0.24, 0.41]]`。这里每个 token 用两个数字示意，真实向量有更多数字。\n3. **看上下文。** RoBERTa 读同一块里的 token，再加工每一行向量。例如 `fever` 和 `no fever` 即使查到同一个 `fever` 编号，编码后的向量也会受周围文字影响。\n4. **给 ICD 打分。** 分类头用这些向量算出病历甲的三个分数，例如 `[2.0, -3.0, 1.0]`。三列依次是 `250.00`、`272.4`、`39.61`。\n5. **和答案对列。** 分数 `[2.0, -3.0, 1.0]` 对上 `[1, 0, 1]`，损失函数算出一个 `loss`。第 1 列答案是 0，这一类就应该给低分。\n6. **先算怎么改，再真的改。** `backward()` 算出梯度。打个只有一个参数的例子，`w=0`、梯度 `-1`、学习率 `0.1`，用 SGD 手算是 `0 - 0.1 × (-1) = 0.1`。仓库用 AdamW，真正修改参数的是优化器那一步。\n7. **跑完这轮再看验证。** 一轮结束后用 `validation` 看表现，根据配置保存最佳模型。训练结束加载最佳权重，再评估 `test`。\n\n### 8.1 组装 Trainer，调用 `fit()`\n\n- **输入** 配置、模型、DataLoader、损失函数、优化器、调度器、回调和 Lookups。\n- **动作** 根据 `cfg.trainer.name` 找到训练器类，构造后设置设备，调用 `trainer.fit()`。训练开始时保存配置和 ICD 编号表。\n- **产物** 训练循环开始，训练器进入第一轮的 `train_one_epoch()`。\n- **源码** `train_plm.py`（构造并运行 Trainer） · `explainable_medical_coding/trainer/trainer.py`（fit）\n\n- **代码位置** `train_plm.py`，`main()`，末尾的训练入口。\n\n```python\n# train_plm.py：组件组装完成后的训练入口\ntrainer.fit()\n\n```\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.fit()`，每轮训练与验证的节选。\n\n```python\n# Trainer.fit() 中，每轮的主线节选\nself.train_one_epoch(self.epoch)\nif self.validate_on_training_data:\n    self.train_val(self.epoch, \"train_val\")\nself.val(self.epoch, \"validation\")\n```\n\n- **读法** fit() 安排整个实验：保存配置，逐轮训练和验证，触发回调，结束后最终评估。在主脚本创建模型、优化器都属于准备；走进训练循环并执行更新步骤，参数才开始改变。\n> **补充解释** 从主脚本跟源码时，`trainer.fit()` 是从准备组件进入正式训练的位置。真正更新某一次参数发生在后面的优化器 step。\n\n### 8.2 取一批病历，把输入和答案备齐\n\n- **输入** `dataloaders['train']` 中的下一批记录。\n- **动作** DataLoader 调用 6.3、6.4 的组批逻辑，`batch.to(self.device)` 将需要的张量移动到模型所用设备。\n- **产物** `input_ids` 和 `attention_masks` 形状 `[B, T]`，真实标签 `targets` 形状 `[B, C]`。\n- **源码** `explainable_medical_coding/trainer/trainer.py`（训练循环取 batch）\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.train_one_epoch()`，批次迁移与损失函数调用。\n\n```python\n# Trainer.train_one_epoch() 中，省略进度条和其他部分\nbatch = batch.to(self.device)\ny_probs, targets, loss = self.loss_function(\n    batch, model=self.model,\n    scale=self.gradient_scaler.get_scale(), epoch=epoch,\n)\n```\n\n- **读法** batch.input_ids 是正文编号，batch.attention_masks 标记有效位置，batch.targets 是 ICD 的 01 答案。这里调用损失函数，由它在内部调用模型。假设一批 2 条病历、最长 3 token、共 3 类，那么输入是 [2,3]，答案也是 [2,3]，但两张表每一列的含义完全不同。\n> **补充解释** 断点可以放在 `batch.to(self.device)` 后，先看 `input_ids[0]`、`attention_masks[0]` 和 `targets[0]`，确认看的是同一份病历。\n\n### 8.3 模型前向：编号查向量并编码文本\n\n- **输入** `model(input_ids, attention_masks)`，基础版走常规编码路径。\n- **动作** 将长序列切成 128-token 块。RoBERTa 的 embedding 层按整数 ID 查浮点向量，编码器融合块内上下文，再把各块的向量拼回同一份病历。\n- **产物** token 表示 `[B, T′, H]`，其中 `T′` 是切块补齐后的长度，`H` 是隐藏维数。\n- **源码** `explainable_medical_coding/models/models.py`（前向入口） · `explainable_medical_coding/models/models.py`（切块编码）\n\n- **代码位置** `explainable_medical_coding/models/models.py`，`PLMICD.encoder()`，切块、编码与形状还原的节选。\n\n```python\n# PLMICD.encoder()：节选，省略切块掩码处理\ninput_ids = self.split_input_into_chunks(input_ids, self.pad_token_id)\nif attention_masks is not None:\n    attention_masks = self.get_chunked_attention_masks(attention_masks)\nbatch_size, num_chunks, chunk_size = input_ids.size()\noutputs = self.roberta_encoder(\n    input_ids=input_ids.view(-1, chunk_size),\n    attention_mask=attention_masks.view(-1, chunk_size)\n        if attention_masks is not None else None,\n    return_dict=False,\n)\nreturn outputs[0].view(batch_size, num_chunks * chunk_size, -1)\n```\n\n- **读法** 先把每份病历切成块，再用 view 暂时把所有块排成一批交给 RoBERTa，最后按原病历拼回。RoBERTa 内部先查 token 向量表，再叠加位置等信息并用 Transformer 加工。假设两份病历各补到 3 块，每块 128 token，向量有 H 个数，流程就是 [2,3,128]→[6,128]→[6,128,H]→[2,384,H]。源码补齐公式在长度正好整除时还会多补一整块，读 shape 时要留意。\n> **补充解释** `input_ids` 类似 `[124, 38, 912]` 这串整数。查 embedding 后，每个整数位置才对应一组浮点数。随后同一个 token 会根据块内上下文获得不同的表示。\n\n### 8.4 模型前向：给各个 ICD 代码打分\n\n- **输入** 拼回的 token 向量、有效位置掩码、每个 ICD 的可训练表示。\n- **动作** `LabelCrossAttention` 计算每个 ICD 对各 token 的相关分数，除以 `scale` 后做 softmax，对 token 向量加权汇总并输出该 ICD 的分数。\n- **产物** `logits` 形状 `[B, C]`。示例病历的输出可以是 `[2.0, -3.0, 1.0]`。\n- **源码** `explainable_medical_coding/models/modules/attention.py`（标签注意力）\n\n- **代码位置** `explainable_medical_coding/models/modules/attention.py`，`LabelCrossAttention.forward()`，省略掩码和归一化处理的节选。\n\n```python\n# LabelCrossAttention.forward()：省略 padding 掩码与归一化部分\nV = self.weights_v(x)\nK = self.weights_k(x)\nQ = self.label_representations\natt_weights = Q.matmul(K.transpose(1, 2))\nattention = torch.softmax(att_weights / self.scale, dim=2)\ny = attention @ V\n# 后面将每个 ICD 汇总出来的 y 转成一个分数\n```\n\n- **读法** 每个 ICD 有一组可训练的查询参数 Q，用它与各 token 的 K 比较，决定该类别更侧重哪些位置。softmax 在同一类别对应的 token 位置上分配总和为 1 的权重，@ 按权重汇总 V。比如 A 更侧重前半段、C 更侧重后半段，最后分别输出一个分数；这些关注方式也是训练学出来的。\n> **补充解释** 分类头里的 softmax 在 token 位置上分配权重。正数 `scale` 越小，权重越集中到高分 token 上。最终 logits 的 sigmoid 逐个 ICD 算概率，三项示例约为 `[0.88, 0.05, 0.73]`，多个 ICD 可以同时有高概率。\n\n### 8.5 让模型输出和答案汇合，计算损失\n\n- **输入** 模型的 `logits` 例如 `[2.0, -3.0, 1.0]`，`targets` 例如 `[1, 0, 1]`。\n- **动作** `binary_cross_entropy_with_logits(logits, targets)` 按同一列对照分数和答案，汇总成一个标量。\n- **产物** 用于反向传播的 `loss`，以及供评估使用的概率和真实标签。\n- **源码** `explainable_medical_coding/utils/loss_functions.py`（BCE 的输入与返回值）\n\n- **代码位置** `explainable_medical_coding/utils/loss_functions.py`，`binary_cross_entropy_loss()`。\n\n```python\n# binary_cross_entropy_loss() 中\nlogits = model(input_ids, attention_masks)\nloss = torch.nn.functional.binary_cross_entropy_with_logits(logits, targets)\nreturn torch.sigmoid(logits), targets, loss\n```\n\n- **读法** logits 是原始分数，可以小于 0 或大于 1；sigmoid 把各列分别变成 0 到 1 的预测概率。示例 [2,-3,1]→约 [0.88,0.05,0.73]，对照答案 [1,0,1]。BCEWithLogits 直接接收原始分数，内部处理所需计算；不要先 sigmoid 再把概率传给这个 API。标签是 1 希望对应分数升高，是 0 希望降低。\n> **补充解释** 分数和标签的索引 2 都指 C。标签是 1，就鼓励这一列的分数升高；标签是 0，就鼓励该分数降低。这个 BCE API 接收原始 logits。\n\n### 8.6 反向传播，得到参数梯度\n\n- **输入** 这一批的 `loss` 和本次配置的梯度累积间隔。\n- **动作** 先按累积间隔缩放损失，再调用 `.backward()`，沿计算图求损失对各训练参数的导数。\n- **产物** 参数的 `.grad`，可能含前几个小 batch 累积的梯度。\n- **源码** `explainable_medical_coding/trainer/trainer.py`（计算梯度）\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.train_one_epoch()`，损失缩放与反向传播。\n\n```python\nloss = loss / self.accumulate_grad_batches\nself.gradient_scaler.scale(loss).backward()\n```\n\n- **读法** 反向传播沿刚才的计算过程，算出损失对每个可训练参数的梯度，放进 .grad。它回答的是参数调大一点会让损失往哪边变。这里还没有修改参数值。gradient_scaler 是仓库为混合精度准备的工具；先把核心过程理解成 loss.backward() 即可。\n> **补充解释** 梯度回答「把这个参数调大一点，损失往哪个方向变」。例如 `w=0`、梯度 `-1`、SGD 学习率 `0.1`，实际更新时得到 `w=0.1`。训练使用的参数梯度在这里形成。`CODE_WALKTHROUGH.md`（可运行小例子）\n\n### 8.7 到更新时机才改参数\n\n- **输入** 已累积的梯度、优化器、调度器，以及当前 batch 序号。\n- **动作** 累积满或到 DataLoader 报告的轮末时，按配置裁剪梯度，调用 `gradient_scaler.step(optimizer)`，按调度器规则推进学习率，最后 `zero_grad()`。\n- **产物** 更新后的模型参数和下一次更新使用的梯度状态。\n- **源码** `explainable_medical_coding/trainer/trainer.py`（参数更新）\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.train_one_epoch()`，满足更新条件时执行的语句节选。\n\n```python\n# 达到累积次数，或到代码判断的轮末时，执行更新\nself.gradient_scaler.step(self.optimizer)\nself.gradient_scaler.update()\n# 若配置了调度器，按相应分支调用 self.lr_scheduler.step()\nself.optimizer.zero_grad()\n```\n\n- **读法** step(optimizer) 交给优化器执行参数更新；scaler 必要时会因非有限梯度跳过更新。调度器调整后续学习率，zero_grad() 清掉已用过的梯度，准备下一次累积。先算梯度、再改参数、再清梯度，这是训练时需要抓住的顺序。\n> **补充解释** 想亲眼验证哪一行改了参数，可以在 `backward()` 后观察同一个参数的 `.grad`，再在 `step()` 后观察该参数的值。\n\n### 8.8 每轮结束评估并检查保存、早停\n\n- **输入** 当前轮训练后的模型、可选的 `train_val` 和独立的 `validation`。\n- **动作** 计算各份数据的评估指标。按配置在 `validation` 上调阈值，基础实验的回调根据验证 mAP 判断保存最佳权重和早停。\n- **产物** 当前轮的指标、可能更新的 `best_model.pt`，以及继续训练或停止的状态。\n- **源码** `explainable_medical_coding/trainer/trainer.py`（每轮评估顺序） · `explainable_medical_coding/trainer/trainer.py`（阈值选择） · `explainable_medical_coding/trainer/callbacks.py`（保存最佳模型）\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.val()` 的装饰器、函数定义与模式设置；其余用注释概括。\n\n```python\n# Trainer.val() 使用以下两类设置\n@torch.no_grad()\ndef val(self, epoch, split_name=\"validation\", evaluating_best_model=False):\n    self.model.eval()\n    # 后面遍历该 split，算预测、损失和指标\n```\n\n- **读法** 验证仍然会运行模型并计算损失，但没有用于训练的 backward 和 optimizer.step。eval() 控制 dropout 等行为，no_grad() 让这段计算不记录梯度。看验证集能判断模型对没拿来更新参数的病历是否也有效。基础实验用验证 mAP 保存最佳模型，阈值另用于把概率转成选中或不选中。\n> **补充解释** 阈值把某个 ICD 的概率变成「选中或未选中」。比如示例概率按 0.5 阈值会选 A 和 C。训练损失用 logits，分类指标用概率及阈值。\n\n### 8.9 训练结束，复用最佳权重完成测试\n\n- **输入** 已完成的训练轮次与最佳 checkpoint。\n- **动作** 基础实验的回调恢复最佳 checkpoint。之后对 `validation` 和 `test` 做最终评估。\n- **产物** 最终验证与测试结果，以及可供后续加载的 `config.yaml`、`target_tokenizer.json`、`best_model.pt`。\n- **源码** `explainable_medical_coding/trainer/trainer.py`（最终评估） · `explainable_medical_coding/trainer/trainer.py`（写入训练产物）\n\n- **代码位置** `explainable_medical_coding/trainer/trainer.py`，`Trainer.save_checkpoint()`。\n\n```python\n# Trainer.save_checkpoint() 保存内容的节选\ncheckpoint = {\n    \"model\": self.model.state_dict(),\n    \"optimizer\": self.optimizer.state_dict(),\n    \"scaler\": self.gradient_scaler.state_dict(),\n    \"epoch\": self.epoch,\n    \"db\": self.best_db,\n    \"num_classes\": self.lookups.data_info[\"num_classes\"],\n}\ntorch.save(checkpoint, self.experiment_path / file_name)\n```\n\n- **读法** state_dict() 是参数和状态的字典。这个存档里确实还保存了优化器等状态，但 main() 的 load_model 分支只用 load_trained_model() 恢复模型和阈值，并没有自动恢复全部训练进度。训练结束的回调会先加载最佳 checkpoint，再最终评估 validation、test。\n> **补充解释** 最佳权重对应验证指标表现最好的轮次。以旧权重开始新训练时，`load_model` 读取的就是保存好的 checkpoint。\n"</script>
+<script>
+  "use strict";
+
+  let lines = JSON.parse(document.getElementById("flow-source").textContent).split("\n");
+  const sourceBase = document.documentElement.dataset.sourceBase || document.baseURI;
+  const byId = id => document.getElementById(id);
+  const stepFields = {"输入": "input", "动作": "action", "产物": "output", "源码": "source", "读法": "reading", "代码位置": "codeLocation"};
+  const editingLabel = "在展开的节点里修改文字，再保存 HTML 或导出 Markdown。";
+
+  function parseLines(sourceLines) {
+    const data = {intro: [], stages: []};
+    let stage, step, codeBlock;
+    let readingIntro = true;
+    for (const [index, line] of sourceLines.entries()) {
+      const entry = prefix => ({index, prefix, value: line.slice(prefix.length)});
+      if (codeBlock) {
+        if (/^```\s*$/u.test(line)) codeBlock = undefined;
+        else codeBlock.lines.push(line);
+        continue;
+      }
+      if (step && /^```/u.test(line)) {
+        codeBlock = {language: line.slice(3).trim(), lines: [], location: step.codeLocation};
+        step.codeBlocks.push(codeBlock);
+        continue;
+      }
+      const stageHeading = /^## (\d{2}|附录) /u.exec(line);
+      const stepHeading = /^### ((?:\d+|[A-Z])\.\d+) /u.exec(line);
+      const stepField = /^- \*\*(输入|动作|产物|源码|读法|代码位置)\*\* /u.exec(line);
+      const walkItem = /^(\d+\. )/u.exec(line);
+      if (line.startsWith("# ")) {
+        data.title = entry("# ");
+      } else if (stageHeading) {
+        stage = {id: stageHeading[1], title: entry(stageHeading[0]), steps: [], walk: [], table: []};
+        step = undefined;
+        data.stages.push(stage);
+      } else if (stepHeading) {
+        step = {id: stepHeading[1], title: entry(stepHeading[0]), notes: [], codeBlocks: []};
+        stage.steps.push(step);
+      } else if (stage && line.startsWith("**起点** ")) {
+        stage.input = entry("**起点** ");
+      } else if (stage && line.startsWith("**交接** ")) {
+        stage.output = entry("**交接** ");
+      } else if (stage && !step && walkItem) {
+        stage.walk.push(entry(walkItem[1]));
+      } else if (stage && !step && /^\|.*\|\s*$/u.test(line)) {
+        const cells = line.trim().slice(1, -1).split("|").map(cell => cell.trim());
+        if (!cells.every(cell => /^:?-+:?$/u.test(cell))) stage.table.push(cells);
+      } else if (stepField) {
+        step[stepFields[stepField[1]]] = entry(stepField[0]);
+      } else if (step && line.startsWith("> **补充解释** ")) {
+        step.notes.push(entry("> **补充解释** "));
+      } else if (line === "## 主线") {
+        readingIntro = false;
+      } else if (readingIntro && line.trim()) {
+        data.intro.push(line);
+      }
+    }
+    return data;
+  }
+
+  function validateDocument(data) {
+    if (!data.title || !data.stages.some(stage => stage.id !== "附录")) {
+      throw new Error("需要保留文档标题和形如「## 01 阶段名」的标题。");
+    }
+    const ids = new Set();
+    for (const stage of data.stages) {
+      if (ids.has(stage.id) || !stage.input || !stage.output || !stage.steps.length) {
+        throw new Error(`阶段 ${stage.id} 需要独立编号、起点、交接和细步骤。`);
+      }
+      ids.add(stage.id);
+      for (const step of stage.steps) {
+        if (ids.has(step.id) || !step.input || !step.action || !step.output || !step.source) {
+          throw new Error(`细步骤 ${step.id} 需要独立编号和输入、动作、产物、源码四项。`);
+        }
+        ids.add(step.id);
+      }
+    }
+  }
+
+  function element(tag, className, label) {
+    const result = document.createElement(tag);
+    if (className) result.className = className;
+    if (label) result.textContent = label;
+    return result;
+  }
+
+  function formatInline(container, text) {
+    container.replaceChildren();
+    const markup = /`([^`]+)`|\*\*([^*]+)\*\*|\[([^\]\n]+)\]\(([^)\s]+)\)/gu;
+    let position = 0;
+    for (const match of text.matchAll(markup)) {
+      container.append(text.slice(position, match.index));
+      if (match[1]) container.append(element("code", null, match[1]));
+      else if (match[2]) container.append(element("strong", null, match[2]));
+      else if (/^https?:\/\//u.test(match[4]) || /^[a-zA-Z0-9_.\/-]+(?:#L\d+)?$/u.test(match[4]) && !match[4].startsWith("//")) {
+        const link = element("a", null, match[3]);
+        link.href = new URL(match[4], sourceBase).href;
+        link.title = match[4];
+        container.append(link);
+      } else container.append(match[0]);
+      position = match.index + match[0].length;
+    }
+    container.append(text.slice(position));
+  }
+
+  function editor(entry, label, update, rows = 2) {
+    const field = element("textarea", "edit-only");
+    field.value = entry.value;
+    field.rows = rows;
+    field.setAttribute("aria-label", label);
+    field.addEventListener("input", () => {
+      entry.value = field.value.replace(/\r?\n/gu, " ");
+      lines[entry.index] = entry.prefix + entry.value;
+      update(entry.value);
+    });
+    return field;
+  }
+
+  function editableText(entry, label) {
+    const text = element("div", "editable");
+    const view = element("span", "text-view");
+    formatInline(view, entry.value);
+    text.append(view, editor(entry, label, value => formatInline(view, value)));
+    return text;
+  }
+
+  function editTitle(entry, id, update) {
+    const group = element("div", "edit-only edit-title");
+    const label = element("label", null, "节点标题");
+    const field = editor(entry, "节点标题", update, 1);
+    field.id = `edit-${id}`;
+    label.htmlFor = field.id;
+    group.append(label, field);
+    return group;
+  }
+
+  function arrow(text) {
+    const mark = element("span", "map-arrow", text);
+    mark.setAttribute("aria-hidden", "true");
+    return mark;
+  }
+
+  function renderMap(core) {
+    const buttons = new Map();
+    for (let start = 0; start < core.length; start += 4) {
+      const reverse = (start / 4) % 2 === 1;
+      const stages = core.slice(start, start + 4);
+      if (start) {
+        const turn = element("div", reverse ? "map-turn" : "map-turn left");
+        turn.append(arrow("↓"));
+        byId("map").append(turn);
+      }
+      const row = element("div", reverse ? "map-row reverse" : "map-row");
+      for (const [index, stage] of stages.entries()) {
+        if (index) row.append(arrow(reverse ? "←" : "→"));
+        const button = element("button", stage.id === "05" ? "map-node optional" : "map-node");
+        const title = element("span", "map-title", stage.title.value);
+        button.type = "button";
+        button.setAttribute("aria-controls", `stage-${stage.id}`);
+        button.setAttribute("aria-expanded", "false");
+        button.addEventListener("click", () => {
+          const target = byId(`stage-${stage.id}`);
+          target.open = !target.open;
+          if (target.open) {
+            target.scrollIntoView({block: "start"});
+            target.querySelector("summary").focus({preventScroll: true});
+          }
+        });
+        button.append(element("span", "map-id", stage.id), title);
+        buttons.set(stage.id, {button, title});
+        row.append(button);
+      }
+      byId("map").append(row);
+    }
+    return buttons;
+  }
+
+  function renderStep(step) {
+    const details = element("details", "step");
+    const summary = element("summary");
+    const title = element("span");
+    formatInline(title, step.title.value);
+    summary.append(element("span", "step-id", step.id), title);
+    const body = element("div", "node-body");
+    body.append(editTitle(step.title, step.id, value => formatInline(title, value)));
+
+    const flow = element("dl", "flow");
+    for (const [field, label] of [["input", "输入"], ["action", "动作"], ["output", "产物"]]) {
+      const row = element("div", "row");
+      const content = element("dd");
+      content.append(editableText(step[field], `${step.id} ${label}`));
+      row.append(element("dt", null, label), content);
+      flow.append(row);
+    }
+    body.append(flow);
+
+    const sources = element("p", "sources");
+    const sourceLinks = element("span");
+    formatInline(sourceLinks, step.source.value);
+    sources.append(element("b", null, "源码"), sourceLinks);
+    body.append(sources);
+
+    for (const block of step.codeBlocks || []) {
+      const box = element("section", "code-example");
+      const pre = element("pre");
+      const code = element("code", null, block.lines.join("\n"));
+      pre.style.cssText = "overflow-x:auto;white-space:pre;padding:12px;background:#f0f3ef;border:1px solid #d7ded4;border-radius:6px;line-height:1.6;font-size:.82rem";
+      code.style.fontSize = "inherit";
+      pre.append(code);
+      box.append(element("b", null, block.language === "text" ? "过程示例" : "关键代码"));
+      if (block.location) {
+        const location = element("div", "code-location");
+        location.style.cssText = "margin:6px 0;line-height:1.7;font-size:.82rem;overflow-wrap:anywhere";
+        location.append(element("b", null, "代码位置："), editableText(block.location, `${step.id} 代码位置`));
+        box.append(location);
+      }
+      box.append(pre);
+      body.append(box);
+    }
+    if (step.reading) {
+      const reading = element("div", "code-reading");
+      reading.style.cssText = "margin:8px 0 12px;line-height:1.8;font-size:.9rem";
+      reading.append(element("b", null, "代码怎么读："), editableText(step.reading, `${step.id} 代码读法`));
+      body.append(reading);
+    }
+
+    if (step.notes.length) {
+      const note = element("details", "note");
+      const content = element("div", "note-content");
+      for (const entry of step.notes) content.append(editableText(entry, `${step.id} 补充解释`));
+      note.append(element("summary", null, "补充解释"), content);
+      body.append(note);
+    }
+    details.append(summary, body);
+    return details;
+  }
+
+  function renderWalkthrough(stage) {
+    const box = element("div", "walkthrough");
+    box.append(element("h3", null, "流程"));
+    const list = element("ol", "walk-list");
+    for (const [index, entry] of stage.walk.entries()) {
+      const item = element("li");
+      item.append(editableText(entry, `${stage.id} 示例流程 ${index + 1}`));
+      list.append(item);
+    }
+    box.append(list);
+    if (!stage.table.length) return box;
+
+    const table = element("table");
+    const head = element("thead");
+    const body = element("tbody");
+    for (const [index, cells] of stage.table.entries()) {
+      const row = element("tr");
+      for (const value of cells) {
+        const cell = element(index === 0 ? "th" : "td");
+        if (index === 0) cell.scope = "col";
+        formatInline(cell, value);
+        row.append(cell);
+      }
+      (index === 0 ? head : body).append(row);
+    }
+    table.append(head, body);
+    const wrapper = element("div", "walk-table");
+    wrapper.append(table);
+    box.append(wrapper);
+    return box;
+  }
+
+  function renderStage(stage, mapEntry) {
+    const details = element("details", "stage");
+    details.id = `stage-${stage.id}`;
+    const summary = element("summary");
+    const title = element("span", "stage-title", stage.title.value);
+    summary.append(element("span", "stage-id", stage.id), title, element("span", "stage-count", `${stage.steps.length} 个子步骤`));
+    if (mapEntry) details.addEventListener("toggle", () => mapEntry.button.setAttribute("aria-expanded", String(details.open)));
+
+    const body = element("div", "stage-body");
+    body.append(editTitle(stage.title, `stage-${stage.id}`, value => {
+      title.textContent = value;
+      if (mapEntry) mapEntry.title.textContent = value;
+    }));
+    if (stage.walk.length || stage.table.length) body.append(renderWalkthrough(stage));
+    const handoff = element("div", "handoff");
+    for (const [field, label] of [["input", "起点"], ["output", "交接"]]) {
+      const item = element("div");
+      item.append(element("b", null, label), editableText(stage[field], `${stage.id} ${label}`));
+      handoff.append(item);
+    }
+    const steps = element("div", "steps");
+    for (const step of stage.steps) steps.append(renderStep(step));
+    body.append(handoff, steps);
+    details.append(summary, body);
+    return details;
+  }
+
+  function download(filename, content, type) {
+    const link = element("a");
+    link.href = URL.createObjectURL(new Blob([content], {type}));
+    link.download = filename;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+  }
+
+  function saveHtml() {
+    const copy = document.documentElement.cloneNode(true);
+    copy.dataset.sourceBase = sourceBase;
+    for (const id of ["document-title", "intro", "map-count", "map", "stages", "status"]) copy.querySelector(`#${id}`).replaceChildren();
+    copy.querySelector("body").classList.remove("editing");
+    copy.querySelector("#edit").textContent = "编辑内容";
+    copy.querySelector("#edit").setAttribute("aria-pressed", "false");
+    copy.querySelector("#flow-source").textContent = JSON.stringify(lines.join("\n")).replace(/</gu, "\\u003c");
+    download("PLM_ICD_FLOW.html", `<!doctype html>\n${copy.outerHTML}`, "text/html;charset=utf-8");
+    byId("status").textContent = "已保存包含当前修改的 HTML 副本。";
+  }
+
+  function renderDocument(data) {
+    for (const id of ["intro", "map", "stages"]) byId(id).replaceChildren();
+    document.title = data.title.value;
+    byId("document-title").textContent = data.title.value;
+    for (const paragraph of data.intro) {
+      const item = element("p");
+      formatInline(item, paragraph);
+      byId("intro").append(item);
+    }
+    const core = data.stages.filter(stage => stage.id !== "附录");
+    const count = core.reduce((sum, stage) => sum + stage.steps.length, 0);
+    byId("map-count").textContent = `${core.length} 个主线节点 · ${count} 个子步骤`;
+    const mapEntries = renderMap(core);
+    for (const stage of data.stages) byId("stages").append(renderStage(stage, mapEntries.get(stage.id)));
+  }
+
+  renderDocument(parseLines(lines));
+
+  byId("open-md").addEventListener("click", () => byId("md-file").click());
+  byId("md-file").addEventListener("change", async event => {
+    const field = event.currentTarget;
+    const file = field.files[0];
+    if (!file) return;
+    try {
+      const nextLines = (await file.text()).replace(/^\uFEFF/u, "").split(/\r\n?|\n/u);
+      const data = parseLines(nextLines);
+      validateDocument(data);
+      lines = nextLines;
+      renderDocument(data);
+      byId("status").textContent = `已读入 ${file.name}。可以保存为 HTML。`;
+    } catch (error) {
+      byId("status").textContent = `打开失败。${error.message}`;
+    } finally {
+      field.value = "";
+    }
+  });
+
+  byId("expand").addEventListener("click", () => {
+    for (const item of document.querySelectorAll("details.stage, details.step")) item.open = true;
+  });
+  byId("collapse").addEventListener("click", () => {
+    for (const item of document.querySelectorAll("details")) item.open = false;
+  });
+  byId("edit").addEventListener("click", () => {
+    const editing = document.body.classList.toggle("editing");
+    byId("edit").textContent = editing ? "完成编辑" : "编辑内容";
+    byId("edit").setAttribute("aria-pressed", String(editing));
+    byId("status").textContent = editing ? editingLabel : "可以保存 HTML 副本或导出 Markdown。";
+  });
+  byId("save-html").addEventListener("click", saveHtml);
+  byId("save-md").addEventListener("click", () => {
+    download("PLM_ICD_FLOW.md", lines.join("\n"), "text/markdown;charset=utf-8");
+    byId("status").textContent = "已导出包含当前修改的 Markdown。";
+  });
+</script>
+</body>
+</html>
