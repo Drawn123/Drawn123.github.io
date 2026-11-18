@@ -79,6 +79,25 @@ tags:
   - "等差数列 | Arithmetic Progression"
   - "等比数列 | Geometric Progression"
   - "值域动态规划 | Value-based DP"
+  - "高精度 | Big Integer"
+  - "容斥原理 | Inclusion-Exclusion"
+  - "最长上升子序列 | LIS"
+  - "最长公共子序列 | LCS"
+  - "树形动态规划 | Tree DP"
+  - "数位动态规划 | Digit DP"
+  - "状态机动态规划 | Automaton DP"
+  - "最大子段和 | Maximum Subarray"
+  - "基环树 | Unicyclic Graph"
+  - "多源 BFS | Multi-source BFS"
+  - "虚拟点建图 | Virtual Nodes"
+  - "贡献法 | Contribution Technique"
+  - "交换论证 | Exchange Argument"
+  - "最长上升子序列 | LIS"
+  - "最长公共子序列 | LCS"
+  - "树形 DP | Tree DP"
+  - "数位 DP | Digit DP"
+  - "结尾分类 DP | Ending-state DP"
+  - "容斥原理 | Inclusion-Exclusion"
 
 weight: 1
 pinned: true
@@ -110,7 +129,9 @@ $$
 
 对闭区间 $[l,r]$ 加 $w$，只记 `diff[l]+=w`、`diff[r+1]-=w`，最后做一次前缀和。若已有初始数组，先令 `diff[i]=a[i]-a[i-1]`；从零开始统计覆盖次数时，差分数组也从零开始。
 
-#### 例题：CF 276C Little Girl and Maximum Sum
+#### 例题
+
+##### CF 276C Little Girl and Maximum Sum {#例题cf-276c-little-girl-and-maximum-sum}
 
 [题目链接](https://codeforces.com/contest/276/problem/C)
 
@@ -150,7 +171,7 @@ void solve(){
 
 **时间复杂度：**$O(n\log n+q)$。排序只处理 $1\sim n$，不把差分预留的 $n+1$ 位置算进去。
 
-#### 例题：CF 1398C Good Subarrays {#example-cf-1398c}
+##### CF 1398C Good Subarrays {#example-cf-1398c}
 
 [题目链接](https://codeforces.com/contest/1398/problem/C)
 
@@ -193,7 +214,7 @@ void solve(){
 }
 ```
 
-#### 例题：CF 1878D Reverse Madness {#example-cf-1878d}
+##### CF 1878D Reverse Madness {#example-cf-1878d}
 
 [题目链接](https://codeforces.com/contest/1878/problem/D)
 
@@ -249,6 +270,91 @@ void solve(){
 }
 ```
 
+##### ABC 444D Many Repunit Sum {#example-abc-444d}
+
+[题目链接](https://atcoder.jp/contests/abc444/tasks/abc444_d)
+
+$a_i$ 表示一个由 $a_i$ 个 `1` 组成的整数，求这些整数的和。$n,a_i\le2\times10^5$。
+
+不用把每个大数造出来。长度为 $a_i$ 的数，会给从个位开始的前 $a_i$ 位各贡献一个 `1`，正好是一次区间加。差分还原出每一列的总和，再从低位到高位处理进位。
+
+这里的下标表示十进制位数。时间复杂度 $O(n+\max a_i)$，最高位之后仍要把剩余进位输出完。
+
+```c++
+void solve(){
+    int n;
+    cin>>n;
+    vector<int> a(n);
+    int mx=0;
+    for(int &x:a){
+        cin>>x;
+        mx=max(mx,x);
+    }
+    vector<int> diff(mx+2);
+    for(int x:a){
+        diff[0]++;
+        diff[x]--;
+    }
+    string ans;
+    int pre=0,ad=0;
+    for(int i=0;i<mx || ad;i++){
+        if(i<mx) pre+=diff[i];
+        else pre=0;
+        int cur=pre+ad;
+        ans.push_back('0'+cur%10);
+        ad=cur/10;
+    }
+    reverse(ans.begin(),ans.end());
+    cout<<ans<<endl;
+}
+```
+
+### 前缀计数差与容斥
+
+区间里两类元素数量相等，可以移项成两个端点的“前缀计数差”相等。三类同时相等，就保存两个独立的差。注意先统计旧状态，再加入当前前缀，并把空前缀算进去。
+
+#### 例题
+
+##### ABC 455E Unbalanced ABC Substrings {#example-abc-455e}
+
+[题目链接](https://atcoder.jp/contests/abc455/tasks/abc455_e)
+
+字符串只含 `A/B/C`，求三种字符出现次数两两不同的非空子串数，$n\le2\times10^5$。没有出现的字符次数为零，也要参与比较。
+
+设 $f_{AB}$ 表示 `A`、`B` 数量相等的子串数，其他同理；$f_{ABC}$ 表示三者相等的子串数。三个“两类相等”事件的任意交集都是“三类相等”，容斥得到
+
+$$
+ans=\frac{n(n+1)}2-f_{AB}-f_{AC}-f_{BC}+2f_{ABC}.
+$$
+
+用三个单差和一个二元组分别计数即可，时间复杂度 $O(n\log n)$。
+
+```c++
+void solve(){
+    int n;
+    string s;
+    cin>>n>>s;
+    map<int,int> ab,ac,bc;
+    map<pii,int> abc;
+    ab[0]=ac[0]=bc[0]=1;
+    abc[{0,0}]=1;
+    int a=0,b=0,c=0;
+    int ans=n*(n+1)/2;
+    for(char ch:s){
+        a+=(ch=='A');
+        b+=(ch=='B');
+        c+=(ch=='C');
+        ans-=ab[a-b]+ac[a-c]+bc[b-c];
+        ans+=2*abc[{a-b,a-c}];
+        ab[a-b]++;
+        ac[a-c]++;
+        bc[b-c]++;
+        abc[{a-b,a-c}]++;
+    }
+    cout<<ans<<endl;
+}
+```
+
 ### 二维前缀和
 
 ```c++
@@ -262,6 +368,49 @@ while(q--){
     int x1,y1,x2,y2;
     cin>>x1>>y1>>x2>>y2;
     cout<<pre[x2][y2]-pre[x2][y1-1]-pre[x1-1][y2]+pre[x1-1][y1-1]<<endl;
+}
+```
+
+#### 例题
+
+##### ABC 461D Count Subgrid Sum = K {#example-abc-461d}
+
+[题目链接](https://atcoder.jp/contests/abc461/tasks/abc461_d)
+
+给定 $H\times W$ 的 `01` 矩阵，统计元素和为 $K$ 的非空子矩形。$H,W\le500$，允许 $K=0$。
+
+四个边界一起枚举会到 $O(H^2W^2)$。固定上下边界后，把每一列压成一个数，就只剩“一维数组中有多少个区间和为 $K$”。枚举右端点，查询此前出现过多少个 $pre-K$，再加入当前前缀和。
+
+前缀和不超过 $HW$，可以直接用数组计数。每轮只撤销本轮插入的前缀和，连同最初的空前缀一起撤销，避免每次清空整个值域。前缀和为零可能出现多次，不能先把 `cnt[0]` 置零，再继续减它。时间复杂度 $O(H^2W)$。
+
+```c++
+void solve(){
+    int h,w,k;
+    cin>>h>>w>>k;
+    vector<string> g(h);
+    for(auto &s:g) cin>>s;
+    vector<int> cnt(h*w+1);
+    int ans=0;
+    for(int r1=0;r1<h;r1++){
+        vector<int> col(w);
+        for(int r2=r1;r2<h;r2++){
+            cnt[0]++;
+            int pre=0;
+            for(int j=0;j<w;j++){
+                col[j]+=g[r2][j]-'0';
+                pre+=col[j];
+                if(pre>=k) ans+=cnt[pre-k];
+                cnt[pre]++;
+            }
+            cnt[0]--;
+            pre=0;
+            for(int x:col){
+                pre+=x;
+                cnt[pre]--;
+            }
+        }
+    }
+    cout<<ans<<endl;
 }
 ```
 
@@ -743,7 +892,9 @@ void solve() {
 
 
 
-#### 例题：CF 52C Circular RMQ {#example-cf-52c}
+#### 例题
+
+##### CF 52C Circular RMQ {#example-cf-52c}
 
 [题目链接](https://codeforces.com/contest/52/problem/C)
 
@@ -802,7 +953,7 @@ void solve(){
 }
 ```
 
-#### 例题：CF 339D Xenia and Bit Operations {#example-cf-339d}
+##### CF 339D Xenia and Bit Operations {#example-cf-339d}
 
 [题目链接](https://codeforces.com/contest/339/problem/D)
 
@@ -1000,7 +1151,9 @@ void solve(){
 
 
 
-#### 例题：CF 1878E Iva & Pav {#example-cf-1878e}
+#### 例题
+
+##### CF 1878E Iva & Pav {#example-cf-1878e}
 
 [题目链接](https://codeforces.com/contest/1878/problem/E)
 
@@ -1345,7 +1498,9 @@ vector<int> slidingWindowMax(const vector<int>& a, int n, int k){
 
 ### 有序集合维护区间端点
 
-#### 例题：CF 1883D In Love {#example-cf-1883d}
+#### 例题
+
+##### CF 1883D In Love {#example-cf-1883d}
 
 [题目链接](https://codeforces.com/contest/1883/problem/D)
 
@@ -1478,7 +1633,9 @@ $$
 
 **边数等于点数，不能直接说明整个连通块就是环。** 三角形外接一个叶子，也满足边数等于点数，但出现了度数为 $1$ 和 $3$ 的点。
 
-#### 例题：CF 977E Cyclic Components
+#### 例题
+
+##### CF 977E Cyclic Components {#例题cf-977e-cyclic-components}
 
 [题目链接](https://codeforces.com/contest/977/problem/E)
 
@@ -1810,6 +1967,59 @@ void solve(){
 
 
 
+#### 虚拟点压缩稠密边
+
+##### 例题
+
+###### ABC 463E Roads and Gates {#example-abc-463e}
+
+[题目链接](https://atcoder.jp/contests/abc463/tasks/abc463_e)
+
+有 $n$ 个城市、$m$ 条无向正权道路，任意 $i,j$ 之间还可以花费 $X_i+X_j+Y$ 传送。求城市 $1$ 到其他城市的最短时间，$n,m\le2\times10^5$。
+
+完全图的边权能拆成“只与起点有关 + 公共代价 + 只与终点有关”，就不必真的建 $n^2$ 条边。增加两个虚拟点 $A,B$，建
+
+$$i\xrightarrow{X_i}A\xrightarrow{Y}B\xrightarrow{X_j}j.$$
+
+每次传送都能对应这条三段路径，反过来也一样，且费用相同。原道路照常保留，新增边必须按上述方向建。点边数降为 $O(n+m)$ 后跑 Dijkstra，时间复杂度 $O((n+m)\log n)$。
+
+```c++
+void solve(){
+    int n,m,y;
+    cin>>n>>m>>y;
+    vector<vector<pii>> g(n+3);
+    while(m--){
+        int u,v,t;
+        cin>>u>>v>>t;
+        g[u].push_back({v,t});
+        g[v].push_back({u,t});
+    }
+    int A=n+1,B=n+2;
+    for(int i=1;i<=n;i++){
+        int x;
+        cin>>x;
+        g[i].push_back({A,x});
+        g[B].push_back({i,x});
+    }
+    g[A].push_back({B,y});
+    vector<int> dis(n+3,1e18),vis(n+3);
+    priority_queue<pii,vector<pii>,greater<pii>> q;
+    dis[1]=0;
+    q.push({0,1});
+    while(!q.empty()){
+        auto [d,u]=q.top();q.pop();
+        if(vis[u]) continue;
+        vis[u]=1;
+        for(auto [v,w]:g[u]) if(dis[v]>d+w){
+            dis[v]=d+w;
+            q.push({dis[v],v});
+        }
+    }
+    for(int i=2;i<=n;i++) cout<<dis[i]<<" ";
+    cout<<endl;
+}
+```
+
 #### 分层图最短路
 
 当最短路还受“最多使用 $k$ 次免费机会”等限制时，把点拆成 $(u,p)$：当前在 $u$，已使用 $p$ 次机会。
@@ -1881,7 +2091,9 @@ void solve(){
 }
 ```
 
-#### 例题：CF 1473E Minimum Path {#example-cf-1473e}
+##### 例题
+
+###### CF 1473E Minimum Path {#example-cf-1473e}
 
 [题目链接](https://codeforces.com/contest/1473/problem/E) · [官方题解](https://codeforces.com/blog/entry/86827)
 
@@ -2131,7 +2343,9 @@ void solve(){
 }
 ```
 
-#### 例题：CF 295B Greg and Graph {#example-cf-295b}
+##### 例题
+
+###### CF 295B Greg and Graph {#example-cf-295b}
 
 [题目链接](https://codeforces.com/contest/295/problem/B)
 
@@ -2358,6 +2572,67 @@ void solve(){
 }
 ```
 
+### 反向建图与可达性筛点
+
+问“哪些点能走到 $t$”，就把边反过来，从 $t$ 搜索。题目还限制路径上的点时，先把资格判定完成，再在保留下来的点中求最短路。
+
+#### 例题
+
+##### P2296 寻找道路 {#example-lg-p2296}
+
+[题目链接](https://www.luogu.com.cn/problem/P2296)
+
+有向图边权为 $1$，求 $s$ 到 $t$ 的最短路，要求路径上每个点的所有出边终点都能到达 $t$。终点没有出边，图中允许重边、自环。
+
+反图 BFS 得到 `vis[u]`：$u$ 在原图能否到达 $t$。再令 `ok[u]` 表示自身可达，且所有出边终点都满足 `vis`。最后只经过 `ok` 点跑 BFS。
+
+“能到达终点”在原图中判定，不能反复剥掉不满足 `ok` 的点；一个邻点本身不能出现在答案路径上，并不等于它在原图中走不到终点。重边、自环不会影响正确性，也无需专门去重。时间复杂度 $O(n+m)$。
+
+```c++
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<int>> g(n+1),rg(n+1);
+    while(m--){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        rg[v].push_back(u);
+    }
+    int s,t;
+    cin>>s>>t;
+    vector<int> vis(n+1),ok(n+1),dis(n+1,-1);
+    queue<int> q;
+    vis[t]=1;
+    q.push(t);
+    while(!q.empty()){
+        int u=q.front();q.pop();
+        for(int v:rg[u]) if(!vis[v]){
+            vis[v]=1;
+            q.push(v);
+        }
+    }
+    for(int u=1;u<=n;u++){
+        ok[u]=vis[u];
+        for(int v:g[u]) if(!vis[v]) ok[u]=0;
+    }
+    if(!ok[s]){
+        cout<<-1<<endl;
+        return;
+    }
+    dis[s]=0;
+    q.push(s);
+    while(!q.empty()){
+        int u=q.front();q.pop();
+        for(int v:g[u]) if(ok[v] && dis[v]==-1){
+            dis[v]=dis[u]+1;
+            q.push(v);
+        }
+    }
+    cout<<dis[t]<<endl;
+}
+```
+
 ### 拓扑排序
 
 ```c++
@@ -2465,13 +2740,50 @@ void solve(){
 }
 ```
 
+#### 例题
+
+##### P1137 旅行计划 {#example-lg-p1137}
+
+[题目链接](https://www.luogu.com.cn/problem/P1137)
+
+有向无环图中，对每个点求以它为终点的最长路径点数。可以任选起点，$n\le10^5,m\le2\times10^5$。
+
+`dp[u]` 表示答案，初始全部为 $1$，因为单点也是一条路径。按拓扑序处理边 $u\to v$，转移 `dp[v]=max(dp[v],dp[u]+1)`。等到 $v$ 入度归零时，所有前驱的贡献已经算完。时间复杂度 $O(n+m)$。
+
+```c++
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<int>> g(n+1);
+    vector<int> in(n+1),dp(n+1,1);
+    while(m--){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        in[v]++;
+    }
+    queue<int> q;
+    for(int i=1;i<=n;i++) if(!in[i]) q.push(i);
+    while(!q.empty()){
+        int u=q.front();q.pop();
+        for(int v:g[u]){
+            dp[v]=max(dp[v],dp[u]+1);
+            if(--in[v]==0) q.push(v);
+        }
+    }
+    for(int i=1;i<=n;i++) cout<<dp[i]<<endl;
+}
+```
+
 ### 函数图剥叶找环
 
 每个点恰有一条出边的有向图，称为函数图。它的每个弱连通分量中恰有一个有向环，其他点沿出边最终进入这个环，自环也算环。
 
 不断删除入度为零的点，同时减少其后继的入度，最后留下来的点恰好是环上的点。不能用原来的入度判断谁在环上，因为环上也可能挂着入树。
 
-#### 例题：CF 1027D Mouse Hunt {#example-cf-1027d}
+#### 例题
+
+##### CF 1027D Mouse Hunt {#example-cf-1027d}
 
 [题目链接](https://codeforces.com/contest/1027/problem/D)
 
@@ -2509,6 +2821,63 @@ void solve(){
         ans += mn;
     }
     cout<<ans<<endl;
+}
+```
+
+### 无向基环树剥叶找环
+
+连通无向图有 $n$ 个点、$n$ 条边时，恰好只有一个环。不断删除度数为 $1$ 的点，留下来的就是环。这里用无向度数，与函数图删入度为零的点不同。
+
+#### 例题
+
+##### CF 1873H Mad City {#example-cf-1873h}
+
+[题目链接](https://codeforces.com/contest/1873/problem/H)
+
+追捕者从 $a$ 出发，逃跑者从 $b$ 出发，每轮可以走到邻点或停留；逃跑者能预知追捕者本轮的选择。同点或在同一条边相遇算被抓，问能否永远逃脱。图连通且无重边、自环，$n\le2\times10^5$。
+
+树枝上没有绕开的路，关键是能否抢先进入环。剥叶得到所有环点，再分别从 $a,b$ BFS。如果存在环点 $x$ 满足 $dis_b[x]<dis_a[x]$，逃跑者能先到环上，并利用预知能力选择安全方向；否则追捕者能堵住它进入环的入口。$a=b$ 时已被抓。时间复杂度 $O(n)$。
+
+```c++
+void solve(){
+    int n,a,b;
+    cin>>n>>a>>b;
+    vector<vector<int>> g(n+1);
+    vector<int> d(n+1);
+    for(int i=0;i<n;i++){
+        int u,v;
+        cin>>u>>v;
+        g[u].push_back(v);
+        g[v].push_back(u);
+        d[u]++,d[v]++;
+    }
+    queue<int> q;
+    for(int i=1;i<=n;i++) if(d[i]==1) q.push(i);
+    while(!q.empty()){
+        int u=q.front();q.pop();
+        d[u]=0;
+        for(int v:g[u]) if(d[v] && --d[v]==1) q.push(v);
+    }
+    auto bfs=[&](int s){
+        vector<int> dis(n+1,-1);
+        queue<int> q;
+        dis[s]=0;
+        q.push(s);
+        while(!q.empty()){
+            int u=q.front();q.pop();
+            for(int v:g[u]) if(dis[v]==-1){
+                dis[v]=dis[u]+1;
+                q.push(v);
+            }
+        }
+        return dis;
+    };
+    auto disa=bfs(a),disb=bfs(b);
+    for(int i=1;i<=n;i++) if(d[i] && disb[i]<disa[i]){
+        cout<<"YES"<<endl;
+        return;
+    }
+    cout<<"NO"<<endl;
 }
 ```
 
@@ -2626,7 +2995,9 @@ void solve(){
 
 下面两个例题接上本节的 `tarjan`、全局数组和 `build_dag`，各自替换 `solve()`。均为单组数据，多测先按上面的说明清空。
 
-#### 例题：CF 427C Checkposts {#example-cf-427c}
+#### 例题
+
+##### CF 427C Checkposts {#example-cf-427c}
 
 [题目链接](https://codeforces.com/contest/427/problem/C)
 
@@ -2665,7 +3036,7 @@ void solve(){
 }
 ```
 
-#### 例题：CF 999E Reachability from the Capital {#example-cf-999e}
+##### CF 999E Reachability from the Capital {#example-cf-999e}
 
 [题目链接](https://codeforces.com/contest/999/problem/E)
 
@@ -2762,7 +3133,9 @@ void solve(){
 
 
 
-#### 例题：CF 1063B Labyrinth {#example-cf-1063b}
+#### 例题
+
+##### CF 1063B Labyrinth {#example-cf-1063b}
 
 [题目链接](https://codeforces.com/problemset/problem/1063/B)
 
@@ -2829,6 +3202,44 @@ void solve(){
 }
 ```
 
+##### ABC 176D Wizard in Maze {#example-abc-176d}
+
+[题目链接](https://atcoder.jp/contests/abc176/tasks/abc176_d)
+
+迷宫中，走到四邻空地不消耗魔法，也可以花一次魔法传送到以自己为中心的 $5\times5$ 范围内的任意空地。求最少魔法次数，无法到达输出 $-1$。$H,W\le1000$。
+
+把两种移动分别看成边权 $0,1$，用双端队列维护最短路。不是统计走了几格，也不能把墙当成传送落点。每个格子的出边数为常数，时间复杂度 $O(HW)$。
+
+```c++
+void solve(){
+    int h,w,ch,cw,dh,dw;
+    cin>>h>>w>>ch>>cw>>dh>>dw;
+    ch--,cw--,dh--,dw--;
+    vector<string> g(h);
+    for(auto &s:g) cin>>s;
+    vector<vector<int>> dis(h,vector<int>(w,1e18)),vis(h,vector<int>(w));
+    deque<pii> q;
+    dis[ch][cw]=0;
+    q.push_front({ch,cw});
+    while(!q.empty()){
+        auto [x,y]=q.front();q.pop_front();
+        if(vis[x][y]) continue;
+        vis[x][y]=1;
+        for(int i=-2;i<=2;i++) for(int j=-2;j<=2;j++){
+            int cx=x+i,cy=y+j;
+            if(cx<0 || cx>=h || cy<0 || cy>=w || g[cx][cy]=='#') continue;
+            int cost=(abs(i)+abs(j)!=1);
+            if(dis[cx][cy]>dis[x][y]+cost){
+                dis[cx][cy]=dis[x][y]+cost;
+                if(cost) q.push_back({cx,cy});
+                else q.push_front({cx,cy});
+            }
+        }
+    }
+    cout<<(dis[dh][dw]==1e18?-1:dis[dh][dw])<<endl;
+}
+```
+
 #### 二分答案与 01BFS
 
 例题：[P1948 Telephone Lines S](https://www.luogu.com.cn/problem/P1948)。从 $1$ 到 $n$ 选一条路径，最多 $k$ 条边免费，其余边只按最大边权计费，求最小费用，不连通输出 $-1$。
@@ -2885,6 +3296,56 @@ void solve(){
         else l=mid+1;
     }
     cout<<l<<endl;
+}
+```
+
+### 带资源状态的 BFS
+
+同一个位置，如果剩余资源不同，后续能走的路也可能不同。只标记坐标会丢掉可行解，应把会影响下一步的资源一起放进状态。边权仍为 $1$ 时照常 BFS。
+
+#### 例题
+
+##### P2802 回家 {#example-lg-p2802}
+
+[题目链接](https://www.luogu.com.cn/problem/P2802)
+
+起始血量为 $6$，每走一格扣 $1$，`0` 是墙、`2` 是起点、`3` 是家、`4` 可以补满血量。补给可重复使用，但血量降为零时立即死亡，即使这一格是补给或终点也不行。求最短回家时间，$n,m\le9$。
+
+状态为 $(x,y,hp)$。先扣血、判断是否存活，再处理补给和到家；顺序不能反。最多 $6nm$ 个状态，时间复杂度 $O(nm)$。
+
+```c++
+void solve(){
+    int n,m;
+    cin>>n>>m;
+    vector<vector<int>> a(n,vector<int>(m));
+    int sx=0,sy=0;
+    for(int i=0;i<n;i++) for(int j=0;j<m;j++){
+        cin>>a[i][j];
+        if(a[i][j]==2) sx=i,sy=j;
+    }
+    vector<vector<array<int,7>>> dis(n,vector<array<int,7>>(m));
+    for(auto &row:dis) for(auto &d:row) d.fill(-1);
+    queue<array<int,3>> q;
+    q.push({sx,sy,6});
+    dis[sx][sy][6]=0;
+    int dx[]={0,0,-1,1},dy[]={1,-1,0,0};
+    while(!q.empty()){
+        auto [x,y,hp]=q.front();q.pop();
+        for(int i=0;i<4;i++){
+            int cx=x+dx[i],cy=y+dy[i],bl=hp-1;
+            if(cx<0 || cx>=n || cy<0 || cy>=m || !a[cx][cy] || !bl) continue;
+            if(a[cx][cy]==4) bl=6;
+            if(a[cx][cy]==3){
+                cout<<dis[x][y][hp]+1<<endl;
+                return;
+            }
+            if(dis[cx][cy][bl]==-1){
+                dis[cx][cy][bl]=dis[x][y][hp]+1;
+                q.push({cx,cy,bl});
+            }
+        }
+    }
+    cout<<-1<<endl;
 }
 ```
 
@@ -3152,7 +3613,38 @@ void solve(){
 }
 ```
 
+#### 例题
 
+##### ABC 465D X to Y {#example-abc-465d}
+
+[题目链接](https://atcoder.jp/contests/abc465/tasks/abc465_d)
+
+给定非负整数 $X,Y$ 和 $K\ge2$，一次可以把 $x$ 换成满足 $\lfloor x/K\rfloor=y$ 或 $\lfloor y/K\rfloor=x$ 的整数 $y$，求从 $X$ 到 $Y$ 的最少步数。多组测试，$X,Y,K\le10^{18}$。
+
+对非负数看父亲 $fa(x)=\lfloor x/K\rfloor$，除去根 $0$ 的自环后就是一棵树。往上走相当于删除 $K$ 进制的最低位，所以 LCA 是两个表示的最长公共前缀。两边剩余位数之和就是距离。
+
+虽然题面允许选择整数，但非负部分只能通过 $0$ 与负数部分相连，绕过去仍要回到 $0$，不会更短。$0$ 用空位序列表示。时间复杂度 $O(\log_K(\max(X,Y)+1))$。
+
+```c++
+void solve(){
+    int x,y,k;
+    cin>>x>>y>>k;
+    vector<int> dx,dy;
+    while(x){
+        dx.push_back(x%k);
+        x/=k;
+    }
+    while(y){
+        dy.push_back(y%k);
+        y/=k;
+    }
+    reverse(dx.begin(),dx.end());
+    reverse(dy.begin(),dy.end());
+    int cnt=0;
+    while(cnt<dx.size() && cnt<dy.size() && dx[cnt]==dy[cnt]) cnt++;
+    cout<<dx.size()+dy.size()-2*cnt<<endl;
+}
+```
 
 ### 树上差分
 
@@ -3283,7 +3775,9 @@ void solve(){
 
 把树定根后，给子树外所有点加 $w$，可以拆成“全体加 $w$，这棵子树减 $w$”。用 `all` 记录全体增加量，用 `diff[u]` 记录整棵子树的标记，再从根向下累加。
 
-#### 例题：ABC 479E Cut and Add {#example-abc479-e}
+##### 例题
+
+###### ABC 479E Cut and Add {#example-abc479-e}
 
 [题目链接](https://atcoder.jp/contests/abc479/tasks/abc479_e)
 
@@ -3698,7 +4192,9 @@ void solve(){
 
 节点数至多为所有插入字符串的总长度加一，上面的 `N` 按 $5\times10^5$ 个字符预留。转移表用 32 位节点编号，避免在全局 64 位宏下把 $26N$ 的转移表也翻倍。下面两个例题都使用上面的 `Trie trie`，只替换 `solve()`。
 
-#### 例题：P2580 于是他错误的点名开始了 {#example-lg-p2580}
+##### 例题
+
+###### P2580 于是他错误的点名开始了 {#example-lg-p2580}
 
 [题目链接](https://www.luogu.com.cn/problem/P2580)
 
@@ -3735,7 +4231,7 @@ void solve(){
 }
 ```
 
-#### 例题：ABC 287E Karuta {#example-abc-287e}
+###### ABC 287E Karuta {#example-abc-287e}
 
 [题目链接](https://atcoder.jp/contests/abc287/tasks/abc287_e)
 
@@ -4331,7 +4827,9 @@ $$
 
 把这整段的贡献一次算完，再令 $l=r+1$。$q=0$ 时不能再算 $d/q$，需要单独处理剩余部分。
 
-#### 例题：CF 2260B Monocarp and Projects {#example-cf-2260b}
+#### 例题
+
+##### CF 2260B Monocarp and Projects {#example-cf-2260b}
 
 [题目链接](https://codeforces.com/contest/2260/problem/B)
 
@@ -4464,7 +4962,9 @@ int lcm(int a,int b){
 
 #### gcd、lcm 与连续分段
 
-#### 例题：CF 1798C Candy Store {#example-cf-1798c}
+##### 例题
+
+###### CF 1798C Candy Store {#example-cf-1798c}
 
 [题目链接](https://codeforces.com/contest/1798/problem/C)
 
@@ -4857,7 +5357,9 @@ void init(int mod){
 
 ### 总方案减去冲突方案
 
-#### 例题：CF 1475C Ball in Berland {#example-cf-1475c}
+#### 例题
+
+##### CF 1475C Ball in Berland {#example-cf-1475c}
 
 [题目链接](https://codeforces.com/contest/1475/problem/C)
 
@@ -5296,7 +5798,9 @@ $$
 
 一般式和方向向量写法都能表示竖直线。判断平行、垂直和共线时，使用叉积、点积或整数方向约分，可以省去斜率中的除法。
 
-#### 例题：ABC 467D Concentric Circles {#example-abc-467d}
+##### 例题
+
+###### ABC 467D Concentric Circles {#example-abc-467d}
 
 [题目链接](https://atcoder.jp/contests/abc467/tasks/abc467_d)
 
@@ -5610,7 +6114,9 @@ vector<Point> hull(vector<Point> p){
 
 如果一组选数是否合法只取决于最大值和最小值，先考虑排序。固定右端点后，若左端点只会向右移动，就可以用双指针维护合法区间。
 
-#### 例题：CF 580B Kefa and Company
+#### 例题
+
+##### CF 580B Kefa and Company {#例题cf-580b-kefa-and-company}
 
 [题目链接](https://codeforces.com/contest/580/problem/B)
 
@@ -5651,11 +6157,51 @@ void solve(){
 
 **时间复杂度：** 排序 $O(n\log n)$，双指针扫描 $O(n)$。左端点需要一直移到合法为止，因此用 `while`。
 
+### 滑动窗口与有序集合
+
+若区间合法时删除左端点仍然合法，就可以尝试双指针。新元素与集合中所有元素都有关时，先看是否只检查前驱、后继就够了。
+
+#### 例题
+
+##### ABC 444E Sparse Range {#example-abc-444e}
+
+[题目链接](https://atcoder.jp/contests/abc444/tasks/abc444_e)
+
+统计有多少个子数组，满足任意两个元素的差的绝对值至少为 $D$。$n\le4\times10^5$，$D\ge1$。
+
+维护已经合法的窗口 $[l,r)$。插入 $a_r$ 时，只有数值上最近的前驱、后继可能最先违反限制；两边距离都够，其他元素自然也够。固定 $l$ 后可以贡献 $r-l$ 个区间，再删除 $a_l$。
+
+$D\ge1$ 保证合法窗口里没有重复值，可以使用 `set`。单元素区间没有需要检查的数对，自然合法。时间复杂度 $O(n\log n)$。
+
+```c++
+void solve(){
+    int n,d;
+    cin>>n>>d;
+    vector<int> a(n);
+    for(int &x:a) cin>>x;
+    set<int> s;
+    int r=0,ans=0;
+    for(int l=0;l<n;l++){
+        while(r<n){
+            auto it=s.lower_bound(a[r]);
+            if(it!=s.end() && *it-a[r]<d) break;
+            if(it!=s.begin() && a[r]-*prev(it)<d) break;
+            s.insert(a[r++]);
+        }
+        ans+=r-l;
+        s.erase(a[l]);
+    }
+    cout<<ans<<endl;
+}
+```
+
 ### 二分答案
 
 先明确 `check(mid)` 判断什么，以及增大 `mid` 后是更容易还是更难满足。下面给出“时间越长越容易”和“阈值越大统计值越小”两种例子。
 
-#### 例题：2024 山东省赛 A Printer {#example-2024shandong-a}
+#### 例题
+
+##### 2024 山东省赛 A Printer {#example-2024shandong-a}
 
 [题目链接](https://codeforces.com/gym/105385/problem/A)
 
@@ -5707,7 +6253,7 @@ void solve(){
 }
 ```
 
-#### 例题：P1314 聪明的质监员 {#example-lg-p1314}
+##### P1314 聪明的质监员 {#example-lg-p1314}
 
 [题目链接](https://www.luogu.com.cn/problem/P1314)
 
@@ -5763,7 +6309,9 @@ void solve(){
 
 ### 倒推位置
 
-#### 例题：CF 1705C Mark and His Unfinished Essay {#example-cf-1705c}
+#### 例题
+
+##### CF 1705C Mark and His Unfinished Essay {#example-cf-1705c}
 
 [题目链接](https://codeforces.com/contest/1705/problem/C)
 
@@ -5806,7 +6354,9 @@ void solve(){
 
 ### 按字典序枚举方案
 
-#### 例题：ABC 473D Coefficient Stair {#example-abc-473d}
+#### 例题
+
+##### ABC 473D Coefficient Stair {#example-abc-473d}
 
 [题目链接](https://atcoder.jp/contests/abc473/tasks/abc473_d)
 
@@ -5849,6 +6399,83 @@ void solve(){
 
 ## 贪心
 
+### 相邻交换确定排序
+
+题目要求安排顺序时，先设前面已经累积了某个量，只交换相邻两项，比较交换前后目标值。若其他位置不受影响，且能推出一个统一的比较关键字，就可以按这个关键字排序。
+
+#### 例题
+
+##### P1842 奶牛玩杂技 {#example-lg-p1842}
+
+[题目链接](https://www.luogu.com.cn/problem/P1842)
+
+每头牛有体重 $w$、力量 $s$，摞成一列后，风险为上方总重减去自身力量。求所有牛的最大风险的最小值，$n\le5\times10^4$，风险允许为负数。
+
+从上到下按 $w+s$ 升序排列。设相邻的 $i,j$ 上方已有重量 $P$，且 $w_i+s_i\le w_j+s_j$。按 $i,j$ 排时，两项风险为 $P-s_i$、$P+w_i-s_j$；反过来有一项是 $P+w_j-s_i$。
+
+前者第一项不超过它；由排序条件，第二项也不超过它。因此把关键字小的放前面不会增大这两头牛的最大风险，其他牛不受影响。排序后扫一遍前缀重量即可，时间复杂度 $O(n\log n)$。
+
+```c++
+struct cow{
+    int w,s;
+};
+void solve(){
+    int n;
+    cin>>n;
+    vector<cow> a(n);
+    for(auto &c:a) cin>>c.w>>c.s;
+    sort(a.begin(),a.end(),[](cow a,cow b){
+        return a.w+a.s<b.w+b.s;
+    });
+    int pre=0,ans=-1e18;
+    for(auto c:a){
+        ans=max(ans,pre-c.s);
+        pre+=c.w;
+    }
+    cout<<ans<<endl;
+}
+```
+
+### 分段权重转成切点贡献
+
+每一段的权重由它前面有多少个切点决定时，可以反过来算“增加一个切点会给哪些元素多算一次”。若各切点贡献独立，分段问题就可能变成选前若干大的贡献。
+
+#### 例题
+
+##### 2024 山东省赛 F Divide the Sequence {#example-2024shandong-f}
+
+[题目链接](https://codeforces.com/gym/105385/problem/F)
+
+把数组分成 $k$ 个连续非空段，第 $i$ 段和为 $s_i$，最大化 $\sum_{i=1}^k i s_i$，对所有 $1\le k\le n$ 输出答案。多组测试，$n\le5\times10^5$，数组允许负数。
+
+先让所有元素权重为 $1$，贡献为整个数组和。在位置 $p$ 前切一刀，后面所有元素的段号都增加 $1$，因此这一刀贡献后缀和 $suf_p$。合法位置是 $2\sim n$，任意不同切点都能组成一种划分。
+
+所以 $k$ 段的答案是总和加上最大的 $k-1$ 个合法后缀和。必须恰好分成 $k$ 段，后缀和为负也要选够。排序后依次累加，时间复杂度 $O(n\log n)$。
+
+```c++
+void solve(){
+    int n;
+    cin>>n;
+    vector<int> a(n+1),suf;
+    int ans=0,sum=0;
+    for(int i=1;i<=n;i++){
+        cin>>a[i];
+        ans+=a[i];
+    }
+    for(int i=n;i>=2;i--){
+        sum+=a[i];
+        suf.push_back(sum);
+    }
+    sort(suf.begin(),suf.end(),greater<int>());
+    cout<<ans;
+    for(int x:suf){
+        ans+=x;
+        cout<<" "<<ans;
+    }
+    cout<<endl;
+}
+```
+
 ### 反悔贪心
 
 按顺序做选择，当前能选就先选；遇到限制被破坏时，允许撤销前面的一次选择，换成对后续更有利的方案。
@@ -5863,7 +6490,9 @@ void solve(){
 
 堆或有序集合只是用来找这个“最差的选择”。只有能解释交换为什么成立，才可以这样贪心；每个东西价值不同、撤销代价不同时，也不能直接按同一规则删。
 
-#### 例题：CF 1526C2 药水与前缀和 {#example-cf-1526c2}
+#### 例题
+
+##### CF 1526C2 药水与前缀和 {#example-cf-1526c2}
 
 [原题](https://codeforces.com/contest/1526/problem/C2)
 
@@ -5897,7 +6526,7 @@ void solve(){
 
 
 
-#### 例题：CF 1249D2 删除覆盖超限的区间 {#example-cf-1249d2}
+##### CF 1249D2 删除覆盖超限的区间 {#example-cf-1249d2}
 
 [原题](https://codeforces.com/contest/1249/problem/D2)
 
@@ -5953,7 +6582,7 @@ void solve(){
 
 时间复杂度 $O(n\log n)$。
 
-#### 例题：CF 1779C 翻转符号调整前缀和 {#example-cf-1779c}
+##### CF 1779C 翻转符号调整前缀和 {#example-cf-1779c}
 
 [原题](https://codeforces.com/contest/1779/problem/C)
 
@@ -6007,7 +6636,9 @@ void solve(){
 
 ### 扫描线统计区间染色
 
-#### 例题：2024 山东省赛 C 区间染色 {#example-2024shandong-c}
+#### 例题
+
+##### 2024 山东省赛 C 区间染色 {#example-2024shandong-c}
 
 [题目链接](https://codeforces.com/gym/105385/problem/C)
 
@@ -6044,7 +6675,9 @@ void solve(){
 
 ### 删除单调段的中间元素
 
-#### 例题：CF 1832C Contrast Value {#example-cf-1832c}
+#### 例题
+
+##### CF 1832C Contrast Value {#example-cf-1832c}
 
 [题目链接](https://codeforces.com/contest/1832/problem/C)
 
@@ -6087,7 +6720,9 @@ void solve(){
 
 碰到相邻元素至少扩大若干倍，先估计前面所有数的和。若较小的数凑不出足以抵消当前数的贡献，大数的选择就可能被目标值直接确定。
 
-#### 例题：成都女赛 E 可带负权的背包问题 {#example-qoj-23635}
+#### 例题
+
+##### 成都女赛 E 可带负权的背包问题 {#example-qoj-23635}
 
 [原题](https://qoj.ac/problem/23635)
 
@@ -6153,11 +6788,206 @@ void solve(){
 
 ## 动态规划
 
+### 按结尾分类计数
+
+先区分子串和子序列。子串必须接在前一个位置后面，状态可以只留“以上一个位置结尾”的数量；子序列允许跳过位置，要保留之前所有结尾的方案。再找决定能否继续接上的最少信息。
+
+#### 例题
+
+##### ABC 418D XNOR Operation {#example-abc-418d}
+
+[题目链接](https://atcoder.jp/contests/abc418/tasks/abc418_d)
+
+二进制字符串可以把相邻相同字符替换为 `1`，不同字符替换为 `0`。求多少个非空子串能缩成单个 `1`，$n\le2\times10^5$。
+
+操作只会让零的个数减少 $0$ 或 $2$，奇偶性不变。最终只剩一位，零的个数为偶数就只能剩 `1`，条件充分且必要。
+
+`dp[0/1]` 统计以上一位置结尾、零的个数为偶数或奇数的子串数。读到 `0` 时奇偶互换，另加单字符 `0`；读到 `1` 时奇偶不变，另加单字符 `1`。每轮把偶数状态累加进答案。时间复杂度 $O(n)$。
+
+```c++
+void solve(){
+    int n;
+    string s;
+    cin>>n>>s;
+    int even=0,odd=0,ans=0;
+    for(char ch:s){
+        if(ch=='0'){
+            int old=even;
+            even=odd;
+            odd=old+1;
+        }
+        else even++;
+        ans+=even;
+    }
+    cout<<ans<<endl;
+}
+```
+
+##### ABC 456D Not Adjacent 2 {#example-abc-456d}
+
+[题目链接](https://atcoder.jp/contests/abc456/tasks/abc456_d)
+
+给定只含 `a/b/c` 的字符串，求相邻字符不同的非空子序列数量，按选取位置区分方案，答案模 $998244353$，长度不超过 $3\times10^5$。
+
+`dp[c]` 表示此前以字符 $c$ 结尾的合法子序列数，`sum` 为总数，包含一个空子序列。当前字符为 $c$，新增方案就是 `sum-dp[c]`，同时加到 `dp[c]` 和 `sum` 中。旧方案仍可通过不选当前字符保留，不能覆盖掉。最后减去空序列。时间复杂度 $O(n)$。
+
+```c++
+void solve(){
+    const int MOD=998244353;
+    string s;
+    cin>>s;
+    int dp[3]={},sum=1;
+    for(char ch:s){
+        int c=ch-'a';
+        int add=(sum-dp[c]+MOD)%MOD;
+        dp[c]=(dp[c]+add)%MOD;
+        sum=(sum+add)%MOD;
+    }
+    cout<<(sum-1+MOD)%MOD<<endl;
+}
+```
+
+### 按修改值分组的最大子段和
+
+一次区间修改后最大化“满足条件的位置数”，可以先固定修改参数，把每个位置看成收益、损失或无影响，再找最大子段和。若每个参数只在少量位置产生正收益，可以按这些位置分组，跳过中间的零贡献。
+
+#### 例题
+
+##### P16238 理想温度 {#example-lg-p16238}
+
+[题目链接](https://www.luogu.com.cn/problem/P16238)
+
+给定当前温度 $a_i$ 和理想温度 $b_i$，给某个非空区间统一加任意整数 $k$，求最多有多少个位置满足 $a_i=b_i$，$n\le2\times10^5$。
+
+令 $diff_i=b_i-a_i$，原本为零的位置有 `cnt0` 个。固定非零 $k$ 后，区间中 `diff=k` 的位置收益为 $+1$，`diff=0` 的位置损失为 $-1$，其余位置贡献为零。
+
+把相同非零差值的位置放在一组。最优区间的两端可以缩到本组位置，相邻两个位置之间只需扣掉零差值的数量。令 `cur` 为以当前组内位置结尾的最大收益，转移为
+
+$$cur=\max(1,cur+1-\text{两位置之间零差值的个数}).$$
+
+用前缀和查询损失。保留 $k=0$ 的原答案，时间复杂度 $O(n\log n)$，不需要为每种 $k$ 都扫描整个数组。
+
+```c++
+void solve(){
+    int n;
+    cin>>n;
+    vector<int> a(n+1),pre(n+1);
+    for(int i=1;i<=n;i++) cin>>a[i];
+    map<int,vector<int>> pos;
+    for(int i=1;i<=n;i++){
+        int b;
+        cin>>b;
+        int diff=b-a[i];
+        pre[i]=pre[i-1]+(diff==0);
+        if(diff) pos[diff].push_back(i);
+    }
+    int best=0;
+    for(auto &[val,vec]:pos){
+        int cur=0;
+        for(int i=0;i<vec.size();i++){
+            if(!i) cur=1;
+            else cur=max(1ll,cur+1-pre[vec[i]-1]+pre[vec[i-1]]);
+            best=max(best,cur);
+        }
+    }
+    cout<<pre[n]+best<<endl;
+}
+```
+
+### 树形 DP：保留边与切断边
+
+合并子树时，如果父子连通块的要求可能冲突，就把“保留边”和“切断边”分别算。状态只描述当前根所在的连通块，已经切出去的部分只留下最优代价。
+
+#### 例题
+
+##### CF 1926G Vlad and Trouble at MIT {#example-cf-1926g}
+
+[题目链接](https://codeforces.com/contest/1926/problem/G)
+
+树上的点标记为 `P/S/C`，求最少切掉多少条边，使每个连通块不能同时包含 `P` 和 `S`。多组测试，总点数不超过 $10^5$，输入保证父亲编号小于儿子编号。
+
+`f[u][0]` 表示 $u$ 所在连通块不含 `S` 的最小代价，`f[u][1]` 表示不含 `P`。`C` 两种都可选；`S` 不能处于状态 $0$，`P` 不能处于状态 $1$。
+
+处理儿子 $v$ 时，保留边就接相同状态；切断后可以选儿子的较小状态再加 $1$。例如
+
+$$f[u][0]\mathrel{+}=\min(f[v][0],1+\min(f[v][0],f[v][1])).$$
+
+另一状态同理。按编号倒序就能先算完子树，也避开链形树的递归深度问题。时间复杂度 $O(n)$。
+
+```c++
+void solve(){
+    int n;
+    cin>>n;
+    vector<int> fa(n+1);
+    for(int i=2;i<=n;i++) cin>>fa[i];
+    string s;
+    cin>>s;
+    s=" "+s;
+    const int inf=1e18;
+    vector<array<int,2>> f(n+1);
+    for(int i=1;i<=n;i++){
+        f[i][0]=(s[i]=='S'?inf:0);
+        f[i][1]=(s[i]=='P'?inf:0);
+    }
+    for(int u=n;u>=2;u--){
+        int p=fa[u],cut=min(f[u][0],f[u][1])+1;
+        for(int t=0;t<2;t++) f[p][t]=min(inf,f[p][t]+min(f[u][t],cut));
+    }
+    cout<<min(f[1][0],f[1][1])<<endl;
+}
+```
+
+### 数位 DP
+
+求区间内满足数字限制的整数个数，先转成 $F(b)-F(a-1)$。从高位向低位填，记录当前位置、影响下一位的历史信息、是否仍贴着上界，以及是否已经开始填数。
+
+前导零通常不参与数字限制。只有不受上界限制的状态才能直接复用；若记忆化表不记录上界信息，换上界时就清空。全程没有开始填数对应整数零，是否计入要看题意。
+
+#### 例题
+
+##### P2657 windy 数 {#example-lg-p2657}
+
+[题目链接](https://www.luogu.com.cn/problem/P2657)
+
+求 $[a,b]$ 中相邻两位数字之差至少为 $2$ 的正整数个数，$1\le a\le b\le2\times10^9$。
+
+用 `last=10` 表示还没有开始填数，省去单独的 `started`。填前导零时仍保持该状态；开始后，零也是普通数字，必须检查与上一位的差。`same` 表示此前是否与上界前缀相同，只有它为假时才缓存。设十进制位数为 $L$，时间复杂度 $O(L\cdot10^2)$。
+
+```c++
+int dp[20][11];
+string digit;
+int dfs(int pos,int last,bool same){
+    if(pos==digit.size()) return last!=10;
+    if(!same && dp[pos][last]!=-1) return dp[pos][last];
+    int up=(same?digit[pos]-'0':9),res=0;
+    for(int d=0;d<=up;d++){
+        bool limit=same && d==up;
+        if(last==10 && d==0) res+=dfs(pos+1,10,limit);
+        else if(last==10 || abs(d-last)>=2) res+=dfs(pos+1,d,limit);
+    }
+    if(!same) dp[pos][last]=res;
+    return res;
+}
+int count_windy(int x){
+    if(x<=0) return 0;
+    digit=to_string(x);
+    memset(dp,-1,sizeof dp);
+    return dfs(0,10,true);
+}
+void solve(){
+    int a,b;
+    cin>>a>>b;
+    cout<<count_windy(b)-count_windy(a-1)<<endl;
+}
+```
+
 ### 记忆化搜索与状态设计
 
 先说明状态表示的子问题，再列出可以做的选择。边界要在访问数组之前判断；“尚未计算”和“不可能到达”也要区分。记忆化省去的是重复求解同一子问题，状态里仍须保存所有会影响后续选择的信息。
 
-#### 例题：CF 698A Vacations {#example-cf-698a}
+#### 例题
+
+##### CF 698A Vacations {#example-cf-698a}
 
 [题目链接](https://codeforces.com/contest/698/problem/A)
 
@@ -6197,7 +7027,9 @@ void solve(){
 
 ### 相同数量只保留最优资源
 
-#### 例题：CF 1526C1 Potions (Easy Version) {#example-cf-1526c1}
+#### 例题
+
+##### CF 1526C1 Potions (Easy Version) {#example-cf-1526c1}
 
 [题目链接](https://codeforces.com/contest/1526/problem/C1)
 
@@ -6236,7 +7068,9 @@ void solve(){
 
 无环依赖中，先求完前置状态，再求依赖它的状态。可以记忆化，也可以把边从前置状态连向后继，按拓扑序递推。依赖链可能很长时，拓扑序能避免递归过深。
 
-#### 例题：CF 1851E Nastya and Potions {#example-cf-1851e}
+#### 例题
+
+##### CF 1851E Nastya and Potions {#example-cf-1851e}
 
 [题目链接](https://codeforces.com/contest/1851/problem/E)
 
@@ -6291,7 +7125,9 @@ void solve(){
 
 ### 多人同步走与状态压缩
 
-#### 例题：P1004 方格取数 {#example-lg-p1004}
+#### 例题
+
+##### P1004 方格取数 {#example-lg-p1004}
 
 [题目链接](https://www.luogu.com.cn/problem/P1004)
 
@@ -6337,7 +7173,9 @@ void solve(){
 
 ### 状压 DP：已选集合与最后一项
 
-#### 例题：P1278 单词游戏 {#example-lg-p1278}
+#### 例题
+
+##### P1278 单词游戏 {#example-lg-p1278}
 
 [题目链接](https://www.luogu.com.cn/problem/P1278)
 
@@ -6395,7 +7233,9 @@ void solve(){
 
 ### 单调队列优化 DP
 
-#### 例题：P1725 琪露诺 {#example-lg-p1725}
+#### 例题
+
+##### P1725 琪露诺 {#example-lg-p1725}
 
 [题目链接](https://www.luogu.com.cn/problem/P1725)
 
@@ -6449,7 +7289,9 @@ void solve(){
 
 如果原数组的顺序不影响选择，冲突又发生在数值之间，可以先统计每个数的出现次数，把相同元素合成一个状态。
 
-#### 例题：CF 455A Boredom
+#### 例题
+
+##### CF 455A Boredom {#例题cf-455a-boredom}
 
 [题目链接](https://codeforces.com/contest/455/problem/A)
 
@@ -6555,7 +7397,9 @@ void solve(){
 
 最大值背包和计数背包的初始化不同：计数时“什么都不选、总和为零”有一种方案，其余和初始为零。01 背包要倒序枚举容量，完全背包正序枚举；若问恰好凑出的最小数量，不可达状态初始化为无穷大。
 
-#### 例题：P1164 小 A 点菜 {#example-lg-p1164}
+#### 例题
+
+##### P1164 小 A 点菜 {#example-lg-p1164}
 
 [题目链接](https://www.luogu.com.cn/problem/P1164)
 
@@ -6593,7 +7437,7 @@ void solve(){
 }
 ```
 
-#### 例题：P1466 集合 Subset Sums {#example-lg-p1466}
+##### P1466 集合 Subset Sums {#example-lg-p1466}
 
 [题目链接](https://www.luogu.com.cn/problem/P1466)
 
@@ -6636,7 +7480,7 @@ void solve(){
 }
 ```
 
-#### 例题：P11246 小杨和整数拆分 {#example-lg-p11246}
+##### P11246 小杨和整数拆分 {#example-lg-p11246}
 
 [题目链接](https://www.luogu.com.cn/problem/P11246)
 
@@ -6665,6 +7509,15 @@ void solve(){
 ```
 
 ### 最长上升子序列
+
+维护 `q[len-1]` 为长度为 `len` 的子序列能达到的最优末尾。它不是原数组中的一条实际答案序列；替换末尾只为给后面的元素留出更容易接上的状态。
+
+| 要求 | 维护方向 | 替换位置 |
+| --- | --- | --- |
+| 严格上升 | 升序 | `lower_bound`，第一个大于等于当前值 |
+| 不下降 | 升序 | `upper_bound`，第一个大于当前值 |
+| 严格下降 | 降序 | `lower_bound(...,greater<int>())`，第一个小于等于当前值 |
+| 不上升 | 降序 | `upper_bound(...,greater<int>())`，第一个小于当前值 |
 
 ```c++
 // 二分优化
@@ -6706,6 +7559,34 @@ signed main(){
 }
 ```
 
+#### 例题
+
+##### P1020 导弹拦截 {#example-lg-p1020}
+
+[题目链接](https://www.luogu.com.cn/problem/P1020)
+
+依次输入导弹高度直到文件结束，一套系统拦截的高度不能上升。求一套系统最多拦截多少枚，以及拦截全部导弹最少需要多少套系统，$n\le10^5$。
+
+第一问是最长不上升子序列，允许相等，降序数组配 `upper_bound`。第二问是把序列分成最少条不上升子序列，答案等于严格 LIS 长度，这是 Dilworth 定理在序列上的形式：严格上升子序列里的导弹必须分给不同系统，而最少链覆盖恰好达到这个下界。
+
+两问的等号边界不同，不能都写 `lower_bound`。时间复杂度 $O(n\log n)$。
+
+```c++
+void solve(){
+    vector<int> q,d;
+    int x;
+    while(cin>>x){
+        auto it=upper_bound(q.begin(),q.end(),x,greater<int>());
+        if(it==q.end()) q.push_back(x);
+        else *it=x;
+        auto p=lower_bound(d.begin(),d.end(),x);
+        if(p==d.end()) d.push_back(x);
+        else *p=x;
+    }
+    cout<<q.size()<<endl<<d.size()<<endl;
+}
+```
+
 ### 最长公共子序列
 
 ```c++
@@ -6726,6 +7607,40 @@ signed main(){
     }
   }
   cout<<dp[n][m]<<endl;
+}
+```
+
+#### 例题
+
+##### P1439 两个排列的最长公共子序列 {#example-lg-p1439}
+
+[题目链接](https://www.luogu.com.cn/problem/P1439)
+
+给定 $1\sim n$ 的两个排列，求 LCS 长度，$n\le10^5$。
+
+普通 LCS 是 $O(n^2)$。注意每个值只出现一次，记录它在第一个排列里的位置，再把第二个排列映射成这些位置。映射后严格上升，就表示它们在两个排列里的先后顺序一致。因此只需求一次 LIS，时间复杂度 $O(n\log n)$。
+
+这种直接一一映射依赖元素不重复，不能原样套到一般 LCS。
+
+```c++
+void solve(){
+    int n;
+    cin>>n;
+    vector<int> pos(n+1),q;
+    for(int i=1;i<=n;i++){
+        int x;
+        cin>>x;
+        pos[x]=i;
+    }
+    for(int i=1;i<=n;i++){
+        int x;
+        cin>>x;
+        x=pos[x];
+        auto it=lower_bound(q.begin(),q.end(),x);
+        if(it==q.end()) q.push_back(x);
+        else *it=x;
+    }
+    cout<<q.size()<<endl;
 }
 ```
 
