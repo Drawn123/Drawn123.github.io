@@ -2,6 +2,7 @@
 title: "【论文精读】AttInGrad：用注意力与输入梯度定位编码证据"
 description: "结合注意力权重和输入梯度定位病历中的证据，再用人工标注与遮挡实验检验解释。"
 date: 2026-11-03
+lastmod: 2026-11-18
 knowledge_id: "research-paper-att-ingrad"
 url: "/p/research-paper-att-ingrad/"
 tags:
@@ -40,7 +41,7 @@ draft: false
 
 ## 二、用注意力和输入梯度定位证据
 
-输入是一份出院小结。模型先用预训练编码器生成各文本位置的向量，再让每个 ICD 编码用自己的查询向量做交叉注意力，得到编码得分。作者从 [PLM-ICD](knowledge:research-paper-plm-icd) 出发，将原解码器替换为标准交叉注意力，目的是改善训练中的数值稳定性。
+输入是一份出院小结。模型先用预训练编码器生成各文本位置的向量，再让每个 ICD 编码用自己的查询向量做交叉注意力，得到编码得分。作者从 [PLM-ICD](knowledge:research-paper-plm-icd) 出发，修改标签注意力解码器，目的是改善训练中的数值稳定性。原文附录 A 将这个编码模型称为 **PLM-CA**，它负责预测编码；AttInGrad 是在模型上计算文本贡献的归因方法。[Less is More](knowledge:research-paper-less-is-more) 后来采用的也是这个 PLM-CA 变体。[原文附录 A](https://aclanthology.org/2024.emnlp-main.280.pdf)
 
 解释阶段先选定一个编码 \(j\)，再为每个输入 token（如词或子词）计算贡献。注意力权重 \(a_{ji}\) 表示模型在预测编码 \(j\) 时给位置 \(i\) 分配的权重。Input×Gradient 衡量编码分数 \(f_j\) 对该处输入向量 \(x_i\) 的局部敏感程度，计算时将输入和梯度逐维相乘，再取二范数。AttInGrad 将这个结果乘以注意力权重：
 

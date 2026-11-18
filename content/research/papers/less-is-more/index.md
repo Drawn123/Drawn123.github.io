@@ -1,8 +1,8 @@
 ---
-title: "【论文精读】Less is More（PLM-CA）：临床实体压缩与编码证据提取"
+title: "【论文精读】Less is More：临床实体压缩与编码证据提取"
 description: "同一个编码模型读全文和临床实体时，输入长度、训练成本、编码分数和证据范围各有什么变化。"
 date: 2026-10-28
-lastmod: 2026-11-14
+lastmod: 2026-11-18
 knowledge_id: "research-paper-less-is-more"
 url: "/p/research-paper-less-is-more/"
 tags:
@@ -74,7 +74,15 @@ p_\ell=\sigma(z_\ell).
 
 NER、AC 和编码模型分别训练。推理时，前两者产生实体文本，PLM-CA 预测编码，AttnInGrad 将 token 的贡献关联回实体。
 
-全文对照和实体方法共用已有的 PLM-CA。[PLM-ICD](knowledge:research-paper-plm-icd) 通过分块让编码器覆盖更多病历位置，PLM-CA 在它的基础上改用 Transformer 式标签交叉注意力。Less is More 用新标注训练实体提取与断言模型，构造贴近编码任务的短文本，再将已有归因方法给出的 token 分数映射回实体。交叉注意力和归因的来源见 [AttInGrad 精读](knowledge:research-paper-att-ingrad)。
+Less is More 是这篇实体压缩论文的简称，PLM-ICD 和 PLM-CA 则是编码模型名称。三者的关系如下。
+
+| 名称 | 来源与作用 |
+| --- | --- |
+| PLM-ICD | Huang 等人（2022）的编码模型，用分块编码与标签注意力处理长病历 |
+| PLM-CA | Edin 等人（2024）在 PLM-ICD 上修改标签注意力得到的交叉注意力变体 |
+| Less is More | Douglas 等人（2025）的实体压缩方法，先用 NER 和 AC 筛选输入，再使用已有的 PLM-CA 预测编码 |
+
+原文 §3.5 明确采用 PLM-CA，表 7 的直接对照也是全文 PLM-CA 与实体 PLM-CA；旧 PLM-ICD 的结果另列作参考。本文没有提出 PLM-ICD 或 PLM-CA。它用新标注训练实体提取与断言模型，构造贴近编码任务的短文本，再将已有归因方法给出的 token 分数映射回实体。[原文 §3.5、表 7](https://aclanthology.org/2025.acl-long.1489.pdf) · [PLM-ICD 精读](knowledge:research-paper-plm-icd) · [PLM-CA 与归因方法的来源](knowledge:research-paper-att-ingrad)
 
 ## 三、临床实体提取与筛选
 

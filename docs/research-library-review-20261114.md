@@ -2,13 +2,13 @@
 
 本次通过 Zotero 插件及本机 API 读取个人库的全部顶层条目，并以分页查询及 `Total-Results` 复核，共 31 条。群组查询为空。30 条为论文，1 条为插件条目。同题综述去重后共有 27 篇论文。保留原有 6 篇笔记，另选 5 篇独立成文，论文栏目共 11 篇。
 
-本页记录本次选题所用的 Zotero 主条目及选择理由。网站文章列表由 Hugo 生成。
+本页记录本次选题所用的 Zotero 主条目及选择理由。网站文章列表由 Hugo 生成。2026-11-18 按用户要求移除 JointCoder 博客文章，当前论文栏目保留 10 篇，Zotero 库内条目不变。
 
 ## 筛选依据与阅读范围
 
 全库按题名、摘要与已有文章的覆盖范围筛选，入选稿件依据论文原文。新增稿件优先补足标签注意力的来源、编码同义词、随病历变化的标签关系、人工证据标注和中文编码实践。MSMN 使用库藏 arXiv v2。
 
-## 保留的 11 篇
+## 当前保留的 10 篇
 
 | Zotero 主条目 | 文献简称 | 本次处理与独立价值 | 文章 |
 | --- | --- | --- | --- |
@@ -22,7 +22,6 @@
 | GK77T3HZ | MSMN | 新增，同义词查询和共享分类函数 | [编码同义词匹配](../content/research/papers/msmn/index.md) |
 | WZRPJXBP | CoRelation | 新增，随病历变化的标签关系建模 | [标签关系建模](../content/research/papers/corelation/index.md) |
 | W2E8XMQG | MDACE | 新增，人工证据的标注协议与评价 | [编码证据标注](../content/research/papers/mdace/index.md) |
-| 5EW2W9WT | JointCoder | 新增，中文疾病与操作联合流程 | [中文联合编码](../content/research/papers/jointcoder/index.md) |
 
 ## 暂缓单写的 16 篇
 

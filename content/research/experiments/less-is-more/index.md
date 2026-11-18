@@ -1,8 +1,8 @@
 ---
-title: "【代码研读】Less is More（PLM-CA）：样例核对、推理调用与训练准备"
+title: "【代码研读】Less is More：样例核对、推理调用与训练准备"
 description: "从作者的合成病历样例核对输入输出，沿源码追踪推理，并记录服务器环境与训练数据的准备步骤。"
 date: 2026-10-28
-lastmod: 2026-11-14
+lastmod: 2026-11-18
 knowledge_id: "research-experiment-less-is-more"
 url: "/p/research-experiment-less-is-more/"
 tags:
@@ -70,7 +70,7 @@ entity-coding/
 └── docs/                          训练、推理、复现说明
 ```
 
-`ac/` 负责断言分类（AC）的训练，推理调用位于 `ner/extract_entities.py`。编码模型位于 `external/plm_ca/`，由总入口启动。沿着处理顺序看，三个主要接口分别是病历表、实体表、编码与证据表。
+`ac/` 负责断言分类（AC）的训练，推理调用位于 `ner/extract_entities.py`。编码模型位于 `external/plm_ca/`，由总入口启动。这里使用的 PLM-CA 是已有 PLM-ICD 的交叉注意力变体，Less is More 的实体处理流程在它之前构造输入；论文名称、编码模型和源码类名的对应关系见[精读篇的模型来源说明](knowledge:research-paper-less-is-more#method-overview)。沿着处理顺序看，三个主要接口分别是病历表、实体表、编码与证据表。
 
 ### 2.1 输入病历
 
