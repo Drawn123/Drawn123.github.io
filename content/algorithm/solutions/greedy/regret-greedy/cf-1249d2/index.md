@@ -1,11 +1,15 @@
 ---
 title: "CF 1249D2 Too Many Segments (hard version)"
 date: 2026-11-07
+lastmod: 2026-11-18
 knowledge_id: "solution-cf-1249d2"
 url: "/algorithm/solutions/greedy/cf-1249d2/"
 tags:
   - "贪心 | Greedy"
+  - "反悔贪心 | Regret Greedy"
   - "排序 | Sorting"
+  - "扫描线 | Sweep Line"
+  - "有序集合 | Ordered Set"
 platform:
   - "Codeforces"
 problem_id: "CF1249D2"

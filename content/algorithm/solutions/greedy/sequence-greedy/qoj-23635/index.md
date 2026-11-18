@@ -5,6 +5,8 @@ knowledge_id: "solution-qoj-23635"
 url: "/algorithm/solutions/greedy/sequence-greedy/qoj-23635/"
 tags:
   - "贪心 | Greedy"
+  - "数学 | Math"
+  - "等比数列 | Geometric Progression"
 platform:
   - "QOJ"
 problem_id: "QOJ23635"

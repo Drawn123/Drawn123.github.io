@@ -1,10 +1,12 @@
 ---
 title: "CF 1779C Least Prefix Sum"
 date: 2026-11-06
+lastmod: 2026-11-18
 knowledge_id: "solution-cf-1779c"
 url: "/algorithm/solutions/greedy/cf-1779c/"
 tags:
   - "贪心 | Greedy"
+  - "反悔贪心 | Regret Greedy"
   - "堆 | Heap"
   - "前缀和 | Prefix Sum"
 platform:

@@ -1,11 +1,14 @@
 ---
 title: "CF 1526C2 Potions (Hard Version)"
 date: 2026-11-06
+lastmod: 2026-11-18
 knowledge_id: "solution-cf-1526c2"
 url: "/algorithm/solutions/greedy/cf-1526c2/"
 tags:
   - "贪心 | Greedy"
+  - "反悔贪心 | Regret Greedy"
   - "堆 | Heap"
+  - "前缀和 | Prefix Sum"
 platform:
   - "Codeforces"
 problem_id: "CF1526C2"
